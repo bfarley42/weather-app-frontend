@@ -34,6 +34,7 @@ export default function EnhancedWeatherChart({
   const [showLowTemp, setShowLowTemp] = useState(true);
   const [showNormals, setShowNormals] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
+  const [darkMode, setDarkMode] = useState(false);  // ADD THIS
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);
 
   useEffect(() => {
@@ -92,9 +93,17 @@ export default function EnhancedWeatherChart({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+//   const formatDate = (date: Date) => {
+//     return date.toLocaleDateString('en-US', { 
+//         month: 'short', 
+//         day: 'numeric',
+//         year: 'numeric'
+//     });
+//     };
+
   const option = {
-    backgroundColor: '#ffffff',
-    
+     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',  // CHANGE THIS
+    //   backgroundColor: darkMode ? '#000000' : '#ffffff',  // CHANGE THIS
     title: {
       text: stationName,
       left: 'center',
@@ -102,20 +111,20 @@ export default function EnhancedWeatherChart({
       textStyle: {
         fontSize: 20,
         fontWeight: 700,
-        color: '#2c3e50'
+        color: darkMode ? '#ecf0f1' : '#2c3e50'  // CHANGE THIS
       }
     },
     
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#e0e0e0',
-      borderWidth: 1,
-      padding: 15,
-      textStyle: {
-        color: '#333',
+    trigger: 'axis',
+    backgroundColor: darkMode ? 'rgba(44, 44, 62, 0.95)' : 'rgba(255, 255, 255, 0.95)',  // CHANGE
+    borderColor: darkMode ? '#34495e' : '#e0e0e0',  // CHANGE
+    borderWidth: 1,
+    padding: 15,
+    textStyle: {
+        color: darkMode ? '#ecf0f1' : '#333',  // CHANGE
         fontSize: 13
-      },
+    },
       axisPointer: {
         type: 'cross',
         crossStyle: {
@@ -126,6 +135,15 @@ export default function EnhancedWeatherChart({
       formatter: (params: any) => {
         const dateIdx = params[0].dataIndex;
         const date = formatDate(dates[dateIdx]);
+        // const dateStr = data[dateIdx].obs_date;  // Get the string date
+        // const date = formatDate(new Date(dateStr + 'T12:00:00'));
+        // const dateObj = dates[dateIdx];
+        // const date = dateObj.toLocaleDateString('en-US', { 
+        // weekday: 'short',
+        // month: 'short', 
+        // day: 'numeric',
+        // year: 'numeric'
+        // });
         let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">${date}</div>`;
         
         params.forEach((param: any) => {
@@ -165,19 +183,33 @@ export default function EnhancedWeatherChart({
         'Precipitation',
         ...(showNormals ? ['Normal High', 'Normal Low'] : [])
       ],
-      top: 50,
+      top: 45,
       left: 'center',
-      itemGap: 20,
+      itemGap: 15,
       textStyle: {
         fontSize: 13,
-        color: '#555'
-      }
+        color: darkMode ? '#bdc3c7' : '#555'  // CHANGE THIS
+      },
+        selectedMode: {  // ADD THIS OBJECT
+    'High Temp': false,     // Can't click
+    'Low Temp': false,      // Can't click
+    'Precipitation': true,  // Can click
+    'Normal High': true,    // Can click
+    'Normal Low': true      // Can click
+  }
+//     selected: {  // ADD THIS
+//     'High Temp': showHighTemp,
+//     'Low Temp': showLowTemp,
+//     'Normal High': showNormals && showHighTemp,
+//     'Normal Low': showNormals && showLowTemp,
+//     'Precipitation': true
+//   }
     },
     
     grid: {
       left: 60,
       right: 60,
-      top: 110,
+      top: 120,
       bottom: 90
     },
     
@@ -207,74 +239,144 @@ export default function EnhancedWeatherChart({
       boundaryGap: false,
       axisLine: {
         lineStyle: {
-          color: '#e0e0e0'
+          color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
         }
       },
       axisLabel: {
-        color: '#666',
+        color: darkMode ? '#95a5a6' : '#666',  // CHANGE
         fontSize: 12,
         rotate: 45,
         formatter: (value: any) => formatDate(new Date(value))
       },
+
+  axisPointer: {  // ADD THIS ENTIRE SECTION
+    label: {
+      formatter: (params: any) => {
+        const date = new Date(params.value);
+        return date.toLocaleDateString('en-US', { 
+           weekday: 'short',
+            month: 'short', 
+          day: 'numeric' 
+        });
+      }
+    }
+  },
+
       splitLine: {
         show: false
       }
     },
     
+    // yAxis: [
+    //   {
+    //     type: 'value',
+    //     name: 'Temperature (°F)',
+    //     // nameLocation: 'middle',  // ADD THIS LINE
+    //     // nameGap: 50,              // ADD THIS LINE
+    //     nameTextStyle: {
+    //       color: '#666',
+    //       fontSize: 13,
+    //       fontWeight: 600
+    //     },
+    //     position: 'left',
+    //     axisLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#e0e0e0'
+    //       }
+    //     },
+    //     axisLabel: {
+    //       color: '#666',
+    //       fontSize: 12,
+    //       formatter: '{value}°'
+    //     },
+    //     splitLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#f0f0f0'
+    //       }
+    //     }
+    //   },
+    //   {
+    //     type: 'value',
+    //     name: 'Precipitation (inches)',
+    //     nameTextStyle: {
+    //       color: '#666',
+    //       fontSize: 13,
+    //       fontWeight: 600
+    //     },
+    //     position: 'right',
+    //     axisLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#e0e0e0'
+    //       }
+    //     },
+    //     axisLabel: {
+    //       color: '#666',
+    //       fontSize: 12,
+    //       formatter: '{value}"'
+    //     },
+    //     splitLine: {
+    //       show: false
+    //     }
+    //   }
+    // ],
     yAxis: [
-      {
-        type: 'value',
-        name: 'Temperature (°F)',
-        nameTextStyle: {
-          color: '#666',
-          fontSize: 13,
-          fontWeight: 600
-        },
-        position: 'left',
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: '#e0e0e0'
-          }
-        },
-        axisLabel: {
-          color: '#666',
-          fontSize: 12,
-          formatter: '{value}°'
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            color: '#f0f0f0'
-          }
-        }
-      },
-      {
-        type: 'value',
-        name: 'Precipitation (inches)',
-        nameTextStyle: {
-          color: '#666',
-          fontSize: 13,
-          fontWeight: 600
-        },
-        position: 'right',
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: '#e0e0e0'
-          }
-        },
-        axisLabel: {
-          color: '#666',
-          fontSize: 12,
-          formatter: '{value}"'
-        },
-        splitLine: {
-          show: false
-        }
+  {
+    type: 'value',
+    name: 'Temperature (°F)',
+    nameLocation: 'middle',
+    nameGap: 50,
+    nameTextStyle: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 13,
+      fontWeight: 600
+    },
+    position: 'left',
+    axisLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
       }
-    ],
-    
+    },
+    axisLabel: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 12,
+      formatter: '{value}°'
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#2c3e50' : '#f0f0f0'  // CHANGE
+      }
+    }
+  },
+  {
+    type: 'value',
+    name: 'Precipitation (inches)',
+    nameTextStyle: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 13,
+      fontWeight: 600
+    },
+    position: 'right',
+    axisLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
+      }
+    },
+    axisLabel: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 12,
+      formatter: '{value}"'
+    },
+    splitLine: {
+      show: false
+    }
+  }
+],
     series: [
       // Temperature range area (only if both temps are shown)
       ...(showHighTemp && showLowTemp ? [{
@@ -441,6 +543,19 @@ export default function EnhancedWeatherChart({
             />
             <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
           </label>
+
+        {/* ADD THIS DIVIDER AND TOGGLE */}
+        <div className="toggle-divider"></div>
+        <label className="toggle-label">
+          <input
+            type="checkbox"
+            checked={darkMode}
+            onChange={(e) => setDarkMode(e.target.checked)}
+          />
+          <span>🌙 Dark Mode</span>
+        </label>
+
+
         </div>
       </div>
       
@@ -459,6 +574,22 @@ export default function EnhancedWeatherChart({
           notMerge={true}
           lazyUpdate={true}
         />
+        {/* <ReactECharts
+        option={option}
+        style={{ height: '100%', width: '100%' }}
+        opts={{ renderer: 'canvas' }}
+        notMerge={true}
+        lazyUpdate={true}
+        onEvents={{  // ADD THIS
+            legendselectchanged: (params: any) => {
+            // Sync legend clicks with checkboxes
+            if (params.name === 'High Temp') setShowHighTemp(params.selected['High Temp']);
+            if (params.name === 'Low Temp') setShowLowTemp(params.selected['Low Temp']);
+            // Note: Normals toggle stays with checkbox only
+            }
+        }}
+        /> */}
+
       </div>
     </div>
   );

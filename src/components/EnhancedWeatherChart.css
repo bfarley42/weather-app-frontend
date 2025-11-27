@@ -61,3 +61,16 @@
     gap: 12px;
   }
 }
+
+.toggle-divider {
+  width: 1px;
+  height: 20px;
+  background: #d0d0d0;
+  margin: 0 12px;
+}
+
+@media (max-width: 768px) {
+  .toggle-divider {
+    display: none;
+  }
+}
