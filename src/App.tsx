@@ -1,9 +1,10 @@
 // src/App.tsx
 import { useState } from 'react';
 import StationSearch from './components/StationSearch';
-import WeatherChart from './components/WeatherChart';
+import EnhancedWeatherChart from './components/EnhancedWeatherChart';
 import WeatherSummary from './components/WeatherSummary';
 import ComparisonChart from './components/ComparisonChart';
+import { API_URL } from './config';
 import './App.css';
 
 interface Station {
@@ -39,7 +40,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/weather/daily?station=${station.station_id}&start=${startDate}&end=${endDate}`
+        `${API_URL}/api/weather/daily?station=${station.station_id}&start=${startDate}&end=${endDate}`
       );
 
       if (!response.ok) {
@@ -68,7 +69,7 @@ function App() {
         const yearEnd = endDate.replace(/^\d{4}/, year.toString());
         
         const response = await fetch(
-          `http://localhost:8000/api/weather/daily?station=${station.station_id}&start=${yearStart}&end=${yearEnd}`
+          `${API_URL}/api/weather/daily?station=${station.station_id}&start=${yearStart}&end=${yearEnd}`
         );
         
         if (!response.ok) {
@@ -205,8 +206,9 @@ function App() {
               endDate={endDate}
             />
             <div className="chart-section">
-              <WeatherChart
+              <EnhancedWeatherChart
                 data={weatherData}
+                stationId={selectedStation?.station_id || ''}
                 stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
               />
             </div>

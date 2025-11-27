@@ -1,0 +1,63 @@
+/* src/components/EnhancedWeatherChart.css */
+.enhanced-chart-container {
+  width: 100%;
+}
+
+.chart-controls {
+  background: #f8f9fa;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+}
+
+.toggle-label input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+}
+
+.toggle-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle-label:has(input[type="checkbox"]:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.toggle-label span {
+  transition: color 0.2s;
+}
+
+.toggle-label:hover:not(:has(input[type="checkbox"]:disabled)) span {
+  color: #667eea;
+}
+
+@media (max-width: 768px) {
+  .toggle-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
