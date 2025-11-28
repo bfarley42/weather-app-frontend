@@ -5,49 +5,6 @@ import * as echarts from 'echarts';
 import { API_URL } from '../config';
 import './EnhancedWeatherChart.css';
 
-const colors = {
-  high: {
-    light: {
-      line: ['#ff6b6b', '#ff3e3e'],
-      dot: '#ff6b6b',
-      shadow: 'rgba(255, 107, 107, 0.45)',
-      normal: 'rgba(255, 120, 120, 0.6)',
-    },
-    dark: {
-      line: ['#ff8c8c', '#ff5a5a'],
-      dot: '#ff8c8c',
-      shadow: 'rgba(255, 150, 150, 0.45)',
-      normal: 'rgba(255, 160, 160, 0.7)',
-    }
-  },
-
-  low: {
-    light: {
-      line: ['#4ecdc4', '#2fbdb5'],
-      dot: '#4ecdc4',
-      shadow: 'rgba(78, 205, 196, 0.45)',
-      normal: 'rgba(78, 205, 196, 0.6)',
-    },
-    dark: {
-      line: ['#7ee7df', '#55d6ce'],
-      dot: '#7ee7df',
-      shadow: 'rgba(120, 235, 225, 0.45)',
-      normal: 'rgba(120, 235, 225, 0.7)',
-    }
-  },
-
-  range: {
-    light: ['rgba(255,140,140,0.25)', 'rgba(78,205,196,0.25)'],
-    dark: ['rgba(255,150,150,0.20)', 'rgba(60,180,170,0.20)']
-  },
-
-  precip: {
-    light: ['rgba(74,177,245,0.95)', 'rgba(0,94,156,0.85)'],
-    dark: ['rgba(90,200,255,0.95)', 'rgba(0,70,130,0.85)'],
-  }
-};
-
-
 interface DailyWeather {
   obs_date: string;
   tmax_f: number | null;
@@ -138,6 +95,14 @@ export default function EnhancedWeatherChart({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+//   const formatDate = (date: Date) => {
+//     return date.toLocaleDateString('en-US', { 
+//         month: 'short', 
+//         day: 'numeric',
+//         year: 'numeric'
+//     });
+//     };
+
   const option = {
      backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',  // CHANGE THIS
     //   backgroundColor: darkMode ? '#000000' : '#ffffff',  // CHANGE THIS
@@ -154,15 +119,14 @@ export default function EnhancedWeatherChart({
     
     tooltip: {
     trigger: 'axis',
-    backgroundColor: darkMode
-            ? 'rgba(30, 38, 50, 0.95)'
-            : 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: darkMode ? 'rgba(44, 44, 62, 0.95)' : 'rgba(255, 255, 255, 0.95)',  // CHANGE
     borderColor: darkMode ? '#34495e' : '#e0e0e0',  // CHANGE
     borderWidth: 1,
     padding: 15,
-textStyle: {
-  color: darkMode ? '#e3eef5' : '#333'
-},
+    textStyle: {
+        color: darkMode ? '#ecf0f1' : '#333',  // CHANGE
+        fontSize: 13
+    },
       axisPointer: {
         type: 'cross',
         crossStyle: {
@@ -173,6 +137,15 @@ textStyle: {
       formatter: (params: any) => {
         const dateIdx = params[0].dataIndex;
         const date = formatDate(dates[dateIdx]);
+        // const dateStr = data[dateIdx].obs_date;  // Get the string date
+        // const date = formatDate(new Date(dateStr + 'T12:00:00'));
+        // const dateObj = dates[dateIdx];
+        // const date = dateObj.toLocaleDateString('en-US', { 
+        // weekday: 'short',
+        // month: 'short', 
+        // day: 'numeric',
+        // year: 'numeric'
+        // });
         let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">${date}</div>`;
         
         params.forEach((param: any) => {
@@ -226,7 +199,13 @@ textStyle: {
     'Normal High': true,    // Can click
     'Normal Low': true      // Can click
   }
-
+//     selected: {  // ADD THIS
+//     'High Temp': showHighTemp,
+//     'Low Temp': showLowTemp,
+//     'Normal High': showNormals && showHighTemp,
+//     'Normal Low': showNormals && showLowTemp,
+//     'Precipitation': true
+//   }
     },
     
     grid: {
@@ -262,11 +241,11 @@ textStyle: {
       boundaryGap: false,
       axisLine: {
         lineStyle: {
-          color: darkMode ? '#3d4a57' : '#d8d8d8'
+          color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
         }
       },
       axisLabel: {
-        color: darkMode ? '#cfd8dc' : '#666',
+        color: darkMode ? '#95a5a6' : '#666',  // CHANGE
         fontSize: 12,
         rotate: 45,
         formatter: (value: any) => formatDate(new Date(value))
@@ -290,12 +269,67 @@ textStyle: {
       }
     },
     
+    // yAxis: [
+    //   {
+    //     type: 'value',
+    //     name: 'Temperature (°F)',
+    //     // nameLocation: 'middle',  // ADD THIS LINE
+    //     // nameGap: 50,              // ADD THIS LINE
+    //     nameTextStyle: {
+    //       color: '#666',
+    //       fontSize: 13,
+    //       fontWeight: 600
+    //     },
+    //     position: 'left',
+    //     axisLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#e0e0e0'
+    //       }
+    //     },
+    //     axisLabel: {
+    //       color: '#666',
+    //       fontSize: 12,
+    //       formatter: '{value}°'
+    //     },
+    //     splitLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#f0f0f0'
+    //       }
+    //     }
+    //   },
+    //   {
+    //     type: 'value',
+    //     name: 'Precipitation (inches)',
+    //     nameTextStyle: {
+    //       color: '#666',
+    //       fontSize: 13,
+    //       fontWeight: 600
+    //     },
+    //     position: 'right',
+    //     axisLine: {
+    //       show: true,
+    //       lineStyle: {
+    //         color: '#e0e0e0'
+    //       }
+    //     },
+    //     axisLabel: {
+    //       color: '#666',
+    //       fontSize: 12,
+    //       formatter: '{value}"'
+    //     },
+    //     splitLine: {
+    //       show: false
+    //     }
+    //   }
+    // ],
     yAxis: [
   {
     type: 'value',
     name: 'Temperature (°F)',
     nameLocation: 'middle',
-    nameGap: 30,
+    nameGap: 50,
     nameTextStyle: {
       color: darkMode ? '#95a5a6' : '#666',  // CHANGE
       fontSize: 13,
@@ -354,12 +388,13 @@ textStyle: {
         lineStyle: { opacity: 0 },
         stack: 'confidence-band',
         symbol: 'none',
-areaStyle: {
-  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-    { offset: 1, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-  ])
-},
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(255, 107, 107, 0.3)' },
+            { offset: 0.5, color: 'rgba(255, 180, 180, 0.2)' },
+            { offset: 1, color: 'rgba(78, 205, 196, 0.3)' }
+          ])
+        },
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -371,24 +406,25 @@ areaStyle: {
         data: maxTemps,
         smooth: true,
         symbolSize: 8,
-itemStyle: {
-  color: darkMode ? colors.high.dark.dot : colors.high.light.dot,
-  borderColor: darkMode ? '#1a1a2e' : '#fff',
-  borderWidth: 2,
-},
-lineStyle: {
-  width: 3,
-  color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
-    (darkMode ? colors.high.dark.line : colors.high.light.line)
-      .map((c, i) => ({ offset: i, color: c }))
-  ),
-},
-emphasis: {
-  itemStyle: {
-    shadowBlur: 12,
-    shadowColor: darkMode ? colors.high.dark.shadow : colors.high.light.shadow,
-  }
-},
+        itemStyle: {
+          color: '#ff6b6b',
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        lineStyle: {
+          width: 3,
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: '#ff6b6b' },
+            { offset: 1, color: '#ee5a6f' }
+          ])
+        },
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(255, 107, 107, 0.5)'
+          }
+        },
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -400,24 +436,25 @@ emphasis: {
         data: minTemps,
         smooth: true,
         symbolSize: 8,
-itemStyle: {
-  color: darkMode ? colors.low.dark.dot : colors.low.light.dot,
-  borderColor: darkMode ? '#1a1a2e' : '#fff',
-  borderWidth: 2,
-},
-lineStyle: {
-  width: 3,
-  color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
-    (darkMode ? colors.low.dark.line : colors.low.light.line)
-      .map((c, i) => ({ offset: i, color: c }))
-  ),
-},
-emphasis: {
-  itemStyle: {
-    shadowBlur: 12,
-    shadowColor: darkMode ? colors.low.dark.shadow : colors.low.light.shadow,
-  }
-},
+        itemStyle: {
+          color: '#4ecdc4',
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        lineStyle: {
+          width: 3,
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: '#4ecdc4' },
+            { offset: 1, color: '#45b7d1' }
+          ])
+        },
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(78, 205, 196, 0.5)'
+          }
+        },
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -429,12 +466,12 @@ emphasis: {
         data: normalHighs,
         smooth: true,
         symbol: 'none',
-lineStyle: {
-  width: 2,
-  type: 'dashed',
-  opacity: 0.7,
-  color: darkMode ? colors.high.dark.normal : colors.high.light.normal
-},
+        lineStyle: {
+          width: 2,
+          type: 'dashed',
+          color: '#ff6b6b',
+          opacity: 0.5
+        },
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -446,12 +483,12 @@ lineStyle: {
         data: normalLows,
         smooth: true,
         symbol: 'none',
-lineStyle: {
-  width: 2,
-  type: 'dashed',
-  opacity: 0.7,
-  color: darkMode ? colors.low.dark.normal : colors.low.light.normal
-},
+        lineStyle: {
+          width: 2,
+          type: 'dashed',
+          color: '#4ecdc4',
+          opacity: 0.5
+        },
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -461,13 +498,13 @@ lineStyle: {
         name: 'Precipitation',
         type: 'bar',
         data: precip,
-itemStyle: {
-  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: darkMode ? colors.precip.dark[0] : colors.precip.light[0] },
-    { offset: 1, color: darkMode ? colors.precip.dark[1] : colors.precip.light[1] }
-  ]),
-  borderRadius: [4, 4, 0, 0]
-},
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(116, 185, 255, 0.9)' },
+            { offset: 1, color: 'rgba(116, 185, 255, 0.5)' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
+        },
         barWidth: '70%',
         yAxisIndex: 1,
         z: 0
@@ -509,6 +546,18 @@ itemStyle: {
             <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
           </label>
 
+        {/* ADD THIS DIVIDER AND TOGGLE
+        <div className="toggle-divider"></div>
+        <label className="toggle-label">
+          <input
+            type="checkbox"
+            checked={darkMode}
+            onChange={(e) => setDarkMode(e.target.checked)}
+          />
+          <span>🌙 Dark Mode</span>
+        </label> */}
+
+
         </div>
       </div>
       
@@ -527,6 +576,21 @@ itemStyle: {
           notMerge={true}
           lazyUpdate={true}
         />
+        {/* <ReactECharts
+        option={option}
+        style={{ height: '100%', width: '100%' }}
+        opts={{ renderer: 'canvas' }}
+        notMerge={true}
+        lazyUpdate={true}
+        onEvents={{  // ADD THIS
+            legendselectchanged: (params: any) => {
+            // Sync legend clicks with checkboxes
+            if (params.name === 'High Temp') setShowHighTemp(params.selected['High Temp']);
+            if (params.name === 'Low Temp') setShowLowTemp(params.selected['Low Temp']);
+            // Note: Normals toggle stays with checkbox only
+            }
+        }}
+        /> */}
 
       </div>
     </div>

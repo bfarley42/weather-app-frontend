@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import StationSearch from './components/StationSearch';
 import EnhancedWeatherChart from './components/EnhancedWeatherChart';
+import PrecipitationChart from './components/PrecipitationChart';
 import WeatherSummary from './components/WeatherSummary';
 import ComparisonChart from './components/ComparisonChart';
 import { API_URL } from './config';
@@ -26,10 +27,9 @@ interface DailyWeather {
 function App() {
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [weatherData, setWeatherData] = useState<DailyWeather[]>([]);
-  // const [startDate, setStartDate] = useState('2025-11-01');
-  // const [endDate, setEndDate] = useState('2025-11-25');
-
-const [startDate, setStartDate] = useState(() => {
+  // const [startDate, setStartDate] = useState('2024-11-01');
+  // const [endDate, setEndDate] = useState('2024-11-25');
+  const [startDate, setStartDate] = useState(() => {
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
   return firstDay.toISOString().split('T')[0];
@@ -38,12 +38,13 @@ const [endDate, setEndDate] = useState(() => {
   const now = new Date();
   return now.toISOString().split('T')[0];
 });
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonYears, setComparisonYears] = useState<number[]>([2024, 2023]);
   const [yearsData, setYearsData] = useState<Array<{year: number, data: DailyWeather[], color: string}>>([]);
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation'>('temperature');  // ADD THIS
+  const [darkMode, setDarkMode] = useState(false);  // ADD THIS
 
   const fetchWeatherData = async (station: Station) => {
     setIsLoading(true);
@@ -159,40 +160,67 @@ const [endDate, setEndDate] = useState(() => {
           </div>
 
           {selectedStation && (
-            <div className="date-controls">
-              <div className="control-group">
-                <label htmlFor="start-date">Start Date:</label>
-                <input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="date-input"
-                />
+            <>
+              <div className="date-controls">
+                <div className="control-group">
+                  <label htmlFor="start-date">Start Date:</label>
+                  <input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="date-input"
+                  />
+                </div>
+
+                <div className="control-group">
+                  <label htmlFor="end-date">End Date:</label>
+                  <input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="date-input"
+                  />
+                </div>
+
+                <button onClick={handleDateChange} className="update-button">
+                  Update Chart
+                </button>
+
+                <button 
+                  onClick={toggleComparisonMode} 
+                  className={`comparison-toggle ${comparisonMode ? 'active' : ''}`}
+                >
+                  {comparisonMode ? '📊 Comparison Mode' : '📈 Single Year'}
+                </button>
+
+                <label className="toggle-label dark-mode-toggle">
+                  <input
+                    type="checkbox"
+                    checked={darkMode}
+                    onChange={(e) => setDarkMode(e.target.checked)}
+                  />
+                  <span>🌙 Dark Mode</span>
+                </label>
               </div>
 
-              <div className="control-group">
-                <label htmlFor="end-date">End Date:</label>
-                <input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="date-input"
-                />
+              {/* Chart View Selector */}
+              <div className="chart-view-selector">
+                <button
+                  className={chartView === 'temperature' ? 'active' : ''}
+                  onClick={() => setChartView('temperature')}
+                >
+                  🌡️ Temperature
+                </button>
+                <button
+                  className={chartView === 'precipitation' ? 'active' : ''}
+                  onClick={() => setChartView('precipitation')}
+                >
+                  🌧️ Precipitation & Snow
+                </button>
               </div>
-
-              <button onClick={handleDateChange} className="update-button">
-                Update Chart
-              </button>
-
-              <button 
-                onClick={toggleComparisonMode} 
-                className={`comparison-toggle ${comparisonMode ? 'active' : ''}`}
-              >
-                {comparisonMode ? '📊 Comparison Mode' : '📈 Single Year'}
-              </button>
-            </div>
+            </>
           )}
         </div>
 
@@ -217,11 +245,21 @@ const [endDate, setEndDate] = useState(() => {
               endDate={endDate}
             />
             <div className="chart-section">
-              <EnhancedWeatherChart
-                data={weatherData}
-                stationId={selectedStation?.station_id || ''}
-                stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-              />
+              {chartView === 'temperature' ? (
+                <EnhancedWeatherChart
+                  data={weatherData}
+                  stationId={selectedStation?.station_id || ''}
+                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                  darkMode={darkMode}
+                />
+              ) : (
+                <PrecipitationChart
+                  data={weatherData}
+                  stationId={selectedStation?.station_id || ''}
+                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                  darkMode={darkMode}
+                />
+              )}
             </div>
           </>
         )}
