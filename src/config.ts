@@ -12,8 +12,13 @@
 // };
 
 // export const API_URL = getApiUrl();
-const API_URL = import.meta.env.PROD
-  ? 'https://weather-api-huq7.onrender.com'  // ✅ Your API URL
-  : 'http://localhost:8000';
+// const API_URL = import.meta.env.PROD
+//   ? 'https://weather-api-huq7.onrender.com'  // ✅ Your API URL
+//   : 'http://localhost:8000';
+
+// export { API_URL };
+
+// Force production API URL
+const API_URL = 'https://weather-api-huq7.onrender.com';
 
 export { API_URL };
