@@ -7,6 +7,7 @@ import WeatherSummary from './components/WeatherSummary';
 import ComparisonChart from './components/ComparisonChart';
 import { API_URL } from './config';
 import './App.css';
+import HourlyWeatherChart from './components/HourlyWeatherChart';
 
 interface Station {
   station_id: string;
@@ -24,9 +25,18 @@ interface DailyWeather {
   snow_in: number | null;
 }
 
+interface HourlyWeather {
+  ts_local: string;
+  tmpf: number | null;
+  precip_in: number | null;
+  avg_wspd_mph: number | null;
+}
+
 function App() {
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [weatherData, setWeatherData] = useState<DailyWeather[]>([]);
+  // const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
+  const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
   // const [startDate, setStartDate] = useState('2024-11-01');
   // const [endDate, setEndDate] = useState('2024-11-25');
   const [startDate, setStartDate] = useState(() => {
@@ -41,9 +51,10 @@ const [endDate, setEndDate] = useState(() => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [comparisonMode, setComparisonMode] = useState(false);
-  const [comparisonYears, setComparisonYears] = useState<number[]>([2024, 2023]);
+  // const [comparisonYears, setComparisonYears] = useState<number[]>([2024, 2023]);
+  const [comparisonYears] = useState<number[]>([2024, 2023]);
   const [yearsData, setYearsData] = useState<Array<{year: number, data: DailyWeather[], color: string}>>([]);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation'>('temperature');  // ADD THIS
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
   const [darkMode, setDarkMode] = useState(false);  // ADD THIS
 
   const fetchWeatherData = async (station: Station) => {
@@ -68,6 +79,29 @@ const [endDate, setEndDate] = useState(() => {
       setIsLoading(false);
     }
   };
+
+const fetchHourlyData = async (station: Station) => {
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    const response = await fetch(
+      `${API_URL}/api/weather/hourly?station=${station.station_id}&start=${startDate}&end=${endDate}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch hourly weather data');
+    }
+
+    const data = await response.json();
+    setHourlyData(data);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'An error occurred');
+    setHourlyData([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const fetchComparisonData = async (station: Station) => {
     setIsLoading(true);
@@ -122,15 +156,41 @@ const [endDate, setEndDate] = useState(() => {
     }
   };
 
-  const handleDateChange = () => {
-    if (selectedStation) {
-      if (comparisonMode) {
-        fetchComparisonData(selectedStation);
-      } else {
-        fetchWeatherData(selectedStation);
+const handleDateChange = () => {
+  if (selectedStation) {
+    if (comparisonMode) {
+      fetchComparisonData(selectedStation);
+    } else if (chartView === 'hourly') {
+      // Check if date range is valid for hourly (max 7 days)
+      const daysDiff = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 7) {
+        setError('Hourly view limited to 7 days. Please adjust date range.');
+        return;
       }
+      fetchHourlyData(selectedStation);
+    } else {
+      fetchWeatherData(selectedStation);
     }
-  };
+  }
+};
+
+const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly') => {
+  setChartView(view);
+  setError(null);
+  
+  // Auto-adjust dates for hourly view
+  if (view === 'hourly' && selectedStation) {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    
+    setStartDate(sevenDaysAgo.toISOString().split('T')[0]);
+    setEndDate(today.toISOString().split('T')[0]);
+    
+    // Fetch hourly data
+    setTimeout(() => fetchHourlyData(selectedStation), 100);
+  }
+};
 
   const toggleComparisonMode = () => {
     const newMode = !comparisonMode;
@@ -206,20 +266,26 @@ const [endDate, setEndDate] = useState(() => {
               </div>
 
               {/* Chart View Selector */}
-              <div className="chart-view-selector">
-                <button
-                  className={chartView === 'temperature' ? 'active' : ''}
-                  onClick={() => setChartView('temperature')}
-                >
-                  🌡️ Temperature
-                </button>
-                <button
-                  className={chartView === 'precipitation' ? 'active' : ''}
-                  onClick={() => setChartView('precipitation')}
-                >
-                  🌧️ Precipitation & Snow
-                </button>
-              </div>
+            <div className="chart-view-selector">
+              <button
+                className={chartView === 'temperature' ? 'active' : ''}
+                onClick={() => handleChartViewChange('temperature')}
+              >
+                🌡️ Temperature
+              </button>
+              <button
+                className={chartView === 'precipitation' ? 'active' : ''}
+                onClick={() => handleChartViewChange('precipitation')}
+              >
+                🌧️ Precip & Snow
+              </button>
+              <button
+                className={chartView === 'hourly' ? 'active' : ''}
+                onClick={() => handleChartViewChange('hourly')}
+              >
+                ⏰ Hourly
+              </button>
+            </div>
             </>
           )}
         </div>
@@ -252,10 +318,16 @@ const [endDate, setEndDate] = useState(() => {
                   stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
                   darkMode={darkMode}
                 />
-              ) : (
+              ) : chartView === 'precipitation' ? (
                 <PrecipitationChart
                   data={weatherData}
                   stationId={selectedStation?.station_id || ''}
+                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                  darkMode={darkMode}
+                />
+              ) : (
+                <HourlyWeatherChart
+                  data={hourlyData}
                   stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
                   darkMode={darkMode}
                 />

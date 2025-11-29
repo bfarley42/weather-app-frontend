@@ -49,7 +49,7 @@ export default function ComparisonChart({ yearsData, stationName }: ComparisonCh
   const tempSeries: any[] = [];
   const precipSeries: any[] = [];
 
-  yearsData.forEach((yearData, index) => {
+  yearsData.forEach((yearData, _index) => {
     // Create a map of MM-DD -> data
     const dataMap = new Map<string, DailyWeather>();
     yearData.data.forEach(d => {
