@@ -19,6 +19,13 @@
 // export { API_URL };
 
 // Force production API URL
-const API_URL = 'https://weather-api-huq7.onrender.com';
+// const API_URL = 'https://weather-api-huq7.onrender.com';
 
-export { API_URL };
+// export { API_URL };
+
+export const API_URL = 'https://weather-api-huq7.onrender.com';
+
+// Debug logging
+console.log('🔍 API_URL configured as:', API_URL);
+console.log('🔍 Environment:', import.meta.env.MODE);
+console.log('🔍 Is Production:', import.meta.env.PROD);
