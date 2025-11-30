@@ -153,10 +153,10 @@ export default function EnhancedWeatherChart({
 
   // Responsive grid settings
   const gridSettings = isMobile ? {
-    left: 45,
-    right: 45,
-    top: 90,
-    bottom: 70
+    left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
+    right: 35,  // CRITICAL: 60 → 35 (2nd Y-axis)
+    top: 80,    // Reduced from 90
+    bottom: 60  // Reduced from 70
   } : {
     left: 60,
     right: 60,
@@ -353,12 +353,12 @@ export default function EnhancedWeatherChart({
     yAxis: [
       {
         type: 'value',
-        name: isMobile ? 'Temp (°F)' : 'Temperature (°F)',
+        name: isMobile ? 'Temp' : 'Temperature (°F)',  // CRITICAL: Just "Temp" on mobile
         nameLocation: 'middle',
-        nameGap: isMobile ? 25 : 30,
+        nameGap: isMobile ? 20 : 30,  // Reduced gap
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 11 : 13,
+          fontSize: isMobile ? 10 : 13,  // Smaller font
           fontWeight: 600
         },
         position: 'left',
@@ -382,10 +382,10 @@ export default function EnhancedWeatherChart({
       },
       {
         type: 'value',
-        name: isMobile ? 'Precip (in)' : 'Precipitation (inches)',
+        name: isMobile ? 'Precip' : 'Precipitation (inches)',  // CRITICAL: Just "Precip"
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 11 : 13,
+          fontSize: isMobile ? 10 : 13,  // Smaller
           fontWeight: 600
         },
         position: 'right',
@@ -574,10 +574,10 @@ export default function EnhancedWeatherChart({
       
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '400px' : '550px',  // KEY FIX: Dynamic height
+        height: isMobile ? '400px' : '550px',  
         background: darkMode ? '#1a1a2e' : '#ffffff',
-        borderRadius: isMobile ? '8px' : '12px',
-        padding: isMobile ? '10px' : '20px',  // KEY FIX: Less padding on mobile
+        borderRadius: isMobile ? '6px' : '12px',
+        padding: isMobile ? '5px' : '20px',  // CRITICAL: 10px → 5px
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
       }}>
         <ReactECharts

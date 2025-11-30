@@ -96,6 +96,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
 }
 
 .update-button:hover {
@@ -117,6 +118,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .comparison-toggle:hover {
@@ -138,6 +140,31 @@ body {
   margin-left: auto;
 }
 
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #555;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.toggle-label:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.toggle-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
 /* Chart View Selector */
 .chart-view-selector {
   margin-top: 16px;
@@ -145,10 +172,12 @@ body {
   gap: 12px;
   padding: 16px 0;
   border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
 }
 
 .chart-view-selector button {
   flex: 1;
+  min-width: 120px;
   padding: 12px 20px;
   font-size: 15px;
   font-weight: 600;
@@ -158,6 +187,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .chart-view-selector button:hover {
@@ -219,30 +249,194 @@ body {
   color: #888;
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
+/* Mobile responsive (phones) */
+@media (max-width: 767px) {
+  .app {
+    padding: 5px;  /* CRITICAL: 20px → 5px */
+  }
+
+  .app-header {
+    margin-bottom: 15px;
+  }
+
   .app-header h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+  }
+
+  .app-header p {
+    font-size: 0.9rem;
   }
 
   .app-main {
-    padding: 20px;
+    padding: 8px;  /* CRITICAL: 32px → 8px */
+    border-radius: 8px;
+  }
+
+  .controls-section {
+    margin-bottom: 20px;
+  }
+
+  .control-group {
+    margin-bottom: 12px;
+  }
+
+  .control-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
   }
 
   .date-controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
   }
 
-  .update-button {
+  .date-input {
     width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .update-button,
+  .comparison-toggle {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .dark-mode-toggle {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .toggle-label {
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 14px;
   }
 
   .chart-view-selector {
     flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
   }
 
   .chart-view-selector button {
     width: 100%;
+    min-width: unset;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .chart-section {
+    margin-top: 15px;
+    padding: 0px;  /* CRITICAL: 10px → 0px - no padding needed on mobile! */
+    background: transparent;
+  }
+
+  .loading-message {
+    padding: 40px 15px;
+    font-size: 16px;
+  }
+
+  .error-message {
+    padding: 30px 15px;
+    font-size: 14px;
+  }
+
+  .empty-state {
+    padding: 50px 15px;
+  }
+
+  .empty-state h2 {
+    font-size: 1.3rem;
+  }
+
+  .empty-state p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet responsive */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app {
+    padding: 15px;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-main {
+    padding: 24px;
+  }
+
+  .date-controls {
+    gap: 16px;
+  }
+
+  .chart-view-selector {
+    gap: 10px;
+  }
+
+  .chart-view-selector button {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+  .app-main {
+    max-width: 1400px;
+  }
+}
+
+/* Landscape phone orientation */
+@media (max-width: 767px) and (orientation: landscape) {
+  .app-header {
+    margin-bottom: 15px;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .app-header p {
+    font-size: 0.85rem;
+  }
+
+  .chart-section {
+    margin-top: 15px;
+  }
+}
+
+/* Dark mode support (if you add it later) */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles here if needed */
+}
+
+/* Ensure touch targets are at least 44x44px on mobile */
+@media (max-width: 767px) {
+  button,
+  input[type="checkbox"],
+  input[type="date"],
+  .toggle-label {
+    min-height: 44px;
+  }
+
+  input[type="checkbox"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
+}
+
+/* Improve performance on mobile */
+@media (max-width: 767px) {
+  * {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
 }
