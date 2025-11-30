@@ -47,6 +47,7 @@ const colors = {
   }
 };
 
+
 interface DailyWeather {
   obs_date: string;
   tmax_f: number | null;
@@ -65,32 +66,21 @@ interface EnhancedWeatherChartProps {
   data: DailyWeather[];
   stationId: string;
   stationName: string;
-  darkMode?: boolean;
+  darkMode?: boolean;  // ADD THIS
 }
 
 export default function EnhancedWeatherChart({ 
   data, 
   stationId,
   stationName,
-  darkMode = false
+  darkMode = false  // ADD THIS
 }: EnhancedWeatherChartProps) {
   const [showHighTemp, setShowHighTemp] = useState(true);
   const [showLowTemp, setShowLowTemp] = useState(true);
   const [showNormals, setShowNormals] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
+  //const [darkMode, setDarkMode] = useState(false);  // ADD THIS
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     const fetchNormals = async () => {
@@ -121,9 +111,9 @@ export default function EnhancedWeatherChart({
     );
   }
 
-  // Prepare observed data
+  // Prepare observed data - FIX: Add one day to match display
   const dates = data.map(d => {
-    const date = new Date(d.obs_date + 'T12:00:00');
+    const date = new Date(d.obs_date + 'T12:00:00'); // Noon to avoid timezone issues
     return date;
   });
   
@@ -143,111 +133,36 @@ export default function EnhancedWeatherChart({
     normalLows.push(normal?.tmin_f || null);
   });
 
-  // Format date labels - shorter for mobile
+  // Format date labels
   const formatDate = (date: Date) => {
-    if (isMobile) {
-      return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
-    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Responsive grid settings
-  const gridSettings = isMobile ? {
-    left: 45,
-    right: 45,
-    top: 90,
-    bottom: 70
-  } : {
-    left: 60,
-    right: 60,
-    top: 120,
-    bottom: 90
-  };
-
-  // Responsive title
-  const titleSettings = isMobile ? {
-    text: stationName,
-    left: 'center',
-    top: 5,
-    textStyle: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50'
-    }
-  } : {
-    text: stationName,
-    left: 'center',
-    top: 10,
-    textStyle: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50'
-    }
-  };
-
-  // Responsive legend
-  const legendSettings = isMobile ? {
-    data: [
-      ...(showHighTemp ? ['High Temp'] : []),
-      ...(showLowTemp ? ['Low Temp'] : []),
-      'Precipitation',
-      ...(showNormals ? ['Normal High', 'Normal Low'] : [])
-    ],
-    top: 30,
-    left: 'center',
-    itemGap: 8,
-    itemWidth: 15,
-    itemHeight: 10,
-    textStyle: {
-      fontSize: 10,
-      color: darkMode ? '#bdc3c7' : '#555'
-    },
-    selectedMode: {
-      'High Temp': false,
-      'Low Temp': false,
-      'Precipitation': true,
-      'Normal High': true,
-      'Normal Low': true
-    }
-  } : {
-    data: [
-      ...(showHighTemp ? ['High Temp'] : []),
-      ...(showLowTemp ? ['Low Temp'] : []),
-      'Precipitation',
-      ...(showNormals ? ['Normal High', 'Normal Low'] : [])
-    ],
-    top: 45,
-    left: 'center',
-    itemGap: 15,
-    textStyle: {
-      fontSize: 13,
-      color: darkMode ? '#bdc3c7' : '#555'
-    },
-    selectedMode: {
-      'High Temp': false,
-      'Low Temp': false,
-      'Precipitation': true,
-      'Normal High': true,
-      'Normal Low': true
-    }
-  };
-
   const option = {
-    backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
-    title: titleSettings,
+     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',  // CHANGE THIS
+    //   backgroundColor: darkMode ? '#000000' : '#ffffff',  // CHANGE THIS
+    title: {
+      text: stationName,
+      left: 'center',
+      top: 10,
+      textStyle: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: darkMode ? '#ecf0f1' : '#2c3e50'  // CHANGE THIS
+      }
+    },
     
     tooltip: {
-      trigger: 'axis',
-      backgroundColor: darkMode
-        ? 'rgba(30, 38, 50, 0.95)'
-        : 'rgba(255, 255, 255, 0.95)',
-      borderColor: darkMode ? '#34495e' : '#e0e0e0',
-      borderWidth: 1,
-      padding: isMobile ? 10 : 15,
-      textStyle: {
-        color: darkMode ? '#e3eef5' : '#333',
-        fontSize: isMobile ? 11 : 13
-      },
+    trigger: 'axis',
+    backgroundColor: darkMode
+            ? 'rgba(30, 38, 50, 0.95)'
+            : 'rgba(255, 255, 255, 0.95)',
+    borderColor: darkMode ? '#34495e' : '#e0e0e0',  // CHANGE
+    borderWidth: 1,
+    padding: 15,
+textStyle: {
+  color: darkMode ? '#e3eef5' : '#333'
+},
       axisPointer: {
         type: 'cross',
         crossStyle: {
@@ -258,7 +173,7 @@ export default function EnhancedWeatherChart({
       formatter: (params: any) => {
         const dateIdx = params[0].dataIndex;
         const date = formatDate(dates[dateIdx]);
-        let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: ${isMobile ? '12px' : '14px'};">${date}</div>`;
+        let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">${date}</div>`;
         
         params.forEach((param: any) => {
           if (param.seriesName === 'Temperature Range') return;
@@ -276,12 +191,12 @@ export default function EnhancedWeatherChart({
           }
           
           html += `
-            <div style="margin: 4px 0; display: flex; align-items: center; justify-content: space-between;">
+            <div style="margin: 6px 0; display: flex; align-items: center; justify-content: space-between;">
               <span style="display: flex; align-items: center;">
-                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${param.color}; margin-right: 6px;"></span>
-                <span style="color: #666; font-size: ${isMobile ? '10px' : '12px'};">${param.seriesName}:</span>
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${param.color}; margin-right: 8px;"></span>
+                <span style="color: #666;">${param.seriesName}:</span>
               </span>
-              <span style="font-weight: 600; margin-left: 8px; color: #333; font-size: ${isMobile ? '11px' : '13px'};">${displayValue}${unit}</span>
+              <span style="font-weight: 600; margin-left: 12px; color: #333;">${displayValue}${unit}</span>
             </div>
           `;
         });
@@ -290,9 +205,36 @@ export default function EnhancedWeatherChart({
       }
     },
     
-    legend: legendSettings,
+    legend: {
+      data: [
+        ...(showHighTemp ? ['High Temp'] : []),
+        ...(showLowTemp ? ['Low Temp'] : []),
+        'Precipitation',
+        ...(showNormals ? ['Normal High', 'Normal Low'] : [])
+      ],
+      top: 45,
+      left: 'center',
+      itemGap: 15,
+      textStyle: {
+        fontSize: 13,
+        color: darkMode ? '#bdc3c7' : '#555'  // CHANGE THIS
+      },
+        selectedMode: {  // ADD THIS OBJECT
+    'High Temp': false,     // Can't click
+    'Low Temp': false,      // Can't click
+    'Precipitation': true,  // Can click
+    'Normal High': true,    // Can click
+    'Normal Low': true      // Can click
+  }
+
+    },
     
-    grid: gridSettings,
+    grid: {
+      left: 60,
+      right: 60,
+      top: 120,
+      bottom: 90
+    },
     
     dataZoom: [
       {
@@ -304,15 +246,12 @@ export default function EnhancedWeatherChart({
         type: 'slider',
         start: 0,
         end: 100,
-        height: isMobile ? 25 : 35,
-        bottom: isMobile ? 10 : 20,
+        height: 35,
+        bottom: 20,
         borderColor: '#e0e0e0',
         fillerColor: 'rgba(102, 126, 234, 0.15)',
         handleStyle: {
           color: '#667eea'
-        },
-        textStyle: {
-          fontSize: isMobile ? 9 : 11
         }
       }
     ],
@@ -328,84 +267,84 @@ export default function EnhancedWeatherChart({
       },
       axisLabel: {
         color: darkMode ? '#cfd8dc' : '#666',
-        fontSize: isMobile ? 9 : 12,
-        rotate: isMobile ? 45 : 45,
-        formatter: (value: any) => formatDate(new Date(value)),
-        interval: isMobile ? 'auto' : 0
+        fontSize: 12,
+        rotate: 45,
+        formatter: (value: any) => formatDate(new Date(value))
       },
-      axisPointer: {
-        label: {
-          formatter: (params: any) => {
-            const date = new Date(params.value);
-            return date.toLocaleDateString('en-US', { 
-              weekday: 'short',
-              month: 'short', 
-              day: 'numeric' 
-            });
-          }
-        }
-      },
+
+  axisPointer: {  // ADD THIS ENTIRE SECTION
+    label: {
+      formatter: (params: any) => {
+        const date = new Date(params.value);
+        return date.toLocaleDateString('en-US', { 
+           weekday: 'short',
+            month: 'short', 
+          day: 'numeric' 
+        });
+      }
+    }
+  },
+
       splitLine: {
         show: false
       }
     },
     
     yAxis: [
-      {
-        type: 'value',
-        name: isMobile ? 'Temp (°F)' : 'Temperature (°F)',
-        nameLocation: 'middle',
-        nameGap: isMobile ? 25 : 30,
-        nameTextStyle: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 11 : 13,
-          fontWeight: 600
-        },
-        position: 'left',
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: darkMode ? '#34495e' : '#e0e0e0'
-          }
-        },
-        axisLabel: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 9 : 12,
-          formatter: '{value}°'
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            color: darkMode ? '#2c3e50' : '#f0f0f0'
-          }
-        }
-      },
-      {
-        type: 'value',
-        name: isMobile ? 'Precip (in)' : 'Precipitation (inches)',
-        nameTextStyle: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 11 : 13,
-          fontWeight: 600
-        },
-        position: 'right',
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: darkMode ? '#34495e' : '#e0e0e0'
-          }
-        },
-        axisLabel: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 9 : 12,
-          formatter: '{value}"'
-        },
-        splitLine: {
-          show: false
-        }
+  {
+    type: 'value',
+    name: 'Temperature (°F)',
+    nameLocation: 'middle',
+    nameGap: 30,
+    nameTextStyle: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 13,
+      fontWeight: 600
+    },
+    position: 'left',
+    axisLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
       }
-    ],
-    
+    },
+    axisLabel: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 12,
+      formatter: '{value}°'
+    },
+    splitLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#2c3e50' : '#f0f0f0'  // CHANGE
+      }
+    }
+  },
+  {
+    type: 'value',
+    name: 'Precipitation (inches)',
+    nameTextStyle: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 13,
+      fontWeight: 600
+    },
+    position: 'right',
+    axisLine: {
+      show: true,
+      lineStyle: {
+        color: darkMode ? '#34495e' : '#e0e0e0'  // CHANGE
+      }
+    },
+    axisLabel: {
+      color: darkMode ? '#95a5a6' : '#666',  // CHANGE
+      fontSize: 12,
+      formatter: '{value}"'
+    },
+    splitLine: {
+      show: false
+    }
+  }
+],
     series: [
       // Temperature range area (only if both temps are shown)
       ...(showHighTemp && showLowTemp ? [{
@@ -415,12 +354,12 @@ export default function EnhancedWeatherChart({
         lineStyle: { opacity: 0 },
         stack: 'confidence-band',
         symbol: 'none',
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-            { offset: 1, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-          ])
-        },
+areaStyle: {
+  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+    { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+    { offset: 1, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+  ])
+},
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -431,25 +370,25 @@ export default function EnhancedWeatherChart({
         type: 'line',
         data: maxTemps,
         smooth: true,
-        symbolSize: isMobile ? 6 : 8,
-        itemStyle: {
-          color: darkMode ? colors.high.dark.dot : colors.high.light.dot,
-          borderColor: darkMode ? '#1a1a2e' : '#fff',
-          borderWidth: isMobile ? 1 : 2,
-        },
-        lineStyle: {
-          width: isMobile ? 2 : 3,
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
-            (darkMode ? colors.high.dark.line : colors.high.light.line)
-              .map((c, i) => ({ offset: i, color: c }))
-          ),
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 12,
-            shadowColor: darkMode ? colors.high.dark.shadow : colors.high.light.shadow,
-          }
-        },
+        symbolSize: 8,
+itemStyle: {
+  color: darkMode ? colors.high.dark.dot : colors.high.light.dot,
+  borderColor: darkMode ? '#1a1a2e' : '#fff',
+  borderWidth: 2,
+},
+lineStyle: {
+  width: 3,
+  color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
+    (darkMode ? colors.high.dark.line : colors.high.light.line)
+      .map((c, i) => ({ offset: i, color: c }))
+  ),
+},
+emphasis: {
+  itemStyle: {
+    shadowBlur: 12,
+    shadowColor: darkMode ? colors.high.dark.shadow : colors.high.light.shadow,
+  }
+},
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -460,25 +399,25 @@ export default function EnhancedWeatherChart({
         type: 'line',
         data: minTemps,
         smooth: true,
-        symbolSize: isMobile ? 6 : 8,
-        itemStyle: {
-          color: darkMode ? colors.low.dark.dot : colors.low.light.dot,
-          borderColor: darkMode ? '#1a1a2e' : '#fff',
-          borderWidth: isMobile ? 1 : 2,
-        },
-        lineStyle: {
-          width: isMobile ? 2 : 3,
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
-            (darkMode ? colors.low.dark.line : colors.low.light.line)
-              .map((c, i) => ({ offset: i, color: c }))
-          ),
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 12,
-            shadowColor: darkMode ? colors.low.dark.shadow : colors.low.light.shadow,
-          }
-        },
+        symbolSize: 8,
+itemStyle: {
+  color: darkMode ? colors.low.dark.dot : colors.low.light.dot,
+  borderColor: darkMode ? '#1a1a2e' : '#fff',
+  borderWidth: 2,
+},
+lineStyle: {
+  width: 3,
+  color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
+    (darkMode ? colors.low.dark.line : colors.low.light.line)
+      .map((c, i) => ({ offset: i, color: c }))
+  ),
+},
+emphasis: {
+  itemStyle: {
+    shadowBlur: 12,
+    shadowColor: darkMode ? colors.low.dark.shadow : colors.low.light.shadow,
+  }
+},
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -490,12 +429,12 @@ export default function EnhancedWeatherChart({
         data: normalHighs,
         smooth: true,
         symbol: 'none',
-        lineStyle: {
-          width: isMobile ? 1.5 : 2,
-          type: 'dashed',
-          opacity: 0.7,
-          color: darkMode ? colors.high.dark.normal : colors.high.light.normal
-        },
+lineStyle: {
+  width: 2,
+  type: 'dashed',
+  opacity: 0.7,
+  color: darkMode ? colors.high.dark.normal : colors.high.light.normal
+},
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -507,12 +446,12 @@ export default function EnhancedWeatherChart({
         data: normalLows,
         smooth: true,
         symbol: 'none',
-        lineStyle: {
-          width: isMobile ? 1.5 : 2,
-          type: 'dashed',
-          opacity: 0.7,
-          color: darkMode ? colors.low.dark.normal : colors.low.light.normal
-        },
+lineStyle: {
+  width: 2,
+  type: 'dashed',
+  opacity: 0.7,
+  color: darkMode ? colors.low.dark.normal : colors.low.light.normal
+},
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -522,14 +461,14 @@ export default function EnhancedWeatherChart({
         name: 'Precipitation',
         type: 'bar',
         data: precip,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: darkMode ? colors.precip.dark[0] : colors.precip.light[0] },
-            { offset: 1, color: darkMode ? colors.precip.dark[1] : colors.precip.light[1] }
-          ]),
-          borderRadius: [4, 4, 0, 0]
-        },
-        barWidth: isMobile ? '60%' : '70%',
+itemStyle: {
+  color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+    { offset: 0, color: darkMode ? colors.precip.dark[0] : colors.precip.light[0] },
+    { offset: 1, color: darkMode ? colors.precip.dark[1] : colors.precip.light[1] }
+  ]),
+  borderRadius: [4, 4, 0, 0]
+},
+        barWidth: '70%',
         yAxisIndex: 1,
         z: 0
       }
@@ -569,15 +508,16 @@ export default function EnhancedWeatherChart({
             />
             <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
           </label>
+
         </div>
       </div>
       
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '400px' : '550px',  // KEY FIX: Dynamic height
-        background: darkMode ? '#1a1a2e' : '#ffffff',
-        borderRadius: isMobile ? '8px' : '12px',
-        padding: isMobile ? '10px' : '20px',  // KEY FIX: Less padding on mobile
+        height: '550px',
+        background: '#ffffff',
+        borderRadius: '12px',
+        padding: '20px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
       }}>
         <ReactECharts
@@ -587,6 +527,7 @@ export default function EnhancedWeatherChart({
           notMerge={true}
           lazyUpdate={true}
         />
+
       </div>
     </div>
   );
