@@ -1,6 +1,7 @@
 // src/components/StationSearch.tsx
 import { useState, useEffect } from 'react';
 import './StationSearch.css';
+import { API_URL } from '../config';
 
 interface Station {
   station_id: string;
@@ -29,9 +30,10 @@ export default function StationSearch({ onSelectStation }: StationSearchProps) {
     const searchStations = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `http://localhost:8000/api/stations/search?q=${encodeURIComponent(query)}&limit=10`
-        );
+        // const response = await fetch(
+        //   `http://localhost:8000/api/stations/search?q=${encodeURIComponent(query)}&limit=10`
+        // );
+        const response = await fetch(`${API_URL}/api/stations/search?q=${query}&limit=10`);
         const data = await response.json();
         setResults(data);
         setShowResults(true);
