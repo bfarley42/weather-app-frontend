@@ -108,38 +108,6 @@ body {
   transform: translateY(0);
 }
 
-.comparison-toggle {
-  padding: 10px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.comparison-toggle:hover {
-  background: #f0f0ff;
-  transform: translateY(-2px);
-}
-
-.comparison-toggle.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-color: transparent;
-}
-
-.comparison-toggle.active:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.dark-mode-toggle {
-  margin-left: auto;
-}
-
 .toggle-label {
   display: flex;
   align-items: center;
@@ -165,9 +133,10 @@ body {
   margin: 0;
 }
 
-/* Chart View Selector */
+/* Chart View Selector - Now below chart */
 .chart-view-selector {
-  margin-top: 16px;
+  margin-top: 20px;
+  margin-bottom: 16px;
   display: flex;
   gap: 12px;
   padding: 16px 0;
@@ -209,7 +178,7 @@ body {
 }
 
 .chart-section {
-  margin-top: 32px;
+  margin-top: 0;
   padding: 20px;
   background: #f9f9f9;
   border-radius: 12px;
@@ -300,16 +269,10 @@ body {
     font-size: 14px;
   }
 
-  .update-button,
-  .comparison-toggle {
+  .update-button {
     width: 100%;
     padding: 12px 20px;
     font-size: 14px;
-  }
-
-  .dark-mode-toggle {
-    margin-left: 0;
-    width: 100%;
   }
 
   .toggle-label {
@@ -322,6 +285,7 @@ body {
     flex-direction: column;
     gap: 8px;
     padding: 12px 0;
+    margin-top: 15px;
   }
 
   .chart-view-selector button {

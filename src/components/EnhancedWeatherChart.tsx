@@ -353,12 +353,12 @@ export default function EnhancedWeatherChart({
     yAxis: [
       {
         type: 'value',
-        name: isMobile ? 'Temp' : 'Temperature (°F)',  // CRITICAL: Just "Temp" on mobile
-        nameLocation: 'middle',
-        nameGap: isMobile ? 20 : 30,  // Reduced gap
+        name: 'Temp',  // Always use "Temp" for more width
+        nameLocation: 'end',  // Position on top of axis
+        nameGap: 10,
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 10 : 13,  // Smaller font
+          fontSize: isMobile ? 10 : 13,
           fontWeight: 600
         },
         position: 'left',
@@ -542,6 +542,23 @@ export default function EnhancedWeatherChart({
 
   return (
     <div className="enhanced-chart-container">
+      <div style={{ 
+        width: '100%', 
+        height: isMobile ? '400px' : '550px',  
+        background: darkMode ? '#1a1a2e' : '#ffffff',
+        borderRadius: isMobile ? '6px' : '12px',
+        padding: isMobile ? '5px' : '20px',  // CRITICAL: 10px → 5px
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+      }}>
+        <ReactECharts
+          option={option}
+          style={{ height: '100%', width: '100%' }}
+          opts={{ renderer: 'canvas' }}
+          notMerge={true}
+          lazyUpdate={true}
+        />
+      </div>
+
       <div className="chart-controls">
         <div className="toggle-group">
           <label className="toggle-label">
@@ -570,23 +587,6 @@ export default function EnhancedWeatherChart({
             <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
           </label>
         </div>
-      </div>
-      
-      <div style={{ 
-        width: '100%', 
-        height: isMobile ? '400px' : '550px',  
-        background: darkMode ? '#1a1a2e' : '#ffffff',
-        borderRadius: isMobile ? '6px' : '12px',
-        padding: isMobile ? '5px' : '20px',  // CRITICAL: 10px → 5px
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
-      }}>
-        <ReactECharts
-          option={option}
-          style={{ height: '100%', width: '100%' }}
-          opts={{ renderer: 'canvas' }}
-          notMerge={true}
-          lazyUpdate={true}
-        />
       </div>
     </div>
   );

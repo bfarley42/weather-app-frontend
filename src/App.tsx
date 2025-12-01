@@ -4,7 +4,6 @@ import StationSearch from './components/StationSearch';
 import EnhancedWeatherChart from './components/EnhancedWeatherChart';
 import PrecipitationChart from './components/PrecipitationChart';
 import WeatherSummary from './components/WeatherSummary';
-import ComparisonChart from './components/ComparisonChart';
 import { API_URL } from './config';
 import './App.css';
 import HourlyWeatherChart from './components/HourlyWeatherChart';
@@ -50,12 +49,8 @@ const [endDate, setEndDate] = useState(() => {
 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [comparisonMode, setComparisonMode] = useState(false);
-  // const [comparisonYears, setComparisonYears] = useState<number[]>([2024, 2023]);
-  const [comparisonYears] = useState<number[]>([2024, 2023]);
-  const [yearsData, setYearsData] = useState<Array<{year: number, data: DailyWeather[], color: string}>>([]);
   const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
-  const [darkMode, setDarkMode] = useState(false);  // ADD THIS
+  const [darkMode, setDarkMode] = useState(false);
 
   const fetchWeatherData = async (station: Station) => {
     setIsLoading(true);
@@ -103,64 +98,14 @@ const fetchHourlyData = async (station: Station) => {
   }
 };
 
-  const fetchComparisonData = async (station: Station) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const colors = ['#ff6b6b', '#4ecdc4', '#95a5a6', '#f39c12'];
-      const yearDataPromises = comparisonYears.map(async (year, index) => {
-        // Adjust dates to the comparison year
-        const yearStart = startDate.replace(/^\d{4}/, year.toString());
-        const yearEnd = endDate.replace(/^\d{4}/, year.toString());
-        
-        const response = await fetch(
-          `${API_URL}/api/weather/daily?station=${station.station_id}&start=${yearStart}&end=${yearEnd}`
-        );
-        
-        if (!response.ok) {
-          console.warn(`Failed to fetch ${year} data`);
-          return null;
-        }
-        
-        const data = await response.json();
-        return {
-          year,
-          data,
-          color: colors[index % colors.length]
-        };
-      });
-
-      const results = await Promise.all(yearDataPromises);
-      const validResults = results.filter(r => r !== null) as Array<{year: number, data: DailyWeather[], color: string}>;
-      
-      if (validResults.length === 0) {
-        throw new Error('No data available for comparison years');
-      }
-      
-      setYearsData(validResults);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      setYearsData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleStationSelect = (station: Station) => {
     setSelectedStation(station);
-    if (comparisonMode) {
-      fetchComparisonData(station);
-    } else {
-      fetchWeatherData(station);
-    }
+    fetchWeatherData(station);
   };
 
 const handleDateChange = () => {
   if (selectedStation) {
-    if (comparisonMode) {
-      fetchComparisonData(selectedStation);
-    } else if (chartView === 'hourly') {
+    if (chartView === 'hourly') {
       // Check if date range is valid for hourly (max 7 days)
       const daysDiff = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
       if (daysDiff > 7) {
@@ -191,19 +136,6 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
     setTimeout(() => fetchHourlyData(selectedStation), 100);
   }
 };
-
-  const toggleComparisonMode = () => {
-    const newMode = !comparisonMode;
-    setComparisonMode(newMode);
-    
-    if (selectedStation) {
-      if (newMode) {
-        fetchComparisonData(selectedStation);
-      } else {
-        fetchWeatherData(selectedStation);
-      }
-    }
-  };
 
   return (
     <div className="app">
@@ -247,45 +179,7 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
                 <button onClick={handleDateChange} className="update-button">
                   Update Chart
                 </button>
-
-                <button 
-                  onClick={toggleComparisonMode} 
-                  className={`comparison-toggle ${comparisonMode ? 'active' : ''}`}
-                >
-                  {comparisonMode ? '📊 Comparison Mode' : '📈 Single Year'}
-                </button>
-
-                <label className="toggle-label dark-mode-toggle">
-                  <input
-                    type="checkbox"
-                    checked={darkMode}
-                    onChange={(e) => setDarkMode(e.target.checked)}
-                  />
-                  <span>🌙 Dark Mode</span>
-                </label>
               </div>
-
-              {/* Chart View Selector */}
-            <div className="chart-view-selector">
-              <button
-                className={chartView === 'temperature' ? 'active' : ''}
-                onClick={() => handleChartViewChange('temperature')}
-              >
-                🌡️ Temperature
-              </button>
-              <button
-                className={chartView === 'precipitation' ? 'active' : ''}
-                onClick={() => handleChartViewChange('precipitation')}
-              >
-                🌧️ Precip & Snow
-              </button>
-              <button
-                className={chartView === 'hourly' ? 'active' : ''}
-                onClick={() => handleChartViewChange('hourly')}
-              >
-                ⏰ Hourly
-              </button>
-            </div>
             </>
           )}
         </div>
@@ -302,7 +196,7 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
           </div>
         )}
 
-        {!isLoading && !error && !comparisonMode && weatherData.length > 0 && (
+        {!isLoading && !error && weatherData.length > 0 && selectedStation && (
           <>
             <WeatherSummary
               data={weatherData}
@@ -310,6 +204,24 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
               startDate={startDate}
               endDate={endDate}
             />
+            
+            {/* Dark mode toggle above chart */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              marginTop: '20px',
+              marginBottom: '10px'
+            }}>
+              <label className="toggle-label dark-mode-toggle">
+                <input
+                  type="checkbox"
+                  checked={darkMode}
+                  onChange={(e) => setDarkMode(e.target.checked)}
+                />
+                <span>🌙 Dark Mode</span>
+              </label>
+            </div>
+
             <div className="chart-section">
               {chartView === 'temperature' ? (
                 <EnhancedWeatherChart
@@ -333,16 +245,29 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
                 />
               )}
             </div>
-          </>
-        )}
 
-        {!isLoading && !error && comparisonMode && yearsData.length > 0 && (
-          <div className="chart-section">
-            <ComparisonChart
-              yearsData={yearsData}
-              stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-            />
-          </div>
+            {/* Chart View Selector below chart */}
+            <div className="chart-view-selector">
+              <button
+                className={chartView === 'temperature' ? 'active' : ''}
+                onClick={() => handleChartViewChange('temperature')}
+              >
+                🌡️ Temperature
+              </button>
+              <button
+                className={chartView === 'precipitation' ? 'active' : ''}
+                onClick={() => handleChartViewChange('precipitation')}
+              >
+                🌧️ Precip & Snow
+              </button>
+              <button
+                className={chartView === 'hourly' ? 'active' : ''}
+                onClick={() => handleChartViewChange('hourly')}
+              >
+                ⏰ Hourly
+              </button>
+            </div>
+          </>
         )}
 
         {!selectedStation && !isLoading && (
