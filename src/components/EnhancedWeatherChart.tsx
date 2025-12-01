@@ -154,9 +154,9 @@ export default function EnhancedWeatherChart({
   // Responsive grid settings
   const gridSettings = isMobile ? {
     left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
-    right: 25,  // CRITICAL: 60 → 35 (2nd Y-axis)
-    top: 90,    // Reduced from 90; increased from 80
-    bottom: 30  // Reduced from 70; increased from 60
+    right: 35,  // CRITICAL: 60 → 35 (2nd Y-axis)
+    top: 80,    // Reduced from 90; increased from 80
+    bottom: 60  // Reduced from 70; increased from 60
   } : {
     left: 60,
     right: 60,
@@ -298,10 +298,11 @@ export default function EnhancedWeatherChart({
       // Mobile: Only slider zoom, no inside zoom to prevent conflict with crosshair
       {
         type: 'slider',
+        show: true,
         start: 0,
         end: 100,
-        height: 25,
-        bottom: 10,
+        height: 30,
+        bottom: 5,
         borderColor: '#e0e0e0',
         fillerColor: 'rgba(102, 126, 234, 0.15)',
         handleStyle: {
@@ -562,7 +563,7 @@ export default function EnhancedWeatherChart({
     <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '480px' : '510px', //was 380
+        height: isMobile ? '580px' : '510px', //was 380
         background: darkMode ? '#1a1a2e' : '#ffffff',
         borderRadius: isMobile ? '6px' : '12px',
         padding: isMobile ? '5px' : '20px',
