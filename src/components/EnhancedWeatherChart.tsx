@@ -562,7 +562,7 @@ export default function EnhancedWeatherChart({
     <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '380px' : '510px',
+        height: isMobile ? '480px' : '510px', //was 380
         background: darkMode ? '#1a1a2e' : '#ffffff',
         borderRadius: isMobile ? '6px' : '12px',
         padding: isMobile ? '5px' : '20px',
@@ -574,8 +574,8 @@ export default function EnhancedWeatherChart({
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
-          notMerge={false} // changed from true
-          lazyUpdate={false} // changed from true
+          notMerge={true} // changed from false
+          lazyUpdate={true} // changed from false
         />
         
         {/* Landscape button - bottom left corner */}
