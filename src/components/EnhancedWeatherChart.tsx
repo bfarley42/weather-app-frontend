@@ -573,8 +573,8 @@ export default function EnhancedWeatherChart({
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
-          notMerge={true}
-          lazyUpdate={true}
+          notMerge={false} // changed from true
+          lazyUpdate={false} // changed from true
         />
         
         {/* Landscape button - bottom left corner */}
