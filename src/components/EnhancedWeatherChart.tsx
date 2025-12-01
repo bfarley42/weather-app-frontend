@@ -79,7 +79,8 @@ export default function EnhancedWeatherChart({
   const [showNormals, setShowNormals] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   // Detect mobile device
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function EnhancedWeatherChart({
       setIsMobile(window.innerWidth < 768);
     };
     
-    checkMobile();
+    // checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
