@@ -570,6 +570,7 @@ export default function EnhancedWeatherChart({
         position: 'relative'
       }}>
         <ReactECharts
+          key={data.length}  // ← ADD THIS - forces full re-render
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
