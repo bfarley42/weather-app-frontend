@@ -156,7 +156,7 @@ export default function EnhancedWeatherChart({
     left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
     right: 35,  // CRITICAL: 60 → 35 (2nd Y-axis)
     top: 80,    // Reduced from 90; increased from 80
-    bottom: 60  // Reduced from 70; increased from 60
+    bottom: 80  // Reduced from 70; increased from 60
   } : {
     left: 60,
     right: 60,
