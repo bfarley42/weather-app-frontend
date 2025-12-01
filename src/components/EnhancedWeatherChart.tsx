@@ -155,8 +155,8 @@ export default function EnhancedWeatherChart({
   const gridSettings = isMobile ? {
     left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
     right: 25,  // CRITICAL: 60 → 35 (2nd Y-axis)
-    top: 90,    // Reduced from 90 increased from 80
-    bottom: 75  // Reduced from 70 increased from 60
+    top: 90,    // Reduced from 90; increased from 80
+    bottom: 100  // Reduced from 70; increased from 60
   } : {
     left: 60,
     right: 60,
