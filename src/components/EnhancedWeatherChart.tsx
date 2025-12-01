@@ -88,7 +88,7 @@ export default function EnhancedWeatherChart({
       setIsMobile(window.innerWidth < 768);
     };
     
-    // checkMobile();
+    checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -572,7 +572,7 @@ export default function EnhancedWeatherChart({
         position: 'relative'
       }}>
         <ReactECharts
-          key={data.length}  // ← ADD THIS - forces full re-render
+          // key={data.length}  // ← ADD THIS - forces full re-render
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
