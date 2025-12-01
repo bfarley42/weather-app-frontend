@@ -154,9 +154,9 @@ export default function EnhancedWeatherChart({
   // Responsive grid settings
   const gridSettings = isMobile ? {
     left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
-    right: 35,  // CRITICAL: 60 → 35 (2nd Y-axis)
-    top: 80,    // Reduced from 90
-    bottom: 60  // Reduced from 70
+    right: 25,  // CRITICAL: 60 → 35 (2nd Y-axis)
+    top: 90,    // Reduced from 90 increased from 80
+    bottom: 75  // Reduced from 70 increased from 60
   } : {
     left: 60,
     right: 60,
@@ -243,7 +243,7 @@ export default function EnhancedWeatherChart({
         : 'rgba(255, 255, 255, 0.95)',
       borderColor: darkMode ? '#34495e' : '#e0e0e0',
       borderWidth: 1,
-      padding: isMobile ? 10 : 15,
+      padding: isMobile ? 5 : 15, //reduced from 10:15
       textStyle: {
         color: darkMode ? '#e3eef5' : '#333',
         fontSize: isMobile ? 11 : 13
