@@ -6,6 +6,38 @@
   max-width: 1400px;
 }
 
+.landscape-button {
+  position: absolute;
+  bottom: 45px;
+  left: 15px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.landscape-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  transform: scale(1.05);
+}
+
+.landscape-button:active {
+  transform: scale(0.95);
+}
+
+.landscape-button svg {
+  color: #667eea;
+}
+
 .chart-controls {
   display: flex;
   justify-content: center;
@@ -59,6 +91,18 @@
   .enhanced-chart-container {
     padding: 0;
     margin: 0;
+  }
+
+  .landscape-button {
+    bottom: 35px;
+    left: 10px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .landscape-button svg {
+    width: 16px;
+    height: 16px;
   }
 
   .chart-controls {
@@ -132,6 +176,20 @@
 
 .dark-mode .toggle-label:hover {
   background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .landscape-button {
+  background: rgba(30, 38, 50, 0.9);
+  border-color: #34495e;
+}
+
+.dark-mode .landscape-button:hover {
+  background: rgba(102, 126, 234, 0.2);
+  border-color: #667eea;
+}
+
+.dark-mode .landscape-button svg {
+  color: #7ee7df;
 }
 
 /* Ensure chart is responsive to container */

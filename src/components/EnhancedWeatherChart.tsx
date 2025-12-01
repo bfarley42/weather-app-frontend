@@ -294,7 +294,25 @@ export default function EnhancedWeatherChart({
     
     grid: gridSettings,
     
-    dataZoom: [
+    dataZoom: isMobile ? [
+      // Mobile: Only slider zoom, no inside zoom to prevent conflict with crosshair
+      {
+        type: 'slider',
+        start: 0,
+        end: 100,
+        height: 25,
+        bottom: 10,
+        borderColor: '#e0e0e0',
+        fillerColor: 'rgba(102, 126, 234, 0.15)',
+        handleStyle: {
+          color: '#667eea'
+        },
+        textStyle: {
+          fontSize: 9
+        }
+      }
+    ] : [
+      // Desktop: Both inside (mouse wheel) and slider zoom
       {
         type: 'inside',
         start: 0,
@@ -304,15 +322,15 @@ export default function EnhancedWeatherChart({
         type: 'slider',
         start: 0,
         end: 100,
-        height: isMobile ? 25 : 35,
-        bottom: isMobile ? 10 : 20,
+        height: 35,
+        bottom: 20,
         borderColor: '#e0e0e0',
         fillerColor: 'rgba(102, 126, 234, 0.15)',
         handleStyle: {
           color: '#667eea'
         },
         textStyle: {
-          fontSize: isMobile ? 9 : 11
+          fontSize: 11
         }
       }
     ],
@@ -541,14 +559,15 @@ export default function EnhancedWeatherChart({
   };
 
   return (
-    <div className="enhanced-chart-container">
+    <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '400px' : '550px',  
+        height: isMobile ? '380px' : '510px',
         background: darkMode ? '#1a1a2e' : '#ffffff',
         borderRadius: isMobile ? '6px' : '12px',
-        padding: isMobile ? '5px' : '20px',  // CRITICAL: 10px → 5px
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+        padding: isMobile ? '5px' : '20px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        position: 'relative'
       }}>
         <ReactECharts
           option={option}
@@ -557,6 +576,23 @@ export default function EnhancedWeatherChart({
           notMerge={true}
           lazyUpdate={true}
         />
+        
+        {/* Landscape button - bottom left corner */}
+        <button
+          className="landscape-button"
+          onClick={() => {
+            // TODO: Implement landscape view in Phase 2
+            console.log('Landscape view coming soon!');
+          }}
+          title="Landscape view"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 9V3h-6" />
+            <path d="M3 15v6h6" />
+            <path d="M21 3l-7 7" />
+            <path d="M3 21l7-7" />
+          </svg>
+        </button>
       </div>
 
       <div className="chart-controls">

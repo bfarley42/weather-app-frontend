@@ -51,6 +51,7 @@ const [endDate, setEndDate] = useState(() => {
   const [error, setError] = useState<string | null>(null);
   const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
+  const [currentView, setCurrentView] = useState<'search' | 'chart'>('search');
 
   const fetchWeatherData = async (station: Station) => {
     setIsLoading(true);
@@ -101,6 +102,7 @@ const fetchHourlyData = async (station: Station) => {
   const handleStationSelect = (station: Station) => {
     setSelectedStation(station);
     fetchWeatherData(station);
+    setCurrentView('chart'); // Navigate to chart view
   };
 
 const handleDateChange = () => {
@@ -137,6 +139,10 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
   }
 };
 
+const handleBackToSearch = () => {
+  setCurrentView('search');
+};
+
   return (
     <div className="app">
       <header className="app-header">
@@ -145,136 +151,177 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
       </header>
 
       <main className="app-main">
-        <div className="controls-section">
-          <div className="control-group">
-            <label>Search Station:</label>
-            <StationSearch onSelectStation={handleStationSelect} />
-          </div>
+        {currentView === 'search' ? (
+          // SEARCH VIEW - Station and date selection
+          <div className="controls-section">
+            <div className="control-group">
+              <label>Search Station:</label>
+              <StationSearch onSelectStation={handleStationSelect} />
+            </div>
 
-          {selectedStation && (
-            <>
-              <div className="date-controls">
-                <div className="control-group">
-                  <label htmlFor="start-date">Start Date:</label>
-                  <input
-                    id="start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="date-input"
-                  />
+            {selectedStation && (
+              <>
+                <div className="date-controls">
+                  <div className="control-group">
+                    <label htmlFor="start-date">Start Date:</label>
+                    <input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </div>
+
+                  <div className="control-group">
+                    <label htmlFor="end-date">End Date:</label>
+                    <input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="date-input"
+                    />
+                  </div>
+
+                  <button onClick={handleDateChange} className="update-button">
+                    Update Chart
+                  </button>
                 </div>
+              </>
+            )}
 
-                <div className="control-group">
-                  <label htmlFor="end-date">End Date:</label>
-                  <input
-                    id="end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="date-input"
-                  />
-                </div>
-
-                <button onClick={handleDateChange} className="update-button">
-                  Update Chart
-                </button>
+            {!selectedStation && (
+              <div className="empty-state">
+                <h2>👆 Search for a weather station to get started</h2>
+                <p>Try searching for your city or airport code</p>
               </div>
-            </>
-          )}
-        </div>
-
-        {isLoading && (
-          <div className="loading-message">
-            Loading weather data...
+            )}
           </div>
-        )}
-
-        {error && (
-          <div className="error-message">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {!isLoading && !error && weatherData.length > 0 && selectedStation && (
+        ) : (
+          // CHART VIEW - Shows chart with back button
           <>
-            <WeatherSummary
-              data={weatherData}
-              stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-              startDate={startDate}
-              endDate={endDate}
-            />
-            
-            {/* Dark mode toggle above chart */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              marginTop: '20px',
-              marginBottom: '10px'
-            }}>
-              <label className="toggle-label dark-mode-toggle">
+            {/* Back button in top-left */}
+            <button onClick={handleBackToSearch} className="back-button">
+              ← Back
+            </button>
+
+            {/* Date controls for updating chart */}
+            <div className="chart-date-controls">
+              <div className="control-group">
+                <label htmlFor="chart-start-date">Start Date:</label>
                 <input
-                  type="checkbox"
-                  checked={darkMode}
-                  onChange={(e) => setDarkMode(e.target.checked)}
+                  id="chart-start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="date-input"
                 />
-                <span>🌙 Dark Mode</span>
-              </label>
+              </div>
+
+              <div className="control-group">
+                <label htmlFor="chart-end-date">End Date:</label>
+                <input
+                  id="chart-end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="date-input"
+                />
+              </div>
+
+              <button onClick={handleDateChange} className="update-button">
+                Update
+              </button>
             </div>
 
-            <div className="chart-section">
-              {chartView === 'temperature' ? (
-                <EnhancedWeatherChart
-                  data={weatherData}
-                  stationId={selectedStation?.station_id || ''}
-                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                  darkMode={darkMode}
-                />
-              ) : chartView === 'precipitation' ? (
-                <PrecipitationChart
-                  data={weatherData}
-                  stationId={selectedStation?.station_id || ''}
-                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                  darkMode={darkMode}
-                />
-              ) : (
-                <HourlyWeatherChart
-                  data={hourlyData}
-                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                  darkMode={darkMode}
-                />
-              )}
-            </div>
+            {isLoading && (
+              <div className="loading-message">
+                Loading weather data...
+              </div>
+            )}
 
-            {/* Chart View Selector below chart */}
-            <div className="chart-view-selector">
-              <button
-                className={chartView === 'temperature' ? 'active' : ''}
-                onClick={() => handleChartViewChange('temperature')}
-              >
-                🌡️ Temperature
-              </button>
-              <button
-                className={chartView === 'precipitation' ? 'active' : ''}
-                onClick={() => handleChartViewChange('precipitation')}
-              >
-                🌧️ Precip & Snow
-              </button>
-              <button
-                className={chartView === 'hourly' ? 'active' : ''}
-                onClick={() => handleChartViewChange('hourly')}
-              >
-                ⏰ Hourly
-              </button>
-            </div>
+            {error && (
+              <div className="error-message">
+                ⚠️ {error}
+              </div>
+            )}
+
+            {!isLoading && !error && weatherData.length > 0 && selectedStation && (
+              <>
+                {/* Dark mode toggle above chart */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  marginTop: '20px',
+                  marginBottom: '10px'
+                }}>
+                  <label className="toggle-label dark-mode-toggle">
+                    <input
+                      type="checkbox"
+                      checked={darkMode}
+                      onChange={(e) => setDarkMode(e.target.checked)}
+                    />
+                    <span>🌙 Dark Mode</span>
+                  </label>
+                </div>
+
+                <div className="chart-section">
+                  {chartView === 'temperature' ? (
+                    <EnhancedWeatherChart
+                      data={weatherData}
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                    />
+                  ) : chartView === 'precipitation' ? (
+                    <PrecipitationChart
+                      data={weatherData}
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                    />
+                  ) : (
+                    <HourlyWeatherChart
+                      data={hourlyData}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                    />
+                  )}
+                </div>
+
+                {/* Chart View Selector below chart */}
+                <div className="chart-view-selector">
+                  <button
+                    className={chartView === 'temperature' ? 'active' : ''}
+                    onClick={() => handleChartViewChange('temperature')}
+                  >
+                    🌡️ Temperature
+                  </button>
+                  <button
+                    className={chartView === 'precipitation' ? 'active' : ''}
+                    onClick={() => handleChartViewChange('precipitation')}
+                  >
+                    🌧️ Precip & Snow
+                  </button>
+                  <button
+                    className={chartView === 'hourly' ? 'active' : ''}
+                    onClick={() => handleChartViewChange('hourly')}
+                  >
+                    ⏰ Hourly
+                  </button>
+                </div>
+
+                {/* Weather Summary below chart type buttons */}
+                <WeatherSummary
+                  data={weatherData}
+                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                  startDate={startDate}
+                  endDate={endDate}
+                />
+              </>
+            )}
           </>
-        )}
-
-        {!selectedStation && !isLoading && (
-          <div className="empty-state">
-            <h2>👆 Search for a weather station to get started</h2>
-            <p>Try searching for your city or airport code</p>
-          </div>
         )}
       </main>
     </div>

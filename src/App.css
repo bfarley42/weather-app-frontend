@@ -108,6 +108,36 @@ body {
   transform: translateY(0);
 }
 
+.back-button {
+  padding: 8px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  background: white;
+  color: #667eea;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-bottom: 20px;
+}
+
+.back-button:hover {
+  border-color: #667eea;
+  background: #f0f0ff;
+  transform: translateY(-2px);
+}
+
+.chart-date-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
 .toggle-label {
   display: flex;
   align-items: center;
@@ -273,6 +303,29 @@ body {
     width: 100%;
     padding: 12px 20px;
     font-size: 14px;
+  }
+
+  .back-button {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+
+  .chart-date-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+  }
+
+  .chart-date-controls .control-group {
+    margin-bottom: 8px;
+  }
+
+  .chart-date-controls .update-button {
+    width: 100%;
   }
 
   .toggle-label {
