@@ -47,44 +47,108 @@ import './EnhancedWeatherChart.css';
 //   }
 // };
 
+// const colors = {
+//   high: {
+//     light: {
+//       line: ['#FF8400', '#FF8400'],
+//       dot: '#FF8400',
+//       shadow: 'rgba(211, 84, 0, 0.45)',
+//       normal: 'rgba(211, 84, 0, 0.6)',
+//     },
+//     dark: {
+//       line: ['#e59866', '#d35400'],
+//       dot: '#e59866',
+//       shadow: 'rgba(229, 152, 102, 0.45)',
+//       normal: 'rgba(229, 152, 102, 0.7)',
+//     }
+//   },
+//   low: {
+//     light: {
+//       line: ['#00BEAE', '#00BEAE'],
+//       dot: '#00BEAE',
+//       shadow: 'rgba(39, 174, 96, 0.45)',
+//       normal: 'rgba(39, 174, 96, 0.6)',
+//     },
+//     dark: {
+//       line: ['#58d68d', '#27ae60'],
+//       dot: '#58d68d',
+//       shadow: 'rgba(88, 214, 141, 0.45)',
+//       normal: 'rgba(88, 214, 141, 0.7)',
+//     }
+//   },
+//   range: {
+//     light: [ 'rgba(255, 132, 0, .6)','rgba(0, 190, 174, .25)', 'rgba(117, 255, 242, .25)', 'rgba(117, 255, 242, .05)'],
+//     dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)', 'rgba(88,214,141,0.20)']
+//   },
+//   precip: {
+//     light: ['rgba(0, 111, 190, .9)', 'rgba(0, 111, 190,.5)'],
+//     dark: ['rgba(127,140,141,0.95)', 'rgba(93,109,126,0.85)'],
+//   }
+// };
+
 const colors = {
   high: {
     light: {
-      line: ['#FF8400', '#FF8400'],
+      // Bright, rich orange → slightly darker for depth
+      line: ['#FF8400', '#FF6E00'],
       dot: '#FF8400',
-      shadow: 'rgba(211, 84, 0, 0.45)',
-      normal: 'rgba(211, 84, 0, 0.6)',
+      shadow: 'rgba(255, 132, 0, 0.40)',
+      normal: 'rgba(255, 150, 40, 0.65)',
     },
     dark: {
-      line: ['#e59866', '#d35400'],
-      dot: '#e59866',
-      shadow: 'rgba(229, 152, 102, 0.45)',
-      normal: 'rgba(229, 152, 102, 0.7)',
+      // Softer & warmer in dark mode for glow
+      line: ['#FFB06A', '#FF8400'],
+      dot: '#FFB06A',
+      shadow: 'rgba(255, 180, 110, 0.50)',
+      normal: 'rgba(255, 165, 110, 0.75)',
     }
   },
+
   low: {
     light: {
-      line: ['#00BEAE', '#00BEAE'],
+      // Clean aqua → deeper teal for good contrast
+      line: ['#00BEAE', '#00A696'],
       dot: '#00BEAE',
-      shadow: 'rgba(39, 174, 96, 0.45)',
-      normal: 'rgba(39, 174, 96, 0.6)',
+      shadow: 'rgba(0, 190, 174, 0.40)',
+      normal: 'rgba(0, 175, 155, 0.65)',
     },
     dark: {
-      line: ['#58d68d', '#27ae60'],
-      dot: '#58d68d',
-      shadow: 'rgba(88, 214, 141, 0.45)',
-      normal: 'rgba(88, 214, 141, 0.7)',
+      // Slightly neon to pop in dark mode
+      line: ['#66F5E6', '#00D5C2'],
+      dot: '#66F5E6',
+      shadow: 'rgba(0, 210, 190, 0.50)',
+      normal: 'rgba(0, 220, 200, 0.75)',
     }
   },
+
   range: {
-    light: [ 'rgba(255, 132, 0, .6)','rgba(0, 190, 174, .25)', 'rgba(117, 255, 242, .25)', 'rgba(117, 255, 242, .05)'],
-    dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)', 'rgba(88,214,141,0.20)']
+    // Much smoother → professional 4-stop gradient
+    light: [
+      'rgba(255,132,0,0.40)',   // warm orange highlight
+      'rgba(255,132,0,0.18)',   // fade toward middle
+      'rgba(0,190,174,0.15)',   // gentle mixing zone
+      'rgba(0,190,174,0.05)'    // bottom haze
+    ],
+    dark: [
+      'rgba(255,180,110,0.20)',
+      'rgba(0,220,200,0.18)',
+      'rgba(0,200,185,0.12)',
+      'rgba(0,200,185,0.06)'
+    ]
   },
+
   precip: {
-    light: ['rgba(0, 111, 190, .9)', 'rgba(0, 111, 190,.5)'],
-    dark: ['rgba(127,140,141,0.95)', 'rgba(93,109,126,0.85)'],
+    light: [
+      'rgba(0,111,190,0.90)',   // your color but refined
+      'rgba(0,111,190,0.45)'
+    ],
+    dark: [
+      'rgba(60,150,220,0.95)',  // brighter + clearer in dark mode
+      'rgba(40,120,190,0.65)'
+    ],
   }
 };
+
 
 interface DailyWeather {
   obs_date: string;
