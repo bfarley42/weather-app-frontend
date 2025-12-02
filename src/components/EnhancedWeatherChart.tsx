@@ -50,46 +50,41 @@ import './EnhancedWeatherChart.css';
 const colors = {
   high: {
     light: {
-      line: ['#513b56', '#513b56'],
-      dot: '#513b56',
-      shadow: 'rgba(255, 107, 107, 0.45)',
-      normal: 'rgba(255, 120, 120, 0.6)',
+      line: ['#ff8c42', '#ff6b35'],
+      dot: '#ff8c42',
+      shadow: 'rgba(255, 140, 66, 0.45)',
+      normal: 'rgba(255, 140, 66, 0.6)',
     },
     dark: {
-      line: ['#ff8c8c', '#ff5a5a'],
-      dot: '#ff8c8c',
-      shadow: 'rgba(255, 150, 150, 0.45)',
-      normal: 'rgba(255, 160, 160, 0.7)',
+      line: ['#ffa64d', '#ff8c42'],
+      dot: '#ffa64d',
+      shadow: 'rgba(255, 166, 77, 0.45)',
+      normal: 'rgba(255, 166, 77, 0.7)',
     }
   },
-
   low: {
     light: {
-      line: ['#348aa7', '#348aa7'],
-      dot: '#348aa7',
-      shadow: 'rgba(78, 205, 196, 0.45)',
-      normal: 'rgba(78, 205, 196, 0.6)',
+      line: ['#4a90e2', '#2e5c8a'],
+      dot: '#4a90e2',
+      shadow: 'rgba(74, 144, 226, 0.45)',
+      normal: 'rgba(74, 144, 226, 0.6)',
     },
     dark: {
-      line: ['#7ee7df', '#55d6ce'],
-      dot: '#7ee7df',
-      shadow: 'rgba(120, 235, 225, 0.45)',
-      normal: 'rgba(120, 235, 225, 0.7)',
+      line: ['#5fa3f5', '#4a90e2'],
+      dot: '#5fa3f5',
+      shadow: 'rgba(95, 163, 245, 0.45)',
+      normal: 'rgba(95, 163, 245, 0.7)',
     }
   },
-
   range: {
-    light: ['rgba(255,140,140,0.25)', 'rgba(78,205,196,0.25)'],
-    dark: ['rgba(255,150,150,0.20)', 'rgba(60,180,170,0.20)']
+    light: ['rgba(255,140,66,0.25)', 'rgba(74,144,226,0.25)'],
+    dark: ['rgba(255,166,77,0.20)', 'rgba(95,163,245,0.20)']
   },
-
   precip: {
-    light: ['#5dd39e', '#5dd39e'],
-    dark: ['rgba(90,200,255,0.95)', 'rgba(0,70,130,0.85)'],
+    light: ['rgba(52,152,219,0.95)', 'rgba(41,128,185,0.85)'],
+    dark: ['rgba(93,173,226,0.95)', 'rgba(52,152,219,0.85)'],
   }
 };
-
-
 
 interface DailyWeather {
   obs_date: string;
