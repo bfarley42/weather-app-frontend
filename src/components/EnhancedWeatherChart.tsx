@@ -189,9 +189,9 @@ export default function EnhancedWeatherChart({
   // Responsive legend
   const legendSettings = isMobile ? {
     data: [
-      ...(showHighTemp ? ['High Temp'] : []),
-      ...(showLowTemp ? ['Low Temp'] : []),
-      'Precipitation',
+      ...(showHighTemp ? ['High F°'] : []),
+      ...(showLowTemp ? ['Low F°'] : []),
+      'Precip',
       ...(showNormals ? ['Normal High', 'Normal Low'] : [])
     ],
     top: 30,
@@ -447,11 +447,11 @@ export default function EnhancedWeatherChart({
       
       // High temperature
       ...(showHighTemp ? [{
-        name: 'High Temp',
+        name: 'High F°',
         type: 'line',
         data: maxTemps,
         smooth: true,
-        symbolSize: isMobile ? 6 : 8,
+        symbolSize: isMobile ? 3 : 6,
         itemStyle: {
           color: darkMode ? colors.high.dark.dot : colors.high.light.dot,
           borderColor: darkMode ? '#1a1a2e' : '#fff',
@@ -476,11 +476,11 @@ export default function EnhancedWeatherChart({
       
       // Low temperature
       ...(showLowTemp ? [{
-        name: 'Low Temp',
+        name: 'Low F°',
         type: 'line',
         data: minTemps,
         smooth: true,
-        symbolSize: isMobile ? 6 : 8,
+        symbolSize: isMobile ? 3 : 6,
         itemStyle: {
           color: darkMode ? colors.low.dark.dot : colors.low.light.dot,
           borderColor: darkMode ? '#1a1a2e' : '#fff',
@@ -539,7 +539,7 @@ export default function EnhancedWeatherChart({
       
       // Precipitation
       {
-        name: 'Precipitation',
+        name: 'Precip',
         type: 'bar',
         data: precip,
         itemStyle: {
