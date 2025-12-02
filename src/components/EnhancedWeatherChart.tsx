@@ -87,20 +87,34 @@ import './EnhancedWeatherChart.css';
 // };
 
 const colors = {
+  // high: {
+  //   light: {
+  //     // Bright, rich orange → slightly darker for depth
+  //     line: ['#FF8400', '#FF6E00'],
+  //     dot: '#FF8400',
+  //     shadow: 'rgba(255, 132, 0, 0.40)',
+  //     normal: 'rgba(255, 150, 40, 0.65)',
+  //   },
+  //   dark: {
+  //     // Softer & warmer in dark mode for glow
+  //     line: ['#FFB06A', '#FF8400'],
+  //     dot: '#FFB06A',
+  //     shadow: 'rgba(255, 180, 110, 0.50)',
+  //     normal: 'rgba(255, 165, 110, 0.75)',
+  //   }
+  // },
   high: {
     light: {
-      // Bright, rich orange → slightly darker for depth
-      line: ['#FF8400', '#FF6E00'],
-      dot: '#FF8400',
-      shadow: 'rgba(255, 132, 0, 0.40)',
-      normal: 'rgba(255, 150, 40, 0.65)',
+      line: ['#BE0010', '#9a000d'],
+      dot: '#BE0010',
+      shadow: 'rgba(190, 0, 16, 0.45)',
+      normal: 'rgba(190, 0, 16, 0.6)',
     },
     dark: {
-      // Softer & warmer in dark mode for glow
-      line: ['#FFB06A', '#FF8400'],
-      dot: '#FFB06A',
-      shadow: 'rgba(255, 180, 110, 0.50)',
-      normal: 'rgba(255, 165, 110, 0.75)',
+      line: ['#d4111f', '#BE0010'],
+      dot: '#d4111f',
+      shadow: 'rgba(212, 17, 31, 0.45)',
+      normal: 'rgba(212, 17, 31, 0.7)',
     }
   },
 
@@ -540,14 +554,21 @@ export default function EnhancedWeatherChart({
         lineStyle: { opacity: 0 },
         stack: 'confidence-band',
         symbol: 'none',
+        // areaStyle: {
+        //   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        //     { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+        //     { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+        //     { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+        //     { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+        //   ])
+        // },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-            { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-            { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-            { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+            { offset: 0, color: 'rgba(190, 0, 16, 0.35)' },      // Top - #BE0010 darker
+            { offset: 0.5, color: 'rgba(190, 0, 16, 0.15)' },    // Middle - #BE0010 lighter
+            { offset: 1, color: 'rgba(255, 240, 240, 0.05)' }    // Bottom - almost white with red tint
           ])
-        },
+        },        
         yAxisIndex: 0,
         z: 1
       }] : []),
