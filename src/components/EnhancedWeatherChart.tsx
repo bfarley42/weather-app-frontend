@@ -105,7 +105,7 @@ const colors = {
   // },
   high: {
     light: {
-      line: ['#BE0010', '#9a000d'],
+      line: ['#bd3440ff', '#9a000d'],
       dot: '#BE0010',
       shadow: 'rgba(190, 0, 16, 0.45)',
       normal: 'rgba(190, 0, 16, 0.6)',
@@ -144,10 +144,10 @@ const colors = {
       'rgba(0,190,174,0.05)'    // bottom haze
     ],
     dark: [
-      'rgba(255,180,110,0.20)',
-      'rgba(0,220,200,0.18)',
-      'rgba(0,200,185,0.12)',
-      'rgba(0,200,185,0.06)'
+      'rgba(190,0,16,0.40)',   // warm orange highlight
+      'rgba(190,0,16,0.2)',   // fade toward middle
+      'rgba(0,190,174,0.4)',   // gentle mixing zone
+      'rgba(0,190,174,0.05)'    // bottom haze
     ]
   },
 
@@ -558,7 +558,7 @@ export default function EnhancedWeatherChart({
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
             { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-            { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 0.3, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
             { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
           ])
         },
