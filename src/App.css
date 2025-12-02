@@ -256,6 +256,9 @@ body {
 
   .app-header {
     margin-bottom: 15px;
+    padding: 0 10px;  /* ADD THIS - gives breathing room */
+    position: relative;  /* ADD THIS - ensures proper stacking */
+    z-index: 1;  /* ADD THIS - keeps header above other elements */
   }
 
   .app-header h1 {
@@ -286,21 +289,27 @@ body {
   }
 
   .date-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    flex-direction: row;  /* Changed from column */
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
   }
 
+  .date-controls .control-group {
+    flex: 1 1 45%;  /* Allow date inputs to share space equally */
+    min-width: 140px;
+  }
+
   .date-input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px 8px;  /* Reduced padding for narrower inputs */
     font-size: 14px;
   }
 
   .update-button {
-    width: 100%;
+    flex: 1 1 100%;  /* Take full width on new line */
     padding: 12px 20px;
     font-size: 14px;
   }
@@ -313,19 +322,22 @@ body {
   }
 
   .chart-date-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;  /* Changed from column */
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
     margin-bottom: 15px;
     padding-bottom: 15px;
   }
 
   .chart-date-controls .control-group {
-    margin-bottom: 8px;
+    flex: 1 1 45%;  /* Allow date inputs to share space equally */
+    min-width: 140px;
+    margin-bottom: 0;  /* Remove bottom margin */
   }
 
   .chart-date-controls .update-button {
-    width: 100%;
+    flex: 1 1 100%;  /* Take full width on new line */
   }
 
   .toggle-label {
