@@ -197,8 +197,8 @@ export default function EnhancedWeatherChart({
     top: 30,
     left: 'center',
     itemGap: 8,
-    itemWidth: 15,
-    itemHeight: 10,
+    itemWidth: 8,  //changed from 15
+    itemHeight: 7, //changed from 10
     textStyle: {
       fontSize: 10,
       color: darkMode ? '#bdc3c7' : '#555'
@@ -220,6 +220,8 @@ export default function EnhancedWeatherChart({
     top: 45,
     left: 'center',
     itemGap: 15,
+    itemWidth: 20,   // ← Add/change this from 25
+    itemHeight: 12,  // ← Add/change this from 14
     textStyle: {
       fontSize: 13,
       color: darkMode ? '#bdc3c7' : '#555'
@@ -447,7 +449,7 @@ export default function EnhancedWeatherChart({
       
       // High temperature
       ...(showHighTemp ? [{
-        name: 'High F°',
+        name: 'High Temp',
         type: 'line',
         data: maxTemps,
         smooth: true,
@@ -511,9 +513,9 @@ export default function EnhancedWeatherChart({
         smooth: true,
         symbol: 'none',
         lineStyle: {
-          width: isMobile ? 1.5 : 2,
+          width: isMobile ? 2 : 3,
           type: 'dashed',
-          opacity: 0.7,
+          opacity: 0.8,
           color: darkMode ? colors.high.dark.normal : colors.high.light.normal
         },
         yAxisIndex: 0,
@@ -528,9 +530,9 @@ export default function EnhancedWeatherChart({
         smooth: true,
         symbol: 'none',
         lineStyle: {
-          width: isMobile ? 1.5 : 2,
+          width: isMobile ? 2 : 3,
           type: 'dashed',
-          opacity: 0.7,
+          opacity: 0.8,
           color: darkMode ? colors.low.dark.normal : colors.low.light.normal
         },
         yAxisIndex: 0,
