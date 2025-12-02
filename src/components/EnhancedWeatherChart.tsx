@@ -77,7 +77,7 @@ const colors = {
     }
   },
   range: {
-    light: [ 'rgba(255, 132, 0, .25)','rgba(0, 190, 174, .25)', 'rgba(117, 255, 242, .25)'],
+    light: [ 'rgba(255, 132, 0, .25)','rgba(0, 190, 174, .25)', 'rgba(117, 255, 242, .25)', 'rgba(117, 255, 242, .05)'],
     dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)', 'rgba(88,214,141,0.20)']
   },
   precip: {
@@ -481,7 +481,7 @@ export default function EnhancedWeatherChart({
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
             { offset: 0.33, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
             { offset: 0.67, color: darkMode ? colors.range.dark[1] : colors.range.light[2] },
-            { offset: 1, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 1, color: darkMode ? colors.range.dark[2] : colors.range.light[3] },
           ])
         },
         yAxisIndex: 0,
