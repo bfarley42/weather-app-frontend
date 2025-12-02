@@ -49,44 +49,45 @@ import './EnhancedWeatherChart.css';
 const colors = {
   high: {
     light: {
-      line: ['#FF3C38', '#FF5A5A'],
-      dot: '#FF3C38',
-      shadow: 'rgba(255,60,56,0.45)',
-      normal: 'rgba(255,100,100,0.60)',
+      line: ['#D35400', '#E67E22'],
+      dot: '#E67E22',
+      shadow: 'rgba(211,84,0,0.45)',
+      normal: 'rgba(230,126,34,0.60)',
     },
     dark: {
-      line: ['#FF6B6A', '#FF3C38'],
-      dot: '#FF6B6A',
-      shadow: 'rgba(255,107,106,0.45)',
-      normal: 'rgba(255,140,140,0.70)',
+      line: ['#F39C12', '#D35400'],
+      dot: '#F39C12',
+      shadow: 'rgba(243,156,18,0.45)',
+      normal: 'rgba(245,180,100,0.70)',
     }
   },
 
   low: {
     light: {
-      line: ['#2C7BFF', '#6AA5FF'],
-      dot: '#2C7BFF',
-      shadow: 'rgba(44,123,255,0.45)',
-      normal: 'rgba(44,123,255,0.60)',
+      line: ['#34495E', '#2C3E50'],
+      dot: '#34495E',
+      shadow: 'rgba(52,73,94,0.45)',
+      normal: 'rgba(52,73,94,0.60)',
     },
     dark: {
-      line: ['#78A7FF', '#2C7BFF'],
-      dot: '#78A7FF',
-      shadow: 'rgba(120,167,255,0.45)',
-      normal: 'rgba(120,167,255,0.70)',
+      line: ['#6C8AA0', '#34495E'],
+      dot: '#6C8AA0',
+      shadow: 'rgba(108,138,160,0.45)',
+      normal: 'rgba(108,138,160,0.70)',
     }
   },
 
   range: {
-    light: ['rgba(255,60,56,0.20)', 'rgba(44,123,255,0.20)'],
-    dark: ['rgba(255,107,106,0.18)', 'rgba(120,167,255,0.18)']
+    light: ['rgba(211,84,0,0.20)', 'rgba(52,73,94,0.20)'],
+    dark: ['rgba(243,156,18,0.18)', 'rgba(108,138,160,0.18)']
   },
 
   precip: {
-    light: ['rgba(138,212,255,0.95)', 'rgba(58,150,201,0.85)'],
-    dark: ['rgba(160,230,255,0.95)', 'rgba(80,170,210,0.85)']
+    light: ['rgba(142,214,209,0.95)', 'rgba(75,171,163,0.85)'],
+    dark: ['rgba(162,230,225,0.95)', 'rgba(95,190,180,0.85)']
   }
 };
+
 
 
 interface DailyWeather {
