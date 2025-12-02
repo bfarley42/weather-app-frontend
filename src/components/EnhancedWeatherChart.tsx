@@ -543,8 +543,8 @@ export default function EnhancedWeatherChart({
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-            { offset: 0.3, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-            { offset: 0.55, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+            { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
             { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
           ])
         },
