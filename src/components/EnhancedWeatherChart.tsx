@@ -124,7 +124,7 @@ const colors = {
   range: {
     // Much smoother → professional 4-stop gradient
     light: [
-      'rgba(255,132,0,0.40)',   // warm orange highlight
+      'rgba(255,132,0,0.30)',   // warm orange highlight
       'rgba(255,132,0,0.18)',   // fade toward middle
       'rgba(0,190,174,0.15)',   // gentle mixing zone
       'rgba(0,190,174,0.05)'    // bottom haze
@@ -543,9 +543,9 @@ export default function EnhancedWeatherChart({
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-            { offset: 0.4, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-            { offset: 0.7, color: darkMode ? colors.range.dark[1] : colors.range.light[2] },
-            { offset: 1, color: darkMode ? colors.range.dark[2] : colors.range.light[3] },
+            { offset: 0.3, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+            { offset: 0.55, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
           ])
         },
         yAxisIndex: 0,
