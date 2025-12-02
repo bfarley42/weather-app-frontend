@@ -141,13 +141,15 @@ const colors = {
       'rgba(190,0,16,0.30)',   // warm orange highlight
       'rgba(190,0,16,0.15)',   // fade toward middle
       'rgba(0,190,174,0.20)',   // gentle mixing zone
-      'rgba(0,190,174,0.05)'    // bottom haze
+      'rgba(0,190,174,0.05)' ,   // bottom haze
+       'rgba(255, 255, 255, 0.15)'    // bottom haze
     ],
     dark: [
-      'rgba(190,0,16,0.40)',   // warm orange highlight
-      'rgba(190,0,16,0.2)',   // fade toward middle
+      'rgba(190,0,16,0.6)',   // warm orange highlight
+      'rgba(190,0,16,0.4)',   // fade toward middle
       'rgba(0,190,174,0.4)',   // gentle mixing zone
-      'rgba(0,190,174,0.05)'    // bottom haze
+      'rgba(0,190,174,0.05)' ,   // bottom haze
+      'rgba(255, 255, 255, 0.15)'    // bottom haze
     ]
   },
 
@@ -559,7 +561,8 @@ export default function EnhancedWeatherChart({
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
             { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
             { offset: 0.3, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-            { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+            { offset: .7, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+            { offset: 1, color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
           ])
         },
         // areaStyle: {
