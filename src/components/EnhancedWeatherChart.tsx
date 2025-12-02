@@ -50,38 +50,38 @@ import './EnhancedWeatherChart.css';
 const colors = {
   high: {
     light: {
-      line: ['#f39c12', '#e67e22'],
-      dot: '#f39c12',
-      shadow: 'rgba(243, 156, 18, 0.45)',
-      normal: 'rgba(243, 156, 18, 0.6)',
+      line: ['#3498db', '#2980b9'],
+      dot: '#3498db',
+      shadow: 'rgba(52, 152, 219, 0.45)',
+      normal: 'rgba(52, 152, 219, 0.6)',
     },
     dark: {
-      line: ['#f5b041', '#f39c12'],
-      dot: '#f5b041',
-      shadow: 'rgba(245, 176, 65, 0.45)',
-      normal: 'rgba(245, 176, 65, 0.7)',
+      line: ['#5dade2', '#3498db'],
+      dot: '#5dade2',
+      shadow: 'rgba(93, 173, 226, 0.45)',
+      normal: 'rgba(93, 173, 226, 0.7)',
     }
   },
   low: {
     light: {
-      line: ['#16a085', '#138d75'],
-      dot: '#16a085',
-      shadow: 'rgba(22, 160, 133, 0.45)',
-      normal: 'rgba(22, 160, 133, 0.6)',
+      line: ['#1abc9c', '#16a085'],
+      dot: '#1abc9c',
+      shadow: 'rgba(26, 188, 156, 0.45)',
+      normal: 'rgba(26, 188, 156, 0.6)',
     },
     dark: {
-      line: ['#48c9b0', '#16a085'],
+      line: ['#48c9b0', '#1abc9c'],
       dot: '#48c9b0',
       shadow: 'rgba(72, 201, 176, 0.45)',
       normal: 'rgba(72, 201, 176, 0.7)',
     }
   },
   range: {
-    light: ['rgba(243,156,18,0.25)', 'rgba(22,160,133,0.25)'],
-    dark: ['rgba(245,176,65,0.20)', 'rgba(72,201,176,0.20)']
+    light: ['rgba(52,152,219,0.25)', 'rgba(26,188,156,0.25)'],
+    dark: ['rgba(93,173,226,0.20)', 'rgba(72,201,176,0.20)']
   },
   precip: {
-    light: ['rgba(52,152,219,0.95)', 'rgba(41,128,185,0.85)'],
+    light: ['rgba(41,128,185,0.95)', 'rgba(21,67,96,0.85)'],
     dark: ['rgba(93,173,226,0.95)', 'rgba(52,152,219,0.85)'],
   }
 };
