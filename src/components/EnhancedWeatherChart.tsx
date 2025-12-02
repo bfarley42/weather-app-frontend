@@ -77,8 +77,8 @@ const colors = {
     }
   },
   range: {
-    light: [ 'rgba(255, 132, 0, .25)','rgba(0, 190, 174, .25)'],
-    dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)']
+    light: [ 'rgba(255, 132, 0, .25)','rgba(0, 190, 174, .25)', 'rgba(117, 255, 242, .25)'],
+    dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)', 'rgba(88,214,141,0.20)']
   },
   precip: {
     light: ['rgba(163, 200, 154, .9)', 'rgba(163, 200, 154,.6)'],
@@ -479,6 +479,7 @@ export default function EnhancedWeatherChart({
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+            { offset: 0.5, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
             { offset: 1, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
           ])
         },
