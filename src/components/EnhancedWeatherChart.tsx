@@ -189,8 +189,8 @@ export default function EnhancedWeatherChart({
   // Responsive legend
   const legendSettings = isMobile ? {
     data: [
-      ...(showHighTemp ? ['High F°'] : []),
-      ...(showLowTemp ? ['Low F°'] : []),
+      ...(showHighTemp ? ['High Temp'] : []),
+      ...(showLowTemp ? ['Low Temp'] : []), //F°
       'Precip',
       ...(showNormals ? ['Normal High', 'Normal Low'] : [])
     ],
@@ -478,7 +478,7 @@ export default function EnhancedWeatherChart({
       
       // Low temperature
       ...(showLowTemp ? [{
-        name: 'Low F°',
+        name: 'Low Temp',
         type: 'line',
         data: minTemps,
         smooth: true,
