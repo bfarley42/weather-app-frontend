@@ -138,9 +138,9 @@ const colors = {
   range: {
     // Much smoother → professional 4-stop gradient
     light: [
-      'rgba(255,132,0,0.30)',   // warm orange highlight
-      'rgba(255,132,0,0.18)',   // fade toward middle
-      'rgba(0,190,174,0.15)',   // gentle mixing zone
+      'rgba(190,0,16,0.30)',   // warm orange highlight
+      'rgba(190,0,16,0.15)',   // fade toward middle
+      'rgba(0,190,174,0.20)',   // gentle mixing zone
       'rgba(0,190,174,0.05)'    // bottom haze
     ],
     dark: [
@@ -554,21 +554,21 @@ export default function EnhancedWeatherChart({
         lineStyle: { opacity: 0 },
         stack: 'confidence-band',
         symbol: 'none',
-        // areaStyle: {
-        //   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        //     { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-        //     { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-        //     { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-        //     { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
-        //   ])
-        // },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(190, 0, 16, 0.35)' },      // Top - #BE0010 darker
-            { offset: 0.5, color: 'rgba(190, 0, 16, 0.15)' },    // Middle - #BE0010 lighter
-            { offset: 1, color: 'rgba(255, 240, 240, 0.05)' }    // Bottom - almost white with red tint
+            { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+            { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+            { offset: 0.35, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 1, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
           ])
-        },        
+        },
+        // areaStyle: {
+        //   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        //     { offset: 0, color: 'rgba(190, 0, 16, 0.35)' },      // Top - #BE0010 darker
+        //     { offset: 0.5, color: 'rgba(190, 0, 16, 0.15)' },    // Middle - #BE0010 lighter
+        //     { offset: 1, color: 'rgba(255, 240, 240, 0.05)' }    // Bottom - almost white with red tint
+        //   ])
+        // },        
         yAxisIndex: 0,
         z: 1
       }] : []),
