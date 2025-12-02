@@ -50,8 +50,8 @@ import './EnhancedWeatherChart.css';
 const colors = {
   high: {
     light: {
-      line: ['#d35400', '#ba4a00'],
-      dot: '#d35400',
+      line: ['#FF8400', '#FF8400'],
+      dot: '#FF8400',
       shadow: 'rgba(211, 84, 0, 0.45)',
       normal: 'rgba(211, 84, 0, 0.6)',
     },
@@ -64,8 +64,8 @@ const colors = {
   },
   low: {
     light: {
-      line: ['#27ae60', '#1e8449'],
-      dot: '#27ae60',
+      line: ['#00BEAE', '#00BEAE'],
+      dot: '#00BEAE',
       shadow: 'rgba(39, 174, 96, 0.45)',
       normal: 'rgba(39, 174, 96, 0.6)',
     },
@@ -77,11 +77,11 @@ const colors = {
     }
   },
   range: {
-    light: ['rgba(211,84,0,0.25)', 'rgba(39,174,96,0.25)'],
+    light: ['rgba(0, 190, 174, .25)', 'rgba(255, 132, 0, .25)'],
     dark: ['rgba(229,152,102,0.20)', 'rgba(88,214,141,0.20)']
   },
   precip: {
-    light: ['rgba(93,109,126,0.95)', 'rgba(52,73,94,0.85)'],
+    light: ['rgba(163, 200, 154, .9)', 'rgba(163, 200, 154,.6)'],
     dark: ['rgba(127,140,141,0.95)', 'rgba(93,109,126,0.85)'],
   }
 };
