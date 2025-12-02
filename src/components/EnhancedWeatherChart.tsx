@@ -5,11 +5,53 @@ import * as echarts from 'echarts';
 import { API_URL } from '../config';
 import './EnhancedWeatherChart.css';
 
+// const colors = {
+//   high: {
+//     light: {
+//       line: ['#ff6b6b', '#ff3e3e'],
+//       dot: '#ff6b6b',
+//       shadow: 'rgba(255, 107, 107, 0.45)',
+//       normal: 'rgba(255, 120, 120, 0.6)',
+//     },
+//     dark: {
+//       line: ['#ff8c8c', '#ff5a5a'],
+//       dot: '#ff8c8c',
+//       shadow: 'rgba(255, 150, 150, 0.45)',
+//       normal: 'rgba(255, 160, 160, 0.7)',
+//     }
+//   },
+
+//   low: {
+//     light: {
+//       line: ['#4ecdc4', '#2fbdb5'],
+//       dot: '#4ecdc4',
+//       shadow: 'rgba(78, 205, 196, 0.45)',
+//       normal: 'rgba(78, 205, 196, 0.6)',
+//     },
+//     dark: {
+//       line: ['#7ee7df', '#55d6ce'],
+//       dot: '#7ee7df',
+//       shadow: 'rgba(120, 235, 225, 0.45)',
+//       normal: 'rgba(120, 235, 225, 0.7)',
+//     }
+//   },
+
+//   range: {
+//     light: ['rgba(255,140,140,0.25)', 'rgba(78,205,196,0.25)'],
+//     dark: ['rgba(255,150,150,0.20)', 'rgba(60,180,170,0.20)']
+//   },
+
+//   precip: {
+//     light: ['rgba(74,177,245,0.95)', 'rgba(0,94,156,0.85)'],
+//     dark: ['rgba(90,200,255,0.95)', 'rgba(0,70,130,0.85)'],
+//   }
+// };
+
 const colors = {
   high: {
     light: {
-      line: ['#ff6b6b', '#ff3e3e'],
-      dot: '#ff6b6b',
+      line: ['#513b56', '#513b56'],
+      dot: '#513b56',
       shadow: 'rgba(255, 107, 107, 0.45)',
       normal: 'rgba(255, 120, 120, 0.6)',
     },
@@ -23,8 +65,8 @@ const colors = {
 
   low: {
     light: {
-      line: ['#4ecdc4', '#2fbdb5'],
-      dot: '#4ecdc4',
+      line: ['#348aa7', '#348aa7'],
+      dot: '#348aa7',
       shadow: 'rgba(78, 205, 196, 0.45)',
       normal: 'rgba(78, 205, 196, 0.6)',
     },
@@ -42,12 +84,10 @@ const colors = {
   },
 
   precip: {
-    light: ['rgba(74,177,245,0.95)', 'rgba(0,94,156,0.85)'],
+    light: ['#5dd39e', '#5dd39e'],
     dark: ['rgba(90,200,255,0.95)', 'rgba(0,70,130,0.85)'],
   }
 };
-
-
 
 
 
