@@ -261,6 +261,12 @@ body {
     z-index: 1;  /* ADD THIS - keeps header above other elements */
   }
 
+    .chart-section-precip {
+    margin-top: 15px;
+    padding: 0;
+    background: transparent;
+  }
+
   .app-header h1 {
     font-size: 1.5rem;
     margin-bottom: 5px;
@@ -365,6 +371,13 @@ body {
     padding: 0px;  /* CRITICAL: 10px → 0px - no padding needed on mobile! */
     background: transparent;
   }
+
+  .chart-section-precip {
+  margin-top: 0;
+  padding: 0;  /* No padding for precipitation chart */
+  background: transparent;  /* Transparent background */
+  border-radius: 0;
+}
 
   .loading-message {
     padding: 40px 15px;

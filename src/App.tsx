@@ -266,7 +266,7 @@ const handleBackToSearch = () => {
                   </label>
                 </div>
 
-                <div className="chart-section">
+                {/* <div className="chart-section">
                   {chartView === 'temperature' ? (
                     <EnhancedWeatherChart
                       data={weatherData}
@@ -288,7 +288,33 @@ const handleBackToSearch = () => {
                       darkMode={darkMode}
                     />
                   )}
-                </div>
+                </div> */}
+                <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
+  {chartView === 'temperature' ? (
+    <EnhancedWeatherChart
+      key="temperature-chart"
+      data={weatherData}
+      stationId={selectedStation?.station_id || ''}
+      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+      darkMode={darkMode}
+    />
+  ) : chartView === 'precipitation' ? (
+    <PrecipitationChart
+      key="precipitation-chart"
+      data={weatherData}
+      stationId={selectedStation?.station_id || ''}
+      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+      darkMode={darkMode}
+    />
+  ) : (
+    <HourlyWeatherChart
+      key="hourly-chart"
+      data={hourlyData}
+      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+      darkMode={darkMode}
+    />
+  )}
+</div>
 
                 {/* Chart View Selector below chart */}
                 <div className="chart-view-selector">

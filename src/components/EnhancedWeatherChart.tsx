@@ -13,7 +13,7 @@ const colors = {
       normal: 'rgba(190, 0, 16, 0.6)',
     },
     dark: {
-      line: ['#d4111f', '#BE0010'],
+      line: ['#c03942ff', '#b3000fff'],
       dot: '#d4111f',
       shadow: 'rgba(212, 17, 31, 0.45)',
       normal: 'rgba(212, 17, 31, 0.7)',
