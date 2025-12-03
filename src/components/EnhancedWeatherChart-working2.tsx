@@ -1,8 +1,10 @@
+// src/components/EnhancedWeatherChart.tsx
 import { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { API_URL } from '../config';
 import './EnhancedWeatherChart.css';
+// import { mathAbs } from 'echarts/types/src/util/number.js';
 
 const colors = {
   high: {
@@ -22,12 +24,14 @@ const colors = {
 
   low: {
     light: {
+      // Clean aqua → deeper teal for good contrast
       line: ['#00BEAE', '#00A696'],
       dot: '#00BEAE',
       shadow: 'rgba(0, 190, 174, 0.40)',
       normal: 'rgba(0, 175, 155, 0.65)',
     },
     dark: {
+      // Slightly neon to pop in dark mode
       line: ['#66F5E6', '#00D5C2'],
       dot: '#66F5E6',
       shadow: 'rgba(0, 210, 190, 0.50)',
@@ -36,50 +40,41 @@ const colors = {
   },
 
   range: {
+    // Much smoother → professional 4-stop gradient
     light: [
-      'rgba(190,0,16,0.30)',
-      'rgba(190,0,16,0.15)',
-      'rgba(0,190,174,0.20)',
-      'rgba(0,190,174,0.05)',
-      'rgba(255, 255, 255, 0.15)'
+      'rgba(190,0,16,0.30)',   // warm orange highlight
+      'rgba(190,0,16,0.15)',   // fade toward middle
+      'rgba(0,190,174,0.20)',   // gentle mixing zone
+      'rgba(0,190,174,0.05)' ,   // bottom haze
+       'rgba(255, 255, 255, 0.15)'    // bottom haze
     ],
     dark: [
-      'rgba(190,0,16,0.6)',
-      'rgba(190,0,16,0.4)',
-      'rgba(0,190,174,0.4)',
-      'rgba(0,190,174,0.05)',
-      'rgba(255, 255, 255, 0.15)'
+      'rgba(190,0,16,0.6)',   // warm orange highlight
+      'rgba(190,0,16,0.4)',   // fade toward middle
+      'rgba(0,190,174,0.4)',   // gentle mixing zone
+      'rgba(0,190,174,0.05)' ,   // bottom haze
+      'rgba(255, 255, 255, 0.15)'    // bottom haze
     ]
   },
 
   precip: {
     light: [
-      'rgba(0,111,190,0.90)',
+      'rgba(0,111,190,0.90)',   // your color but refined
       'rgba(0,111,190,0.45)'
     ],
     dark: [
-      'rgba(60,150,220,0.95)',
+      'rgba(60,150,220,0.95)',  // brighter + clearer in dark mode
       'rgba(40,120,190,0.65)'
-    ],
-  },
-  snow: {  // ADD THIS ENTIRE BLOCK
-    light: [
-      'rgba(133, 195, 250, 0.90)',  // Light ice blue at top
-      'rgba(220,240,255,0.70)'   // Very light ice blue at bottom
-    ],
-    dark: [
-      'rgba(140,200,255,0.95)',  // Brighter ice blue for dark mode
-      'rgba(180,220,255,0.45)'   // Lighter ice blue
     ],
   }
 };
+
 
 interface DailyWeather {
   obs_date: string;
   tmax_f: number | null;
   tmin_f: number | null;
   prcp_in: number | null;
-  snow_in: number | null;  // ADD THIS
 }
 
 interface ClimateNormal {
@@ -107,9 +102,8 @@ export default function EnhancedWeatherChart({
   const [showNormals, setShowNormals] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-
-  const [showSnow, setShowSnow] = useState(false);  // ADD THIS - default to precip
 
   // Detect mobile device
   useEffect(() => {
@@ -159,46 +153,26 @@ export default function EnhancedWeatherChart({
   
   const maxTemps = data.map(d => d.tmax_f);
   const minTemps = data.map(d => d.tmin_f);
-  // const precip = data.map(d => d.prcp_in || 0);
-  const precip = data.map(d => showSnow ? (d.snow_in || 0) : (d.prcp_in || 0));  // Toggle between precip and snow
+  const precip = data.map(d => d.prcp_in || 0);
 
-  // Compute axis min/max for temperature, matching your old min/max logic
-  const allTemps: number[] = [];
-  maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
-  minTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+  // const maxTempsSafe = maxTemps.map(t => t == null ? NaN : t);
+  // const minTempsSafe = minTemps.map(t => t == null ? NaN : t);
 
+  // const yAxisMin = Math.min(...maxTempsSafe, ...minTempsSafe) - 5;  // small buffer
+  // const baseline = maxTemps.map(v => (v == null ? null : yAxisMin));
+  // const bandHeight = maxTemps.map(v =>
+  // v == null ? null : v - yAxisMin
+// );
 
+  // const tempBandBase = data.map(d => {
+  //   if (d.tmax_f == null || d.tmin_f == null) return null;
+  //   return d.tmin_f;
+  // });
 
-  // Compute raw min/max from the data
-// const allTemps = [];
-maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
-minTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
-
-let axisMin = 0;
-let axisMax = 0;
-
-if (allTemps.length > 0) {
-  const rawMin = Math.min(...allTemps);
-  const rawMax = Math.max(...allTemps);
-  const buffer = (rawMax - rawMin) * 0.05;
-
-  // Round min and max to nearest 5° intervals
-  const minWithBuffer = rawMin - buffer;
-  const maxWithBuffer = rawMax + buffer;
-
-  const roundedMin = Math.floor(minWithBuffer / 5) * 5;
-  const roundedMax = Math.ceil(maxWithBuffer / 5) * 5;
-
-  // 👉 Zero-base logic:
-  if (roundedMin >= 0) {
-    axisMin = 0;                 // zero-base the graph
-  } else {
-    axisMin = roundedMin;        // negative temps → use the real minimum
-  }
-
-  axisMax = roundedMax;
-}
-
+  // const tempBandHeight = data.map(d => {
+  //   if (d.tmax_f == null || d.tmin_f == null) return null;
+  //   return d.tmax_f - d.tmin_f;
+  // });
 
   // Match normals to observed dates
   const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
@@ -208,8 +182,8 @@ if (allTemps.length > 0) {
   dates.forEach(date => {
     const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const normal = normalsMap.get(mmdd);
-    normalHighs.push(normal?.tmax_f ?? null);
-    normalLows.push(normal?.tmin_f ?? null);
+    normalHighs.push(normal?.tmax_f ?? null);  // ✅ GOOD - only replaces undefined/null, not 0
+    normalLows.push(normal?.tmin_f ?? null);   // ✅ GOOD - only replaces undefined/null, not 0
   });
 
   // Format date labels - shorter for mobile
@@ -222,10 +196,10 @@ if (allTemps.length > 0) {
 
   // Responsive grid settings
   const gridSettings = isMobile ? {
-    left: 35,
-    right: 35,
-    top: 100,
-    bottom: 80
+    left: 35,   // CRITICAL: 60 → 35 (Y-axis labels)
+    right: 35,  // CRITICAL: 60 → 35 (2nd Y-axis)
+    top: 100,    // Reduced from 90; increased from 80
+    bottom: 80  // Reduced from 70; increased from 60
   } : {
     left: 60,
     right: 60,
@@ -233,72 +207,71 @@ if (allTemps.length > 0) {
     bottom: 90
   };
 
-  // Helper function to wrap long station names
-  const wrapStationName = (name: string, maxLength: number) => {
-    if (name.length <= maxLength) return name;
-    
-    const words = name.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
-    
-    words.forEach(word => {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      if (testLine.length <= maxLength) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      }
-    });
-    
-    if (currentLine) lines.push(currentLine);
-    return lines.join('\n');
-  };
+// Helper function to wrap long station names
+const wrapStationName = (name: string, maxLength: number) => {
+  if (name.length <= maxLength) return name;
+  
+  const words = name.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  words.forEach(word => {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (testLine.length <= maxLength) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  });
+  
+  if (currentLine) lines.push(currentLine);
+  return lines.join('\n');
+};
 
-  const titleSettings = isMobile ? {
-    text: wrapStationName(stationName, 30),
-    left: 'center',
-    top: 5,
-    textStyle: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50',
-      lineHeight: 18
-    }
-  } : {
-    text: wrapStationName(stationName, 50),
-    left: 'center',
-    top: 10,
-    textStyle: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50',
-      lineHeight: 24
-    }
-  };
+const titleSettings = isMobile ? {
+  text: wrapStationName(stationName, 30),  // Wrap at 30 chars for mobile
+  left: 'center',
+  top: 5,
+  textStyle: {
+    fontSize: 15,  // Reduced from 17 for wrapped titles
+    fontWeight: 700,
+    color: darkMode ? '#ecf0f1' : '#2c3e50',
+    lineHeight: 18
+  }
+} : {
+  text: wrapStationName(stationName, 50),  // Wrap at 50 chars for desktop
+  left: 'center',
+  top: 10,
+  textStyle: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: darkMode ? '#ecf0f1' : '#2c3e50',
+    lineHeight: 24
+  }
+};  
 
   // Responsive legend
   const legendSettings = isMobile ? {
     data: [
       ...(showHighTemp ? ['High Temp'] : []),
-      ...(showLowTemp ? ['Low Temp'] : []),
-      showSnow ? 'Snow' : 'Precip',
+      ...(showLowTemp ? ['Low Temp'] : []), //F°
+      'Precip',
       ...(showNormals ? ['Normal High', 'Normal Low'] : [])
     ],
     top: 45,
     left: 'center',
-    width: '110%',
+    width: '110%',  // Constrain width to force wrapping after 3 items
     itemGap: 7,
-    itemWidth: 8,
-    itemHeight: 7,
-    //  icon: 'rect',
+    itemWidth: 8,  //changed from 15
+    itemHeight: 7, //changed from 10
     textStyle: {
       fontSize: 11,
       color: darkMode ? '#bdc3c7' : '#555'
     },
     selectedMode: {
-      'High Temp': true,
-      'Low Temp': true,
+      'High Temp': false,
+      'Low Temp': false,
       'Precip': true,
       'Normal High': true,
       'Normal Low': true
@@ -307,112 +280,26 @@ if (allTemps.length > 0) {
     data: [
       ...(showHighTemp ? ['High Temp'] : []),
       ...(showLowTemp ? ['Low Temp'] : []),
-      showSnow ? 'Snow' : 'Precip',
+      'Precipitation',
       ...(showNormals ? ['Normal High', 'Normal Low'] : [])
     ],
     top: 45,
     left: 'center',
     itemGap: 15,
-    itemWidth: 20,
-    itemHeight: 12,
+    itemWidth: 20,   // ← Add/change this from 25
+    itemHeight: 12,  // ← Add/change this from 14
     textStyle: {
       fontSize: 13,
       color: darkMode ? '#bdc3c7' : '#555'
     },
     selectedMode: {
-      'High Temp': true,
-      'Low Temp': true,
+      'High Temp': false,
+      'Low Temp': false,
       'Precipitation': true,
       'Normal High': true,
       'Normal Low': true
     }
   };
-
-  // Responsive legend with custom icons for normals
-// const legendSettings = isMobile ? {
-//   data: [
-//     ...(showHighTemp ? [{
-//       name: 'High Temp',
-//       icon: 'circle'
-//     }] : []),
-//     ...(showLowTemp ? [{
-//       name: 'Low Temp', 
-//       icon: 'circle'
-//     }] : []),
-//     {
-//       name: 'Precip',
-//       icon: 'rect'
-//     },
-//     ...(showNormals ? [
-//       {
-//         name: 'Normal High',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       },
-//       {
-//         name: 'Normal Low',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       }
-//     ] : [])
-//   ],
-//   top: 45,
-//   left: 'center',
-//   width: '110%',
-//   itemGap: 7,
-//   itemWidth: 15,
-//   itemHeight: 7,
-//   textStyle: {
-//     fontSize: 11,
-//     color: darkMode ? '#bdc3c7' : '#555'
-//   },
-//   selectedMode: {
-//     'High Temp': true,
-//     'Low Temp': true,
-//     'Precip': true,
-//     'Normal High': true,
-//     'Normal Low': true
-//   }
-// } : {
-//   data: [
-//     ...(showHighTemp ? [{
-//       name: 'High Temp',
-//       icon: 'circle'
-//     }] : []),
-//     ...(showLowTemp ? [{
-//       name: 'Low Temp',
-//       icon: 'circle'
-//     }] : []),
-//     {
-//       name: 'Precipitation',
-//       icon: 'rect'
-//     },
-//     ...(showNormals ? [
-//       {
-//         name: 'Normal High',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       },
-//       {
-//         name: 'Normal Low',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       }
-//     ] : [])
-//   ],
-//   top: 45,
-//   left: 'center',
-//   itemGap: 15,
-//   itemWidth: 25,
-//   itemHeight: 12,
-//   textStyle: {
-//     fontSize: 13,
-//     color: darkMode ? '#bdc3c7' : '#555'
-//   },
-//   selectedMode: {
-//     'High Temp': true,
-//     'Low Temp': true,
-//     'Precipitation': true,
-//     'Normal High': true,
-//     'Normal Low': true
-//   }
-// };
 
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
@@ -425,7 +312,7 @@ if (allTemps.length > 0) {
         : 'rgba(255, 255, 255, 0.95)',
       borderColor: darkMode ? '#34495e' : '#e0e0e0',
       borderWidth: 1,
-      padding: isMobile ? 5 : 15,
+      padding: isMobile ? 5 : 15, //reduced from 10:15
       textStyle: {
         color: darkMode ? '#e3eef5' : '#333',
         fontSize: isMobile ? 14 : 15
@@ -443,9 +330,8 @@ if (allTemps.length > 0) {
         let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: ${isMobile ? '12px' : '14px'};">${date}</div>`;
         
         params.forEach((param: any) => {
-          // Hide shading series in tooltip
-          if (param.seriesName === 'TempFillBase' || param.seriesName === 'TempFillBand' || param.seriesName === 'Temperature Shade') return;
-
+          if (param.seriesName === 'Temperature Range') return;
+          
           const value = param.value !== null && param.value !== undefined ? param.value : 'N/A';
           let displayValue = value;
           let unit = '';
@@ -453,7 +339,7 @@ if (allTemps.length > 0) {
           if (param.seriesName.includes('Temp')) {
             unit = '°F';
             displayValue = value !== 'N/A' ? Math.round(value) : value;
-          } else if (param.seriesName === 'Precipitation' || param.seriesName === 'Precip') {
+          } else if (param.seriesName === 'Precipitation') {
             unit = '"';
             displayValue = value !== 'N/A' ? value.toFixed(2) : value;
           }
@@ -478,6 +364,7 @@ if (allTemps.length > 0) {
     grid: gridSettings,
     
     dataZoom: isMobile ? [
+      // Mobile: Only slider zoom, no inside zoom to prevent conflict with crosshair
       {
         type: 'slider',
         show: true,
@@ -495,6 +382,7 @@ if (allTemps.length > 0) {
         }
       }
     ] : [
+      // Desktop: Both inside (mouse wheel) and slider zoom
       {
         type: 'inside',
         start: 0,
@@ -529,7 +417,7 @@ if (allTemps.length > 0) {
       axisLabel: {
         color: darkMode ? '#cfd8dc' : '#666',
         fontSize: isMobile ? 11 : 12,
-        rotate: 45,
+        rotate: isMobile ? 45 : 45,
         formatter: (value: any) => formatDate(new Date(value)),
         interval: isMobile ? 'auto' : 0
       },
@@ -553,8 +441,8 @@ if (allTemps.length > 0) {
     yAxis: [
       {
         type: 'value',
-        name: 'Temp',
-        nameLocation: 'end',
+        name: 'Temp',  // Always use "Temp" for more width
+        nameLocation: 'end',  // Position on top of axis
         nameGap: 10,
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
@@ -562,8 +450,16 @@ if (allTemps.length > 0) {
           fontWeight: 600
         },
         position: 'left',
-        min: axisMin,
-        max: axisMax,
+        min: function(value: any) {
+          const buffer = (value.max - value.min) * 0.05;
+          const minWithBuffer = value.min - buffer;
+          return Math.floor(minWithBuffer / 5) * 5;  // Round DOWN to nearest 5
+        },
+        max: function(value: any) {
+          const buffer = (value.max - value.min) * 0.05;
+          const maxWithBuffer = value.max + buffer;
+          return Math.ceil(maxWithBuffer / 5) * 5;  // Round UP to nearest 5
+        },
         axisLine: {
           show: true,
           lineStyle: {
@@ -584,15 +480,15 @@ if (allTemps.length > 0) {
       },
       {
         type: 'value',
-        name: isMobile ? (showSnow ? 'Snow' : 'Precip') : (showSnow ? 'Snowfall (inches)' : 'Precipitation (inches)'),
+        name: isMobile ? 'Precip' : 'Precipitation (inches)',  // CRITICAL: Just "Precip"
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: isMobile ? 12 : 13,
+          fontSize: isMobile ? 12 : 13,  // Smaller
           fontWeight: 600
         },
         position: 'right',
-        min: 0,
-        max: Math.max(...precip) > 0.9 ? undefined : 1.0,
+        min: 0,  // ADD THIS - start at 0
+        max: Math.max(...precip) > 0.9 ? undefined : 1.0,  // ADD THIS - fix at 1.0" unless data exceeds 0.9"
         axisLine: {
           show: true,
           lineStyle: {
@@ -611,33 +507,72 @@ if (allTemps.length > 0) {
     ],
     
     series: [
-      // 🔥 Always-on temperature shading from High Temp down to axis bottom
- // 🔥 Temperature shading from High Temp down to axis bottom
-{
-  name: 'Temperature Shade',
-  type: 'line',
-  data: maxTemps,
-  symbol: 'none',
-  smooth: true,           // or false, your call
-  lineStyle: {
-    width: 0,             // hide the line itself
-    opacity: 0,
-  },
-  areaStyle: {
-    origin: 'start',      // <--- key: fill down to yAxis.min, not 0
-    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-      { offset: 0.25, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-      { offset: 0.5,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-      { offset: 0.75, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
-      { offset: 1,    color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
-    ]),
-  },
-  silent: true,
-  yAxisIndex: 0,
-  z: 0,                  // keep this below the high/low lines (which use z: 2)
-},
+      // Temperature range area (only if both temps are shown)
+      ...(showHighTemp && showLowTemp ? [
+        
+        {
+        name: 'Temperature Range',
+        type: 'line',
+        data: maxTemps.map((max, i) => {
+        const min = minTemps[i];
+        // Calculate the DIFFERENCE between high and low
+        return (max !== null && min !== null) ? max : null;
+      }),
+        lineStyle: { opacity: 0 },
+        stack: 'temp-band',
+        symbol: 'none',
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+            { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+            { offset: 0.3, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: .7, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+            { offset: 1, color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
+          ])
+        },    
+        yAxisIndex: 0,
+        z: 1,
+        silent: true,
+      } ] : []),
+// {
+//   name: 'TempFillBase',
+//   type: 'line',
+//   data: baseline,          // 🚨 baseline = yAxisMin
+//   stack: 'temp-fill',
+//   symbol: 'none',
+//   lineStyle: { opacity: 0 },
+//   areaStyle: { opacity: 0 },
+//   silent: true,
+//   yAxisIndex: 0,
+//   z: 0
+// },
+// {
+//   name: 'Temperature Range',
+//   type: 'line',
+//   data: bandHeight,        // 🚨 height = tmax - yAxisMin
+//   stack: 'temp-fill',
+//   symbol: 'none',
+//   lineStyle: { opacity: 0 },
+//   areaStyle: {
+//     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+//       { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
+//       { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+//       { offset: 0.3,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+//       { offset: 0.7,  color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+//       { offset: 1,    color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
+//     ])
+//   },
+//   silent: true,
+//   yAxisIndex: 0,
+//   z: 1
+// },    
+      
+// ] : []),
 
+
+// Temperature range area (only if both temps are shown)
+// Temperature range area (only if both temps are shown)
+// This uses a custom dataset approach
 
       // High temperature
       ...(showHighTemp ? [{
@@ -664,25 +599,27 @@ if (allTemps.length > 0) {
             shadowColor: darkMode ? colors.high.dark.shadow : colors.high.light.shadow,
           }
         },
-        markPoint: {
+        markPoint: {  // ADD THIS ENTIRE BLOCK
           data: [
             {
               type: 'max',
               label: {
                 show: true,
                 formatter: '{c}°',
-                position: 'top',
-                color: darkMode ? '#fff' : '#fff',
+                position: 'top',  // ADD THIS - places label above point
+                // offset: [0, -0],  // ADD THIS - moves it 10px further up
+                color: darkMode ? '#fff' : '#2c3e50',
                 fontSize: isMobile ? 11 : 13,
                 fontWeight: 'semibold',
                 backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(190, 0, 16, 0.7)',
                 padding: [2.5, 7],
                 borderRadius: 6
               },
-              symbolSize: 0
+              symbolSize: 0  // Hide the marker symbol, just show label
             }
           ]
         },
+
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -712,7 +649,7 @@ if (allTemps.length > 0) {
             shadowColor: darkMode ? colors.low.dark.shadow : colors.low.light.shadow,
           }
         },
-        markPoint: {
+        markPoint: {  // ADD THIS ENTIRE BLOCK
           data: [
             {
               type: 'min',
@@ -727,10 +664,11 @@ if (allTemps.length > 0) {
                 padding: [2.5, 7],
                 borderRadius: 4
               },
-              symbolSize: 0
+              symbolSize: 0  // Hide the marker symbol, just show label
             }
           ]
         },
+
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -742,7 +680,6 @@ if (allTemps.length > 0) {
         data: normalHighs,
         smooth: true,
         symbol: 'none',
-        legendIcon: 'rect',  // ADD THIS - forces dashed line icon
         lineStyle: {
           width: isMobile ? 2 : 3,
           type: 'dashed',
@@ -760,7 +697,6 @@ if (allTemps.length > 0) {
         data: normalLows,
         smooth: true,
         symbol: 'none',
-        legendIcon: 'rect',  // ADD THIS - forces dashed line icon
         lineStyle: {
           width: isMobile ? 2 : 3,
           type: 'dashed',
@@ -773,21 +709,14 @@ if (allTemps.length > 0) {
       
       // Precipitation
       {
-        name: showSnow ? 'Snow' : 'Precip',  // Dynamic name
+        name: 'Precip',
         type: 'bar',
         data: precip,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, 
-            showSnow ? [
-              // Ice blue gradient for snow
-              { offset: 0, color: darkMode ? colors.snow.dark[0] : colors.snow.light[0] },
-              { offset: 1, color: darkMode ? colors.snow.dark[1] : colors.snow.light[1] }
-            ] : [
-              // Regular blue gradient for precipitation
-              { offset: 0, color: darkMode ? colors.precip.dark[0] : colors.precip.light[0] },
-              { offset: 1, color: darkMode ? colors.precip.dark[1] : colors.precip.light[1] }
-            ]
-          ),
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: darkMode ? colors.precip.dark[0] : colors.precip.light[0] },
+            { offset: 1, color: darkMode ? colors.precip.dark[1] : colors.precip.light[1] }
+          ]),
           borderRadius: [4, 4, 0, 0]
         },
         barWidth: isMobile ? '60%' : '70%',
@@ -798,18 +727,14 @@ if (allTemps.length > 0) {
     
     animation: true,
     animationDuration: 1000,
-    animationEasing: 'cubicOut',
-  //   animationDelay: (idx: number) => {
-  // // Stagger the animation by series order
-  // return idx * 100;  // 100ms delay between each series element
-// }
+    animationEasing: 'cubicOut'
   };
 
   return (
     <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
       <div style={{ 
         width: '100%', 
-        height: isMobile ? '540px' : '510px',
+        height: isMobile ? '540px' : '510px', //was 380
         background: darkMode ? '#1a1a2e' : '#ffffff',
         borderRadius: isMobile ? '6px' : '12px',
         padding: isMobile ? '5px' : '20px',
@@ -817,17 +742,19 @@ if (allTemps.length > 0) {
         position: 'relative'
       }}>
         <ReactECharts
+          // key={data.length}  // ← ADD THIS - forces full re-render
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
-          notMerge={true}
-          lazyUpdate={true}
+          notMerge={true} // changed from false
+          lazyUpdate={true} // changed from false
         />
         
         {/* Landscape button - bottom left corner */}
         <button
           className="landscape-button"
           onClick={() => {
+            // TODO: Implement landscape view in Phase 2
             console.log('Landscape view coming soon!');
           }}
           title="Landscape view"
@@ -840,63 +767,6 @@ if (allTemps.length > 0) {
           </svg>
         </button>
       </div>
-{/* Snow/Rain Toggle - Below chart, above checkboxes */}
-<div style={{ 
-  display: 'flex', 
-  justifyContent: 'center', 
-  marginTop: '15px',
-  marginBottom: '10px'
-}}>
-<button
-  onClick={() => setShowSnow(!showSnow)}
-  style={{
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',  // CHANGED - gradient like other buttons
-    border: 'none',  // CHANGED - remove border for gradient
-    borderRadius: '8px',
-    padding: '10px 20px',  // CHANGED - slightly more padding
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: isMobile ? '13px' : '14px',
-    fontWeight: 600,
-    color: 'white',  // CHANGED - white text on gradient
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'  // CHANGED - gradient shadow
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform = 'translateY(-2px)';  // CHANGED - lift effect
-    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform = 'translateY(0)';
-    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-  }}
-  title={showSnow ? 'Show Precipitation' : 'Show Snowfall'}
->
-  {showSnow ? (
-    // Raindrop icon (when snow is selected)
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-    </svg>
-  ) : (
-    // Better Snowflake icon (when precip is selected)
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="2" x2="12" y2="22" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="m20 16-4-4 4-4" />
-      <path d="m4 8 4 4-4 4" />
-      <path d="m16 4-4 4-4-4" />
-      <path d="m8 20 4-4 4 4" />
-    </svg>
-  )}
-    <span>{showSnow ? 'Show Rain' : 'Show Snow'}</span>
-  </button>
-</div>
-
-{/* <div className="chart-controls">
-  <div className="toggle-group"></div> */}
-
 
       <div className="chart-controls">
         <div className="toggle-group">
