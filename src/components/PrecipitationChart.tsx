@@ -120,15 +120,15 @@ const barBottom = showSnow
   : (darkMode ? 'rgba(0, 70, 130, 0.90)' : 'rgba(0, 94, 156, 0.90)');
     // : (darkMode ? '#4a90e2' : '#000000');  // Blue for precip
   
-  const lineColor = showSnow
-    ? (darkMode ? '#95a5a6' : '#636e72')  // Dark gray for snow line
-    // : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
-    : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
+//   const lineColor = showSnow
+//     ? (darkMode ? '#95a5a6' : '#636e72')  // Dark gray for snow line
+//     // : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
+//     : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
 
- const snowLineColor = darkMode
-  ? 'rgba(140, 205, 255, 1.0)'
-  : 'rgba(0, 145, 215, 1.0)';
-// Helper function to wrap long station names
+//  const snowLineColor = darkMode
+//   ? 'rgba(140, 205, 255, 1.0)'
+//   : 'rgba(0, 145, 215, 1.0)';
+// // Helper function to wrap long station names
 
 const wrapStationName = (name: string, maxLength: number) => {
   if (name.length <= maxLength) return name;
