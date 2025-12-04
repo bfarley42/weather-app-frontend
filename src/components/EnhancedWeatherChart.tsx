@@ -542,7 +542,7 @@ if (allTemps.length > 0) {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
       { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-      { offset: 0.25,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+      { offset: 0.35,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
       { offset: 0.65, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
       { offset: 1,    color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
     ]),
@@ -558,7 +558,7 @@ if (allTemps.length > 0) {
         name: 'High Temp',
         type: 'line',
         data: maxTemps,
-        smooth: true,
+        smooth: 0.4,
         symbolSize: isMobile ? 3 : 3,
         itemStyle: {
           color: darkMode ? colors.high.dark.dot : colors.high.light.dot,

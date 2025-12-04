@@ -298,24 +298,14 @@ export default function HourlyWeatherChart({
         fontWeight: 600
       },
       position: 'left',
-      min: (() => {
-        // Base scale on actual temps only, not feels like (prevents outlier blowup)
-        const validTemps = temps.filter((t): t is number => t !== null);
-        if (validTemps.length === 0) return 0;
-        const minTemp = Math.min(...validTemps);
-        const maxTemp = Math.max(...validTemps);
-        const buffer = (maxTemp - minTemp) * 0.10;
-        return Math.floor(minTemp - buffer);
-      })(),
-      max: (() => {
-        // Base scale on actual temps only, not feels like (prevents outlier blowup)
-        const validTemps = temps.filter((t): t is number => t !== null);
-        if (validTemps.length === 0) return 100;
-        const minTemp = Math.min(...validTemps);
-        const maxTemp = Math.max(...validTemps);
-        const buffer = (maxTemp - minTemp) * 0.10;
-        return Math.ceil(maxTemp + buffer);
-      })(),
+      min: function(value: any) {  // ADD THIS
+        const buffer = (value.max - value.min) * 0.10;  // 10% buffer for labels
+        return Math.floor(value.min - buffer);
+      },
+      max: function(value: any) {  // ADD THIS
+        const buffer = (value.max - value.min) * 0.10;
+        return Math.ceil(value.max + buffer);
+      },
       axisLine: {
         show: true,
         lineStyle: {
@@ -342,7 +332,7 @@ export default function HourlyWeatherChart({
           : (showWindOrPrecip === 'wind' ? 'Wind Speed (mph)' : 'Precipitation (in)'),
         min: 0,  // ADD THIS
         max: showWindOrPrecip === 'wind'  // ADD THIS ENTIRE BLOCK
-          ? (Math.max(Math.max(...windSpeed), Math.max(...windGusts)) > 40 ? undefined : 40)  // Check both wind speed AND gusts
+          ? (Math.max(...windSpeed) > 40 ? undefined : 40)  // Fixed at 25 unless exceeds
           : (Math.max(...precip) > 0.2 ? undefined : 0.2),  // Fixed at 0.25" unless exceeds
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
@@ -452,7 +442,7 @@ export default function HourlyWeatherChart({
             name: 'High',
             label: {
               show: true,
-              formatter: (params: any) => `${Math.round(params.value)}°`,
+              formatter: '{c}°',
               position: 'top',
               // offset: [0, -10],
               color: darkMode ? '#fff' : '#fff',
@@ -469,7 +459,7 @@ export default function HourlyWeatherChart({
             name: 'Low',
             label: {
               show: true,
-              formatter: (params: any) => `${Math.round(params.value)}°`,
+              formatter: '{c}°',
               position: 'bottom',
               color: darkMode ? '#fff' : '#fff',
               fontSize: isMobile ? 11 : 13,
@@ -510,7 +500,7 @@ export default function HourlyWeatherChart({
         name: 'High',
         label: {
           show: true,
-          formatter: (params: any) => `${Math.round(params.value)}°`,
+          formatter: '{c}°',
           position: 'top',
           offset: [0, -10],
           color: darkMode ? '#fff' : '#2c3e50',
@@ -527,7 +517,7 @@ export default function HourlyWeatherChart({
         name: 'Low',
         label: {
           show: true,
-          formatter: (params: any) => `${Math.round(params.value)}°`,
+          formatter: '{c}°',
           position: 'bottom',
           offset: [0, 10],
           color: darkMode ? '#fff' : '#2c3e50',
@@ -721,7 +711,7 @@ export default function HourlyWeatherChart({
         value: item.gust,
         label: {
           show: true,
-          formatter: (params: any) => `${Math.round(params.value)} mph`,
+          formatter: '{c} mph',
           position: 'left',
           // offset: [0, -15],
           color: darkMode ? '#ffd700' : '#333',

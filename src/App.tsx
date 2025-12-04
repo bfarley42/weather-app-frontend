@@ -29,6 +29,9 @@ interface HourlyWeather {
   tmpf: number | null;
   precip_in: number | null;
   avg_wspd_mph: number | null;
+  relh_pct: number | null;
+  max_gust_mph: number | null;
+  feelslike_f: number | null;
 }
 
 function App() {
