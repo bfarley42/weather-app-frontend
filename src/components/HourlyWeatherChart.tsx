@@ -57,7 +57,7 @@ export default function HourlyWeatherChart({
   const windSpeed = data.map(d => d.avg_wspd_mph || 0);
   const windGusts = data.map(d => d.max_gust_mph || 0);  // ADD THIS
   const feelsLike = data.map(d => d.feelslike_f);  // ADD THIS
-  const relHumdity = data.map(d => d.relh_pct);  // ADD THIS
+  // const relHumdity = data.map(d => d.relh_pct);  // ADD THIS
 
   // Format timestamp for display
   const formatTimestamp = (date: Date) => {
@@ -300,21 +300,24 @@ export default function HourlyWeatherChart({
       position: 'left',
       min: (() => {
         // Base scale on actual temps only, not feels like (prevents outlier blowup)
-        const validTemps = temps.filter((t): t is number => t !== null);
+        // const validTemps = temps.filter((t): t is number => t !== null);
+        const validTemps =  temps.filter((t): t is number => t !== null);
+        const feelsLikeTemps = feelsLike.filter((t): t is number => t !== null) 
         if (validTemps.length === 0) return 0;
-        const minTemp = Math.min(...validTemps);
-        const maxTemp = Math.max(...validTemps);
+        const minTemp = showFeelsLike ? Math.min(Math.min(...feelsLikeTemps),Math.min(...validTemps)) : Math.min(...validTemps);
+        const maxTemp = showFeelsLike ? Math.max(Math.max(...feelsLikeTemps),Math.max(...validTemps)) : Math.max(...validTemps);
         const buffer = (maxTemp - minTemp) * 0.10;
-        return Math.floor(minTemp - buffer);
+        return Math.floor((minTemp - buffer)/5)*5;
       })(),
       max: (() => {
         // Base scale on actual temps only, not feels like (prevents outlier blowup)
-        const validTemps = temps.filter((t): t is number => t !== null);
+        const validTemps =  temps.filter((t): t is number => t !== null);
+        const feelsLikeTemps = feelsLike.filter((t): t is number => t !== null) 
         if (validTemps.length === 0) return 100;
-        const minTemp = Math.min(...validTemps);
-        const maxTemp = Math.max(...validTemps);
+        const minTemp = showFeelsLike ? Math.min(Math.min(...feelsLikeTemps),Math.min(...validTemps)) : Math.min(...validTemps);
+        const maxTemp = showFeelsLike ? Math.max(Math.max(...feelsLikeTemps),Math.max(...validTemps)) : Math.max(...validTemps);
         const buffer = (maxTemp - minTemp) * 0.10;
-        return Math.ceil(maxTemp + buffer);
+        return Math.ceil((maxTemp + buffer)/5)*5;
       })(),
       axisLine: {
         show: true,
@@ -439,11 +442,19 @@ export default function HourlyWeatherChart({
       },
       lineStyle: {
         width: 2.0,
-        opacity: showFeelsLike ? 0.4 : 1,  // ADD THIS - fade when feels like shown
-        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+        opacity: showFeelsLike ? 0.5 : 1,  // ADD THIS - fade when feels like shown
+        color: showFeelsLike ? 
+        new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: darkMode ? '#b6bdbae0' : '#aca6a4f1' },
+          { offset: 1, color: darkMode ? '#848f8cff' : '#867777b6' }
+        ])        
+        :
+        new echarts.graphic.LinearGradient(0, 0, 1, 0, [
           { offset: 0, color: darkMode ? '#0fc076c2' : '#a52b06f1' },
           { offset: 1, color: darkMode ? '#119675ff' : '#910404b6' }
         ])
+
+
       },
       markPoint: showFeelsLike ? undefined : {  // Only show when feels like is OFF
         data: [
@@ -500,8 +511,8 @@ export default function HourlyWeatherChart({
   smooth: true,
   symbol: 'none',
   lineStyle: {
-    width: 2.5,  // Make it prominent
-    color: darkMode ? '#ffa07a' : '#ff8c69'
+    width: 2,  // Make it prominent
+    color: darkMode ? '#e74b0eff' : '#e25614ff'
   },
   markPoint: {  // ADD THIS
     data: [
@@ -512,12 +523,12 @@ export default function HourlyWeatherChart({
           show: true,
           formatter: (params: any) => `${Math.round(params.value)}°`,
           position: 'top',
-          offset: [0, -10],
+          // offset: [0, -10],
           color: darkMode ? '#fff' : '#2c3e50',
           fontSize: isMobile ? 11 : 13,
-          fontWeight: 'bold',
+          fontWeight: 'semibold',
           backgroundColor: darkMode ? 'rgba(255, 160, 122, 0.8)' : 'rgba(255, 140, 105, 0.9)',
-          padding: [4, 8],
+          padding: [3,7],
           borderRadius: 4
         },
         symbolSize: 0
@@ -529,12 +540,12 @@ export default function HourlyWeatherChart({
           show: true,
           formatter: (params: any) => `${Math.round(params.value)}°`,
           position: 'bottom',
-          offset: [0, 10],
-          color: darkMode ? '#fff' : '#2c3e50',
-          fontSize: isMobile ? 11 : 13,
-          fontWeight: 'bold',
-          backgroundColor: darkMode ? 'rgba(255, 160, 122, 0.8)' : 'rgba(255, 140, 105, 0.9)',
-          padding: [4, 8],
+          // offset: [0, 10],
+              color: darkMode ? '#fff' : '#fff',
+              fontSize: isMobile ? 11 : 13,
+              fontWeight: 'semibold',
+              backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
+          padding: [3, 7],
           borderRadius: 4
         },
         symbolSize: 0
@@ -578,8 +589,8 @@ export default function HourlyWeatherChart({
       },
       style: {
         fill: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: darkMode ? 'rgba(255, 100, 100, 0.4)' : 'rgba(255, 100, 100, 0.3)' },
-          { offset: 1, color: darkMode ? 'rgba(255, 150, 150, 0.1)' : 'rgba(255, 150, 150, 0.1)' }
+          { offset: 0, color: darkMode ? 'rgba(255, 100, 100, 0.0)' : 'rgba(255, 100, 100, 0.0)' },
+          { offset: 1, color: darkMode ? 'rgba(255, 150, 150, 0.0)' : 'rgba(255, 150, 150, 0.0)' }
         ])
       }
     };
@@ -619,8 +630,10 @@ export default function HourlyWeatherChart({
       },
       style: {
         fill: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: darkMode ? 'rgba(100, 150, 255, 0.4)' : 'rgba(100, 150, 255, 0.3)' },
-          { offset: 1, color: darkMode ? 'rgba(150, 200, 255, 0.1)' : 'rgba(150, 200, 255, 0.1)' }
+          // { offset: 0, color: darkMode ? 'rgba(100, 150, 255, 0.4)' : 'rgba(100, 150, 255, 0.3)' },
+          { offset: 0, color: darkMode ? 'rgba(100, 150, 255, 0.0)' : 'rgba(2, 76, 173, 0.0)' },
+          // { offset: 1, color: darkMode ? 'rgba(150, 200, 255, 0.1)' : 'rgba(150, 200, 255, 0.1)' }
+          { offset: 1, color: darkMode ? 'rgba(150, 200, 255, 0.0)' : 'rgba(3, 132, 206, 0.0)' }
         ])
       }
     };
@@ -673,8 +686,8 @@ export default function HourlyWeatherChart({
   },
   areaStyle: {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: darkMode ? 'rgba(12, 196, 180, 0.65)' : 'rgba(11, 191, 236, 0.99)' },
-      { offset: 1, color: darkMode ? 'rgba(168, 230, 207, 0.5)' : 'rgba(22, 143, 190, 0.4)' }
+      { offset: 0, color: darkMode ? 'rgba(12, 196, 180, 0.2)' : 'rgba(11, 191, 236, 0.99)' },
+      { offset: 1, color: darkMode ? '#0db0c548' : 'rgba(22, 143, 190, 0.4)' }
     ])
   },
   emphasis: {

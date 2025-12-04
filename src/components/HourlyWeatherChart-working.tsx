@@ -57,7 +57,7 @@ export default function HourlyWeatherChart({
   const windSpeed = data.map(d => d.avg_wspd_mph || 0);
   const windGusts = data.map(d => d.max_gust_mph || 0);  // ADD THIS
   const feelsLike = data.map(d => d.feelslike_f);  // ADD THIS
-  const relHumdity = data.map(d => d.relh_pct);  // ADD THIS
+//   const relHumdity = data.map(d => d.relh_pct);  // ADD THIS
 
   // Format timestamp for display
   const formatTimestamp = (date: Date) => {
