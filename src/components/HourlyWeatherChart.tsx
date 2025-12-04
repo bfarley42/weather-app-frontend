@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import './HourlyWeatherChart.css';
+import { useEffect } from 'react';
 
 interface HourlyWeather {
   ts_local: string;
@@ -22,7 +23,18 @@ export default function HourlyWeatherChart({
   stationName,
   darkMode = false
 }: HourlyWeatherChartProps) {
-  const [showWind, setShowWind] = useState(false);
+  const [showWindOrPrecip, setShowWindOrPrecip] = useState<'precip' | 'wind'>('precip');  // Toggle between two
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);  // ADD THIS
+  // Detect mobile device - ADD THIS ENTIRE BLOCK
+    useEffect(() => {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
   if (!data || data.length === 0) {
     return (
@@ -50,32 +62,60 @@ export default function HourlyWeatherChart({
   };
 
   // Format for x-axis (shorter)
+// Format for x-axis (only show date at midnight, "12pm" at noon)
   const formatAxisLabel = (date: Date) => {
-    const day = date.getDate();
     const hour = date.getHours();
     
-    // Show date at midnight, otherwise just hour
+    // Show date at midnight
     if (hour === 0) {
       const month = date.toLocaleDateString('en-US', { month: 'short' });
-      return `${month} ${day}`;
+      const day = date.getDate();
+      return `{date|${month} ${day}}`;  // Use rich text style
     }
     
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour} ${ampm}`;
+    // Show "12pm" at noon
+    if (hour === 12) {
+      return '{small|12pm}';  // Use rich text style
+    }
+    
+    // Hide all other hours
+    return '';
+  };
+
+    // Helper function to wrap long station names
+  const wrapStationName = (name: string, maxLength: number) => {
+    if (name.length <= maxLength) return name;
+    
+    const words = name.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    words.forEach(word => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      if (testLine.length <= maxLength) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+    
+    if (currentLine) lines.push(currentLine);
+    return lines.join('\n');
   };
 
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
     
     title: {
-      text: `${stationName} - Hourly`,
+      text: wrapStationName(stationName, isMobile ? 30 : 50),  // Just station name
       left: 'center',
-      top: 10,
+      top: isMobile ? 5 : 10,
       textStyle: {
-        fontSize: 20,
+        fontSize: isMobile ? 15 : 20,
         fontWeight: 700,
-        color: darkMode ? '#ecf0f1' : '#2c3e50'
+        color: darkMode ? '#ecf0f1' : '#2c3e50',
+        lineHeight: isMobile ? 18 : 24
       }
     },
     
@@ -87,7 +127,7 @@ export default function HourlyWeatherChart({
       padding: 15,
       textStyle: {
         color: darkMode ? '#e3eef5' : '#333',
-        fontSize: 13
+        fontSize: isMobile ? 13 : 14  // Responsive
       },
       axisPointer: {
         type: 'cross',
@@ -133,25 +173,31 @@ export default function HourlyWeatherChart({
     },
     
     legend: {
-      data: [
-        'Temperature',
-        'Precipitation',
-        ...(showWind ? ['Wind Speed'] : [])
-      ],
-      top: 50,
-      left: 'center',
-      itemGap: 30,
-      textStyle: {
-        fontSize: 13,
-        color: darkMode ? '#bdc3c7' : '#555'
-      }
-    },
+    data: [
+      'Temperature',
+      showWindOrPrecip === 'precip' ? 'Precipitation' : 'Wind Speed'
+    ],
+    top: isMobile ? 40 : 45,
+    left: 'center',
+    itemGap: isMobile ? 12 : 20,
+    itemWidth: isMobile ? 15 : 20,
+    itemHeight: isMobile ? 8 : 12,
+    textStyle: {
+      fontSize: isMobile ? 11 : 13,
+      color: darkMode ? '#bdc3c7' : '#555'
+    }
+  },
     
-    grid: {
+    grid: isMobile ? {
+      left: 45,
+      right: 45,
+      top: 90,
+      bottom: 90
+    } : {
       left: 60,
       right: 60,
-      top: 120,
-      bottom: 90
+      top: 100,
+      bottom: 100
     },
     
     dataZoom: [
@@ -165,7 +211,7 @@ export default function HourlyWeatherChart({
         start: 0,
         end: 100,
         height: 35,
-        bottom: 20,
+        bottom: 15,
         borderColor: darkMode ? '#34495e' : '#e0e0e0',
         fillerColor: 'rgba(102, 126, 234, 0.15)',
         handleStyle: {
@@ -183,12 +229,43 @@ export default function HourlyWeatherChart({
           color: darkMode ? '#3d4a57' : '#d8d8d8'
         }
       },
-      axisLabel: {
-        color: darkMode ? '#cfd8dc' : '#666',
-        fontSize: 11,
-        rotate: 45,
-        formatter: (value: any) => formatAxisLabel(new Date(value))
+        axisTick: {  // ADD THIS ENTIRE BLOCK
+        show: false  // Hide all tick marks
       },
+      axisLabel: {
+        color: darkMode ? '#95a5a6' : '#666',  // Match other charts
+        fontSize: isMobile ? 11 : 12,  // Responsive
+        rotate: 45,
+        interval: 0,  // ADD THIS - show all labels (formatter will hide most)
+        formatter: (value: any) => formatAxisLabel(new Date(value)),
+        rich: {  // ADD THIS
+        date: {
+          fontSize: isMobile ? 11 : 12,
+          fontWeight: 'bold',
+          color: darkMode ? '#95a5a6' : '#666'
+        },
+        small: {
+          fontSize: isMobile ? 9 : 10,  // Smaller font
+          color: darkMode ? 'rgba(149, 165, 166, 0.6)' : 'rgba(102, 102, 102, 0.6)'  // Lighter color
+        }
+  }
+
+      },
+      splitLine: {  // ADD THIS ENTIRE BLOCK
+        show: true,
+        interval: (index: number) => {
+          // Show line only at midnight (hour === 0)
+          const date = new Date(timestamps[index]);
+          return date.getHours() === 0;
+        },
+        lineStyle: {
+          color: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          width: 1,
+          type: 'solid'
+        }
+      },
+
+
       axisPointer: {
         label: {
           formatter: (params: any) => {
@@ -197,49 +274,61 @@ export default function HourlyWeatherChart({
           }
         }
       },
-      splitLine: {
-        show: false
-      }
+      // splitLine: {
+      //   show: false
+      // }
     },
     
     yAxis: [
-      // Temperature axis (left)
-      {
-        type: 'value',
-        name: 'Temperature (°F)',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameTextStyle: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: 13,
-          fontWeight: 600
-        },
-        position: 'left',
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: darkMode ? '#34495e' : '#e0e0e0'
-          }
-        },
-        axisLabel: {
-          color: darkMode ? '#95a5a6' : '#666',
-          fontSize: 12,
-          formatter: '{value}°'
-        },
-        splitLine: {
-          show: true,
-          lineStyle: {
-            color: darkMode ? '#2c3e50' : '#f0f0f0'
-          }
+    // Temperature axis (left)
+    {
+      type: 'value',
+      name: isMobile ? 'Temp (°F)' : 'Temperature (°F)',
+      nameTextStyle: {
+        color: darkMode ? '#95a5a6' : '#666',
+        fontSize: isMobile ? 12 : 13,
+        fontWeight: 600
+      },
+      position: 'left',
+      min: function(value: any) {  // ADD THIS
+        const buffer = (value.max - value.min) * 0.10;  // 10% buffer for labels
+        return Math.floor(value.min - buffer);
+      },
+      max: function(value: any) {  // ADD THIS
+        const buffer = (value.max - value.min) * 0.10;
+        return Math.ceil(value.max + buffer);
+      },
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: darkMode ? '#34495e' : '#e0e0e0'
         }
       },
+      axisLabel: {
+        color: darkMode ? '#95a5a6' : '#666',
+        fontSize: isMobile ? 11 : 12,
+        formatter: '{value}°'
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: darkMode ? '#2c3e50' : '#f0f0f0'
+        }
+      }
+    },
       // Precip/Wind axis (right)
       {
         type: 'value',
-        name: showWind ? 'Precip (in) / Wind (mph)' : 'Precipitation (inches)',
+        name: isMobile 
+          ? (showWindOrPrecip === 'wind' ? 'Wind (mph)' : 'Precip') 
+          : (showWindOrPrecip === 'wind' ? 'Wind Speed (mph)' : 'Precipitation (in)'),
+        min: 0,  // ADD THIS
+        max: showWindOrPrecip === 'wind'  // ADD THIS ENTIRE BLOCK
+          ? (Math.max(...windSpeed) > 25 ? undefined : 25)  // Fixed at 25 unless exceeds
+          : (Math.max(...precip) > 0.25 ? undefined : 0.25),  // Fixed at 0.25" unless exceeds
         nameTextStyle: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: 13,
+          fontSize: isMobile ? 12 : 13,
           fontWeight: 600
         },
         position: 'right',
@@ -251,8 +340,8 @@ export default function HourlyWeatherChart({
         },
         axisLabel: {
           color: darkMode ? '#95a5a6' : '#666',
-          fontSize: 12,
-          formatter: showWind ? '{value}' : '{value}"'
+          fontSize: isMobile ? 11 : 12,
+          formatter: showWindOrPrecip === 'wind' ? '{value}' : '{value}"'
         },
         splitLine: {
           show: false
@@ -261,90 +350,213 @@ export default function HourlyWeatherChart({
     ],
     
     series: [
-      // Temperature line
-      {
-        name: 'Temperature',
-        type: 'line',
-        data: temps,
-        smooth: true,
-        symbolSize: 4,
-        showSymbol: false, // Don't show symbols on every point (too many for hourly)
-        itemStyle: {
-          color: darkMode ? '#ff8c8c' : '#ff6b6b',
-          borderColor: darkMode ? '#1a1a2e' : '#fff',
-          borderWidth: 2
-        },
-        lineStyle: {
-          width: 2.5,
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: darkMode ? '#ff8c8c' : '#ff6b6b' },
-            { offset: 1, color: darkMode ? '#ff5a5a' : '#ff3e3e' }
-          ])
-        },
-        emphasis: {
-          focus: 'series',
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: darkMode ? 'rgba(255, 150, 150, 0.5)' : 'rgba(255, 107, 107, 0.5)'
+  {
+    // Dummy series for background day bands
+    type: 'line',
+    markArea: {
+      silent: true,
+      data: (() => {
+        const areas: any[] = [];
+        let currentDay = new Date(timestamps[0]).setHours(0, 0, 0, 0);
+        let dayStart = 0;
+        let isAlternate = false;
+        
+        timestamps.forEach((date, index) => {
+          const dateAtMidnight = new Date(date).setHours(0, 0, 0, 0);
+          
+          // When day changes, create a band for previous day
+          if (dateAtMidnight !== currentDay) {
+            areas.push([
+              {
+                xAxis: dayStart,
+                itemStyle: {
+                  color: isAlternate 
+                    ? (darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
+                    : 'transparent'
+                }
+              },
+              {
+                xAxis: index  // Changed from index - 1
+              }
+            ]);
+            
+            dayStart = index;
+            currentDay = dateAtMidnight;
+            isAlternate = !isAlternate;
           }
-        },
-        yAxisIndex: 0,
-        z: 2
+        });
+        
+        // Add final day
+        areas.push([
+          {
+            xAxis: dayStart,
+            itemStyle: {
+              color: isAlternate 
+                ? (darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
+                : 'transparent'
+            }
+          },
+          {
+            xAxis: timestamps.length - 1
+          }
+        ]);
+        
+        return areas;
+      })()
+    }
+  },
+
+    // Temperature line
+    {
+      name: 'Temperature',
+      type: 'line',
+      data: temps,
+      smooth: true,
+      symbolSize: 4,
+      showSymbol: false,
+      itemStyle: {
+        color: darkMode ? '#C76E6D' : '#df9d23ff',
+        borderColor: darkMode ? '#1a1a2e' : '#fff',
+        borderWidth: 2
       },
-      
-      // Precipitation bars
-      {
-        name: 'Precipitation',
-        type: 'bar',
-        data: precip,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: darkMode ? 'rgba(90, 200, 255, 0.95)' : 'rgba(74, 177, 245, 0.95)' },
-            { offset: 1, color: darkMode ? 'rgba(0, 70, 130, 0.85)' : 'rgba(0, 94, 156, 0.85)' }
-          ]),
-          borderRadius: [2, 2, 0, 0]
-        },
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 8,
-            shadowColor: darkMode ? 'rgba(90, 200, 255, 0.4)' : 'rgba(74, 177, 245, 0.4)'
-          }
-        },
-        barWidth: '80%',
-        yAxisIndex: 1,
-        z: 0
+      lineStyle: {
+        width: 2.5,
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: darkMode ? '#C7C66D' : '#df9d23ff' },
+          { offset: 1, color: darkMode ? '#C76E6D' : '#c7826dff' }
+        ])
       },
-      
-      // Wind speed line (optional)
-      ...(showWind ? [{
-        name: 'Wind Speed',
-        type: 'line',
-        data: windSpeed,
-        smooth: true,
-        symbolSize: 3,
-        showSymbol: false,
-        itemStyle: {
-          color: darkMode ? '#a8e6cf' : '#26a69a',
-          borderColor: darkMode ? '#1a1a2e' : '#fff',
-          borderWidth: 2
-        },
-        lineStyle: {
-          width: 2,
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: darkMode ? '#a8e6cf' : '#26a69a' },
-            { offset: 1, color: darkMode ? '#7ec699' : '#00897b' }
-          ])
-        },
-        emphasis: {
-          focus: 'series',
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: darkMode ? 'rgba(168, 230, 207, 0.5)' : 'rgba(38, 166, 154, 0.5)'
+      markPoint: {  // ADD THIS ENTIRE BLOCK
+        data: [
+          {
+            type: 'max',
+            name: 'High',
+            label: {
+              show: true,
+              formatter: '{c}°',
+              position: 'top',
+              // offset: [0, -10],
+              color: darkMode ? '#fff' : '#fff',
+              fontSize: isMobile ? 11 : 13,
+              fontWeight: 'semibold',
+              backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(190, 0, 16, 0.7)',
+              padding: [2.5, 7],
+              borderRadius: 6
+            },
+            symbolSize: 0
+          },
+          {
+            type: 'min',
+            name: 'Low',
+            label: {
+              show: true,
+              formatter: '{c}°',
+              position: 'bottom',
+              color: darkMode ? '#fff' : '#fff',
+              fontSize: isMobile ? 11 : 13,
+              fontWeight: 'semibold',
+              backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
+              padding: [2.5, 7],
+              borderRadius: 4
+            },
+            symbolSize: 0
+          },
+          {
+  // Current temp (last non-null value)
+  coord: (() => {
+    // Find last non-null temperature
+    for (let i = temps.length - 1; i >= 0; i--) {
+      if (temps[i] !== null) {
+        return [i, temps[i]];
+      }
+    }
+    return [timestamps.length - 1, 0]; // Fallback
+
+
+  })(),
+  name: 'Current',
+            label: {
+              show: false,
+              formatter: 'Now: {c}°',
+              position: 'right',
+              offset: [-0, 0],
+              color: darkMode ? '#fff' : '#2c3e50',
+              fontSize: isMobile ? 11 : 13,
+              fontWeight: 'bold',
+              backgroundColor: darkMode ? 'rgba(102, 126, 234, 0.8)' : 'rgba(102, 126, 234, 0.9)',
+              padding: [4, 8],
+              borderRadius: 4
+            },
+            symbolSize: 8,
+            itemStyle: {
+              color: darkMode ? '#667eea' : '#667eea',
+              borderColor: darkMode ? '#fff' : '#fff',
+              borderWidth: 2
+            }
           }
-        },
-        yAxisIndex: 1,
-        z: 1
-      }] : [])
+        ]
+      },
+      emphasis: {
+        focus: 'series',
+        itemStyle: {
+          shadowBlur: 10,
+          shadowColor: darkMode ? 'rgba(255, 150, 150, 0.5)' : 'rgba(255, 107, 107, 0.5)'
+        }
+      },
+      yAxisIndex: 0,
+      z: 2
+    },
+      
+    // Precipitation bars (only if not showing wind)
+    ...(showWindOrPrecip === 'precip' ? [{
+      name: 'Precipitation',
+      type: 'bar',
+      data: precip,
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: darkMode ? 'rgba(90, 200, 255, 0.95)' : 'rgba(74, 177, 245, 0.95)' },
+          { offset: 1, color: darkMode ? 'rgba(0, 70, 130, 0.85)' : 'rgba(0, 94, 156, 0.85)' }
+        ]),
+        borderRadius: [2, 2, 0, 0]
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 8,
+          shadowColor: darkMode ? 'rgba(90, 200, 255, 0.4)' : 'rgba(74, 177, 245, 0.4)'
+        }
+      },
+      barWidth: '80%',
+      yAxisIndex: 1,
+      z: 0
+    }] : []),
+
+// Wind speed line with gradient area fill
+...(showWindOrPrecip === 'wind' ? [{
+  name: 'Wind Speed',
+  type: 'line',
+  data: windSpeed,
+  smooth: 0,  // Very smooth
+  sampling: 'lttb',  // ADD THIS - downsamples data intelligently for smoothness
+  symbol: 'none',
+  lineStyle: {
+    width: 0,
+    color: darkMode ? '#a8e6cf' : '#26a69a'
+  },
+  areaStyle: {
+    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: darkMode ? 'rgba(168, 230, 207, 0.5)' : 'rgba(38, 166, 154, 0.99)' },
+      { offset: 1, color: darkMode ? 'rgba(168, 230, 207, 0.05)' : 'rgba(38, 166, 154, 0.4)' }
+    ])
+  },
+  emphasis: {
+    focus: 'series',
+    lineStyle: {
+      width: 2.5
+    }
+  },
+  yAxisIndex: 1,
+  z: 1
+}] : [])
     ],
     
     animation: true,
@@ -354,29 +566,17 @@ export default function HourlyWeatherChart({
 
   return (
     <div className="hourly-chart-container">
-      <div className="hourly-controls">
-        <div className="toggle-group">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={showWind}
-              onChange={(e) => setShowWind(e.target.checked)}
-            />
-            <span>💨 Show Wind Speed</span>
-          </label>
-        </div>
-      </div>
-      
-      <div style={{ 
-        width: '100%', 
-        height: '550px',
-        background: darkMode ? '#1a1a2e' : '#ffffff',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: darkMode 
-          ? '0 2px 8px rgba(0, 0, 0, 0.4)' 
-          : '0 2px 8px rgba(0, 0, 0, 0.08)'
-      }}>
+
+          
+    <div style={{ 
+      width: '100%', 
+      height: isMobile ? '540px' : '510px',  // Match other charts
+      background: darkMode ? '#1a1a2e' : '#ffffff',
+      borderRadius: isMobile ? '6px' : '12px',  // Smaller on mobile
+      padding: isMobile ? '5px' : '20px',  // Less padding on mobile
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      position: 'relative'
+    }}>
         <ReactECharts
           option={option}
           style={{ height: '100%', width: '100%' }}
@@ -385,6 +585,40 @@ export default function HourlyWeatherChart({
           lazyUpdate={true}
         />
       </div>
+      {/* Chart controls - Toggle between Wind and Precip */}
+      <div className="chart-controls">
+        <div className="toggle-group">
+          <button
+            onClick={() => setShowWindOrPrecip(showWindOrPrecip === 'precip' ? 'wind' : 'precip')}
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: isMobile ? '12px' : '13px',
+              fontWeight: 600,
+              color: 'white',
+              transition: 'all 0.2s',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+            }}
+          >
+            {showWindOrPrecip === 'precip' ? '💨 Show Wind' : '🌧️ Show Precip'}
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }

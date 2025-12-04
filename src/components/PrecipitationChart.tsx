@@ -170,7 +170,7 @@ const wrapStationName = (name: string, maxLength: number) => {
       backgroundColor: darkMode ? 'rgba(44, 44, 62, 0.95)' : 'rgba(255, 255, 255, 0.95)',
       borderColor: darkMode ? '#34495e' : '#e0e0e0',
       borderWidth: 1,
-      padding: 15,
+      padding: isMobile ? 5 : 15,
       textStyle: {
         color: darkMode ? '#ecf0f1' : '#333',
         fontSize: isMobile ? 13 : 14 
@@ -185,7 +185,7 @@ const wrapStationName = (name: string, maxLength: number) => {
       formatter: (params: any) => {
         const dateIdx = params[0].dataIndex;
         const date = formatDate(dates[dateIdx]);
-        let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">${date}</div>`;
+        let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: ${isMobile ? '12px' : '14px'};">${date}</div>`;
         
         params.forEach((param: any) => {
           const value = param.value !== null && param.value !== undefined ? param.value : 'N/A';
@@ -194,8 +194,8 @@ const wrapStationName = (name: string, maxLength: number) => {
           html += `
             <div style="margin: 6px 0; display: flex; align-items: center; justify-content: space-between;">
               <span style="display: flex; align-items: center;">
-                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${param.color}; margin-right: 8px;"></span>
-                <span style="color: ${darkMode ? '#bdc3c7' : '#666'};">${param.seriesName}:</span>
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${param.color}; margin-right: 8px;"></span>
+                <span style="color: ${darkMode ? '#bdc3c7' : '#666'}; font-size: ${isMobile ? '10px' : '12px'};">${param.seriesName}:</span>
               </span>
               <span style="font-weight: 600; margin-left: 12px; color: ${darkMode ? '#ecf0f1' : '#333'};">${displayValue}"</span>
             </div>
@@ -376,25 +376,25 @@ const wrapStationName = (name: string, maxLength: number) => {
     type: 'line',
     data: cumulativeObserved,
     smooth: true,
-    symbolSize: 8,
+    symbolSize: 6,
     symbol: 'circle',
 itemStyle: {
   color: showSnow
-    ? (darkMode ? 'rgba(160, 210, 255, 1.0)' : 'rgba(40, 130, 180, 1.0)')
-    : (darkMode ? 'rgba(120, 200, 255, 1.0)' : 'rgba(0, 148, 255, 1.0)'),
+    ? (darkMode ? 'rgba(160,210,255,1)' : 'rgba(40,130,180,1)')
+    : (darkMode ? 'rgba(120,200,255,1)' : 'rgba(0,148,255,1)'),
   borderColor: darkMode ? '#1a1a2e' : '#fff',
-  borderWidth: 2
+  borderWidth: 0.5
 },
 lineStyle: {
   width: 3,
   color: showSnow
     ? new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-        { offset: 0, color: darkMode ? 'rgba(160, 210, 255, 1.0)' : 'rgba(40, 130, 180, 1.0)' },
-        { offset: 1, color: darkMode ? 'rgba(90, 140, 190, 1.0)' : 'rgba(109, 164, 217, 1.0)' }
+        { offset: 0, color: darkMode ? 'rgba(160, 210, 255, 1)' : 'rgba(40, 130, 180, 1)' },
+        { offset: 1, color: darkMode ? 'rgba(90, 140, 190, 1)' : 'rgba(109, 164, 217, 1)' }
       ])
     : new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-        { offset: 0, color: darkMode ? 'rgba(120, 200, 255, 1.0)' : 'rgba(0, 148, 255, 1.0)' },
-        { offset: 1, color: darkMode ? 'rgba(0, 110, 160, 1.0)' : 'rgba(74, 177, 245, 1.0)' }
+        { offset: 0, color: darkMode ? 'rgba(120, 200, 255, 1)' : 'rgba(0, 148, 255, 1)' },
+        { offset: 1, color: darkMode ? 'rgba(0, 110, 160, 1)' : 'rgba(74, 177, 245, 1)' }
       ]),
   shadowBlur: 8,
   shadowColor: showSnow
@@ -410,8 +410,8 @@ areaStyle: {
         { offset: 1,   color: darkMode ? 'rgba(67, 77, 209, 0.9)' : 'rgba(82, 105, 235, 0.8)' }
       ])
     : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        { offset: 0, color: darkMode ? 'rgba(30, 55, 75, 0.60)' : 'rgba(224,243,255,0.55)' },
-        { offset: 0.5, color: darkMode ? 'rgba(0, 110, 160, 0.70)' : 'rgba(140,202,247,0.70)' },
+        { offset: 0, color: darkMode ? 'rgba(30, 55, 75, 0.30)' : 'rgba(224,243,255,0.35)' },
+        { offset: 0.5, color: darkMode ? 'rgba(0, 110, 160, 0.50)' : 'rgba(140,202,247,0.50)' },
         { offset: 1, color: darkMode ? 'rgba(0, 60, 110, 0.85)' : 'rgba(0,94,156,0.85)' }
       ])
 },
@@ -436,8 +436,8 @@ lineStyle: {
   width: 2,
   type: 'dashed',
   color: showSnow
-    ? (darkMode ? 'rgba(140, 200, 255, 0.9)' : 'rgba(0, 120, 180, 0.9)')
-    : (darkMode ? 'rgba(120, 180, 255, 0.9)' : 'rgba(33,123,197,0.9)'),
+    ? (darkMode ? 'rgba(140, 200, 255, 0.9)' : '#415ef1ff')
+    : (darkMode ? 'rgba(120, 180, 255, 0.9)' : '#0cd9e7ff'),
   opacity: 0.8
 },
     yAxisIndex: 1,

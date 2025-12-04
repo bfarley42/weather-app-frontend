@@ -64,8 +64,8 @@ const colors = {
   },
   snow: {  // ADD THIS ENTIRE BLOCK
     light: [
-      'rgba(133, 195, 250, 0.90)',  // Light ice blue at top
-      'rgba(220,240,255,0.70)'   // Very light ice blue at bottom
+      'rgba(128, 194, 252, 0.9)',  // Light ice blue at top
+      'rgba(193, 224, 248, 0.7)'   // Very light ice blue at bottom
     ],
     dark: [
       'rgba(140,200,255,0.95)',  // Brighter ice blue for dark mode
@@ -328,92 +328,6 @@ if (allTemps.length > 0) {
     }
   };
 
-  // Responsive legend with custom icons for normals
-// const legendSettings = isMobile ? {
-//   data: [
-//     ...(showHighTemp ? [{
-//       name: 'High Temp',
-//       icon: 'circle'
-//     }] : []),
-//     ...(showLowTemp ? [{
-//       name: 'Low Temp', 
-//       icon: 'circle'
-//     }] : []),
-//     {
-//       name: 'Precip',
-//       icon: 'rect'
-//     },
-//     ...(showNormals ? [
-//       {
-//         name: 'Normal High',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       },
-//       {
-//         name: 'Normal Low',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       }
-//     ] : [])
-//   ],
-//   top: 45,
-//   left: 'center',
-//   width: '110%',
-//   itemGap: 7,
-//   itemWidth: 15,
-//   itemHeight: 7,
-//   textStyle: {
-//     fontSize: 11,
-//     color: darkMode ? '#bdc3c7' : '#555'
-//   },
-//   selectedMode: {
-//     'High Temp': true,
-//     'Low Temp': true,
-//     'Precip': true,
-//     'Normal High': true,
-//     'Normal Low': true
-//   }
-// } : {
-//   data: [
-//     ...(showHighTemp ? [{
-//       name: 'High Temp',
-//       icon: 'circle'
-//     }] : []),
-//     ...(showLowTemp ? [{
-//       name: 'Low Temp',
-//       icon: 'circle'
-//     }] : []),
-//     {
-//       name: 'Precipitation',
-//       icon: 'rect'
-//     },
-//     ...(showNormals ? [
-//       {
-//         name: 'Normal High',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       },
-//       {
-//         name: 'Normal Low',
-//         icon: 'path://M0,5 L15,5 M20,5 L35,5'  // Dashed line path
-//       }
-//     ] : [])
-//   ],
-//   top: 45,
-//   left: 'center',
-//   itemGap: 15,
-//   itemWidth: 25,
-//   itemHeight: 12,
-//   textStyle: {
-//     fontSize: 13,
-//     color: darkMode ? '#bdc3c7' : '#555'
-//   },
-//   selectedMode: {
-//     'High Temp': true,
-//     'Low Temp': true,
-//     'Precipitation': true,
-//     'Normal High': true,
-//     'Normal Low': true
-//   }
-// };
-
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
     title: titleSettings,
@@ -462,9 +376,9 @@ if (allTemps.length > 0) {
             <div style="margin: 4px 0; display: flex; align-items: center; justify-content: space-between;">
               <span style="display: flex; align-items: center;">
                 <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${param.color}; margin-right: 6px;"></span>
-                <span style="color: #666; font-size: ${isMobile ? '10px' : '12px'};">${param.seriesName}:</span>
+                <span style="color: ${darkMode ? '#bdc3c7' : '#666'}; font-size: ${isMobile ? '10px' : '12px'};">${param.seriesName}:</span>
               </span>
-              <span style="font-weight: 600; margin-left: 8px; color: #333; font-size: ${isMobile ? '11px' : '13px'};">${displayValue}${unit}</span>
+              <span style="font-weight: 600; margin-left: 8px; color: ${darkMode ? '#bdc3c7' : '#666'}; font-size: ${isMobile ? '11px' : '13px'};">${displayValue}${unit}</span>
             </div>
           `;
         });
@@ -627,9 +541,9 @@ if (allTemps.length > 0) {
     origin: 'start',      // <--- key: fill down to yAxis.min, not 0
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
-      { offset: 0.25, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
-      { offset: 0.5,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-      { offset: 0.75, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+      { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
+      { offset: 0.25,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+      { offset: 0.65, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
       { offset: 1,    color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
     ]),
   },
@@ -645,7 +559,7 @@ if (allTemps.length > 0) {
         type: 'line',
         data: maxTemps,
         smooth: true,
-        symbolSize: isMobile ? 3 : 6,
+        symbolSize: isMobile ? 3 : 3,
         itemStyle: {
           color: darkMode ? colors.high.dark.dot : colors.high.light.dot,
           borderColor: darkMode ? '#1a1a2e' : '#fff',
@@ -693,7 +607,7 @@ if (allTemps.length > 0) {
         type: 'line',
         data: minTemps,
         smooth: true,
-        symbolSize: isMobile ? 3 : 6,
+        symbolSize: isMobile ? 3 : 3,
         itemStyle: {
           color: darkMode ? colors.low.dark.dot : colors.low.light.dot,
           borderColor: darkMode ? '#1a1a2e' : '#fff',

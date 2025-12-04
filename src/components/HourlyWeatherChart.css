@@ -1,53 +1,14 @@
 /* src/components/HourlyWeatherChart.css */
 .hourly-chart-container {
   width: 100%;
+  margin: 0 auto;
+  max-width: 1400px;
 }
 
-.hourly-controls {
-  background: #f8f9fa;
-  padding: 16px 20px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #e0e0e0;
-}
-
-.hourly-controls .toggle-group {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.hourly-controls .toggle-label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-}
-
-.hourly-controls .toggle-label input[type="checkbox"] {
-  margin-right: 8px;
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
-  accent-color: #26a69a;
-}
-
-.hourly-controls .toggle-label span {
-  transition: color 0.2s;
-}
-
-.hourly-controls .toggle-label:hover span {
-  color: #26a69a;
-}
-
+/* Mobile responsive */
 @media (max-width: 768px) {
-  .hourly-controls .toggle-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .hourly-chart-container {
+    padding: 0;
+    margin: 0;
   }
 }
