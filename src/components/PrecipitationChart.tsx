@@ -22,19 +22,26 @@ interface PrecipitationChartProps {
   stationId: string;
   stationName: string;
   darkMode?: boolean;
+  startDate: string;
+  endDate: string;
+  onDateRangeChange: (range: string) => void;
 }
 
 export default function PrecipitationChart({ 
   data, 
   stationId,
   stationName,
-  darkMode = false
+  darkMode = false,
+  startDate: _startDate,
+  endDate: _endDate,
+  onDateRangeChange
 }: PrecipitationChartProps) {
   const [showSnow, setShowSnow] = useState(false); // false = precip, true = snow
   const [showNormalsCumulative, setShowNormalsCumulative] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768); 
+  const [activeRange, setActiveRange] = useState<string>('14D');
 
 // Detect mobile device
 useEffect(() => {
@@ -63,10 +70,40 @@ useEffect(() => {
       }
     };
 
+    // Set initial active range based on current date range (runs once on mount)
+// useEffect(() => {
+//   const start = new Date(startDate);
+//   const end = new Date(endDate);
+//   const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+//   // Month to date
+//   if (start.getDate() === 1 && start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+//     setActiveRange('MTD');
+//   }
+//   // Year to date
+//   else if (start.getMonth() === 0 && start.getDate() === 1 && start.getFullYear() === end.getFullYear()) {
+//     setActiveRange('YTD');
+//   }
+//   // Based on day difference
+//   else if (diffDays >= 6 && diffDays <= 8) setActiveRange('7D');
+//   else if (diffDays >= 13 && diffDays <= 15) setActiveRange('14D');
+//   else if (diffDays >= 28 && diffDays <= 32) setActiveRange('1M');
+//   else if (diffDays >= 85 && diffDays <= 95) setActiveRange('3M');
+//   else if (diffDays >= 175 && diffDays <= 185) setActiveRange('6M');
+//   else if (diffDays >= 360 && diffDays <= 370) setActiveRange('1Y');
+//   else setActiveRange('Custom');
+// }, []); // Empty array = only run once on mount
+
     if (stationId) {
       fetchNormals();
     }
   }, [stationId]);
+  
+      // Handle date range button clicks
+    const handleRangeClick = (range: string) => {
+      setActiveRange(range);
+      onDateRangeChange(range);
+    };
 
   if (!data || data.length === 0) {
     return (
@@ -111,13 +148,13 @@ useEffect(() => {
   };
 
   const dataType = showSnow ? 'Snow' : 'Precip';
-const barTop = showSnow
-  ? (darkMode ? 'rgba(175, 215, 255, 0.98)' : 'rgba(205, 235, 255, 0.98)')
-  : (darkMode ? 'rgba(90, 200, 255, 0.95)' : 'rgba(74, 177, 245, 0.95)');
+  const barTop = showSnow
+    ? (darkMode ? 'rgba(175, 215, 255, 0.98)' : 'rgba(205, 235, 255, 0.98)')
+    : (darkMode ? 'rgba(90, 200, 255, 0.95)' : '#1440aed8');
 
-const barBottom = showSnow
-  ? (darkMode ? 'rgba(70, 130, 190, 0.92)' : 'rgba(80, 155, 225, 0.92)')
-  : (darkMode ? 'rgba(0, 70, 130, 0.90)' : 'rgba(0, 94, 156, 0.90)');
+  const barBottom = showSnow
+    ? (darkMode ? 'rgba(70, 130, 190, 0.92)' : 'rgba(80, 155, 225, 0.92)')
+    : (darkMode ? 'rgba(0, 70, 130, 0.90)' : 'rgba(0,111,190,0.45)');
     // : (darkMode ? '#4a90e2' : '#000000');  // Blue for precip
   
 //   const lineColor = showSnow
@@ -165,6 +202,8 @@ const wrapStationName = (name: string, maxLength: number) => {
         lineHeight: isMobile ? 18 : 24
       }
     },
+
+
     tooltip: {
       trigger: 'axis',
       backgroundColor: darkMode ? 'rgba(44, 44, 62, 0.95)' : 'rgba(255, 255, 255, 0.95)',
@@ -380,8 +419,8 @@ const wrapStationName = (name: string, maxLength: number) => {
     symbol: 'circle',
 itemStyle: {
   color: showSnow
-    ? (darkMode ? 'rgba(160,210,255,1)' : 'rgba(40,130,180,1)')
-    : (darkMode ? 'rgba(120,200,255,1)' : 'rgba(0,148,255,1)'),
+    ? (darkMode ? 'rgba(160,210,255,1)' : '#2883b4a1')
+    : (darkMode ? 'rgba(120,200,255,1)' : 'rgba(50, 153, 182, 0.79)'),
   borderColor: darkMode ? '#1a1a2e' : '#fff',
   borderWidth: 0.5
 },
@@ -389,12 +428,12 @@ lineStyle: {
   width: 3,
   color: showSnow
     ? new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-        { offset: 0, color: darkMode ? 'rgba(160, 210, 255, 1)' : 'rgba(40, 130, 180, 1)' },
+        { offset: 0, color: darkMode ? 'rgba(160, 210, 255, 1)' : '#2882b4ff' },
         { offset: 1, color: darkMode ? 'rgba(90, 140, 190, 1)' : 'rgba(109, 164, 217, 1)' }
       ])
     : new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-        { offset: 0, color: darkMode ? 'rgba(120, 200, 255, 1)' : 'rgba(0, 148, 255, 1)' },
-        { offset: 1, color: darkMode ? 'rgba(0, 110, 160, 1)' : 'rgba(74, 177, 245, 1)' }
+        { offset: 0, color: darkMode ? 'rgba(120, 200, 255, 1)' : 'rgba(20,141,174,.7)' },
+        { offset: 1, color: darkMode ? 'rgba(0, 110, 160, 1)' : 'rgba(10, 129, 161, 0.9)' }
       ]),
   shadowBlur: 8,
   shadowColor: showSnow
@@ -404,14 +443,14 @@ lineStyle: {
 areaStyle: {
   color: showSnow
     ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        { offset: 0,   color: darkMode ? 'rgba(45, 70, 100, 0.55)'  : 'rgba(230, 245, 255, 0.55)' },
-        { offset: 0.5, color: darkMode ? 'rgba(80, 130, 180, 0.65)' : 'rgba(160, 210, 250, 0.65)' },
+        { offset: 0,   color: darkMode ? 'rgba(45, 70, 100, 0.55)'  : 'rgba(59, 77, 179, 0.05)' },
+        { offset: 0.5, color: darkMode ? 'rgba(80, 130, 180, 0.65)' : 'rgba(59, 77, 179, 0.2)' },
         // { offset: 1,   color: darkMode ? 'rgba(60, 110, 170, 0.90)' : 'rgba(80, 150, 225, 0.90)' }
-        { offset: 1,   color: darkMode ? 'rgba(67, 77, 209, 0.9)' : 'rgba(82, 105, 235, 0.8)' }
+        { offset: 1,   color: darkMode ? 'rgba(67, 77, 209, 0.9)' : 'rgba(40, 60, 180, 0.4)' }
       ])
     : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
         { offset: 0, color: darkMode ? 'rgba(30, 55, 75, 0.30)' : 'rgba(224,243,255,0.35)' },
-        { offset: 0.5, color: darkMode ? 'rgba(0, 110, 160, 0.50)' : 'rgba(140,202,247,0.50)' },
+        { offset: 0.7, color: darkMode ? 'rgba(0, 110, 160, 0.50)' : 'rgba(140,202,247,0.50)' },
         { offset: 1, color: darkMode ? 'rgba(0, 60, 110, 0.85)' : 'rgba(0,94,156,0.85)' }
       ])
 },
@@ -436,10 +475,42 @@ lineStyle: {
   width: 2,
   type: 'dashed',
   color: showSnow
-    ? (darkMode ? 'rgba(140, 200, 255, 0.9)' : '#415ef1ff')
-    : (darkMode ? 'rgba(120, 180, 255, 0.9)' : '#0cd9e7ff'),
+    ? (darkMode ? 'rgba(140, 200, 255, 0.9)' : '#283db4dc')
+    : (darkMode ? '#14ae82e0' : '#14AE82'),
   opacity: 0.8
 },
+      itemStyle: {
+        color: showSnow ?
+          darkMode ? '#14AE82': '#283db4dc' // 👈 match line
+          : darkMode ? '#14AE82': '#14AE82', // 👈 match line
+        opacity: darkMode ? 0.8: 0.5,
+      },
+markPoint: {
+  data: [
+    {
+      coord: [cumulativeObserved.length - 1, cumulativeObserved[cumulativeObserved.length - 1]],
+      value: cumulativeObserved[cumulativeObserved.length - 1],
+      label: {
+        show: true,
+        formatter: (params: any) => `${params.value.toFixed(2)}"`,
+        position: 'top',
+        offset: [0, -1],
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'bold',
+        backgroundColor: showSnow
+          ? 'rgba(160, 210, 255, 0.85)' // Ice blue for snow
+          : 'rgba(50, 153, 182, 0.85)', // Water blue for rain
+        padding: [3, 7],
+        borderRadius: 3
+      },
+      symbolSize: 0
+
+    }
+  ]
+},
+
+
+      
     yAxisIndex: 1,
     z: 1
     }] : [])
@@ -452,7 +523,60 @@ lineStyle: {
 
   return (
     <div className="precipitation-chart-container">
-      
+    {/* Date Range Selector - CNBC Style */}
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      gap: isMobile ? '6px' : '8px',
+      marginBottom: '15px',
+      marginTop: '10px',
+      flexWrap: 'wrap',
+      padding: '0 10px'
+    }}>
+      {['7D', '14D', 'MTD', '1M', '3M', '6M', 'YTD', '1Y'].map(range => (
+        <button
+          key={range}
+          onClick={() => handleRangeClick(range)}
+          style={{
+            padding: isMobile ? '6px 12px' : '8px 16px',
+            fontSize: isMobile ? '11px' : '13px',
+            fontWeight: activeRange === range ? 700 : 500,
+            color: activeRange === range 
+              ? '#fff' 
+              : (darkMode ? '#95a5a6' : '#666'),
+            background: activeRange === range
+              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              : (darkMode ? 'rgba(52, 73, 94, 0.3)' : 'rgba(0, 0, 0, 0.04)'),
+            border: activeRange === range
+              ? 'none'
+              : `1px solid ${darkMode ? 'rgba(149, 165, 166, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`,
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: activeRange === range
+              ? '0 2px 8px rgba(102, 126, 234, 0.3)'
+              : 'none',
+            minWidth: isMobile ? '42px' : '48px'
+          }}
+          onMouseEnter={(e) => {
+            if (activeRange !== range) {
+              e.currentTarget.style.background = darkMode 
+                ? 'rgba(52, 73, 94, 0.5)' 
+                : 'rgba(0, 0, 0, 0.08)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeRange !== range) {
+              e.currentTarget.style.background = darkMode 
+                ? 'rgba(52, 73, 94, 0.3)' 
+                : 'rgba(0, 0, 0, 0.04)';
+            }
+          }}
+        >
+          {range}
+        </button>
+      ))}
+    </div>      
       
 <div style={{ 
   width: '100%', 

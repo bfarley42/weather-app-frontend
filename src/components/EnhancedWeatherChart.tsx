@@ -94,13 +94,19 @@ interface EnhancedWeatherChartProps {
   stationId: string;
   stationName: string;
   darkMode?: boolean;
+  startDate: string;
+  endDate: string;
+  onDateRangeChange: (range: string) => void;
 }
 
 export default function EnhancedWeatherChart({ 
   data, 
   stationId,
   stationName,
-  darkMode = false
+  darkMode = false,
+  startDate: _startDate,
+  endDate: _endDate,
+  onDateRangeChange
 }: EnhancedWeatherChartProps) {
   const [showHighTemp, setShowHighTemp] = useState(true);
   const [showLowTemp, setShowLowTemp] = useState(true);
@@ -110,6 +116,7 @@ export default function EnhancedWeatherChart({
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   const [showSnow, setShowSnow] = useState(false);  // ADD THIS - default to precip
+  const [activeRange, setActiveRange] = useState<string>('14D');
 
   // Detect mobile device
   useEffect(() => {
@@ -138,10 +145,39 @@ export default function EnhancedWeatherChart({
       }
     };
 
+// Set initial active range based on current date range (runs once on mount)
+// useEffect(() => {
+//   const start = new Date(startDate);
+//   const end = new Date(endDate);
+//   const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+//   // Month to date
+//   if (start.getDate() === 1 && start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+//     setActiveRange('MTD');
+//   }
+//   // Year to date
+//   else if (start.getMonth() === 0 && start.getDate() === 1 && start.getFullYear() === end.getFullYear()) {
+//     setActiveRange('YTD');
+//   }
+//   // Based on day difference
+//   else if (diffDays >= 6 && diffDays <= 8) setActiveRange('7D');
+//   else if (diffDays >= 13 && diffDays <= 15) setActiveRange('14D');
+//   else if (diffDays >= 28 && diffDays <= 32) setActiveRange('1M');
+//   else if (diffDays >= 85 && diffDays <= 95) setActiveRange('3M');
+//   else if (diffDays >= 175 && diffDays <= 185) setActiveRange('6M');
+//   else if (diffDays >= 360 && diffDays <= 370) setActiveRange('1Y');
+//   else setActiveRange('Custom');
+// }, []); // Empty array = only run once on mount
+
     if (stationId) {
       fetchNormals();
     }
   }, [stationId]);
+
+  const handleRangeClick = (range: string) => {
+    setActiveRange(range); // Update immediately for instant visual feedback
+    onDateRangeChange(range); // Trigger parent update
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -732,7 +768,63 @@ if (allTemps.length > 0) {
 
   return (
     <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
+      {/* Date Range Selector - CNBC Style */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: isMobile ? '6px' : '8px',
+        marginBottom: '15px',
+        marginTop: '10px',
+        flexWrap: 'wrap',
+        padding: '0 10px'
+      }}>
+        {['7D', '14D', 'MTD', '1M', '3M', '6M', 'YTD', '1Y'].map(range => (
+          <button
+            key={range}
+            onClick={() => handleRangeClick(range)}
+            style={{
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              fontSize: isMobile ? '11px' : '13px',
+              fontWeight: activeRange === range ? 700 : 500,
+              color: activeRange === range 
+                ? '#fff' 
+                : (darkMode ? '#95a5a6' : '#666'),
+              background: activeRange === range
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : (darkMode ? 'rgba(52, 73, 94, 0.3)' : 'rgba(0, 0, 0, 0.04)'),
+              border: activeRange === range
+                ? 'none'
+                : `1px solid ${darkMode ? 'rgba(149, 165, 166, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeRange === range
+                ? '0 2px 8px rgba(102, 126, 234, 0.3)'
+                : 'none',
+              minWidth: isMobile ? '42px' : '48px'
+            }}
+            onMouseEnter={(e) => {
+              if (activeRange !== range) {
+                e.currentTarget.style.background = darkMode 
+                  ? 'rgba(52, 73, 94, 0.5)' 
+                  : 'rgba(0, 0, 0, 0.08)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeRange !== range) {
+                e.currentTarget.style.background = darkMode 
+                  ? 'rgba(52, 73, 94, 0.3)' 
+                  : 'rgba(0, 0, 0, 0.04)';
+              }
+            }}
+          >
+            {range}
+          </button>
+        ))}
+      </div>
+      
       <div style={{ 
+        marginTop: '20px',
         width: '100%', 
         height: isMobile ? '540px' : '510px',
         background: darkMode ? '#1a1a2e' : '#ffffff',

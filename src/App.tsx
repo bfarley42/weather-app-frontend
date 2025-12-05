@@ -41,14 +41,15 @@ function App() {
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
   // const [startDate, setStartDate] = useState('2024-11-01');
   // const [endDate, setEndDate] = useState('2024-11-25');
-  const [startDate, setStartDate] = useState(() => {
-  const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-  return firstDay.toISOString().split('T')[0];
-});
 const [endDate, setEndDate] = useState(() => {
   const now = new Date();
   return now.toISOString().split('T')[0];
+});
+const [startDate, setStartDate] = useState(() => {
+  const now = new Date();
+  const fourteenDaysAgo = new Date(now);
+  fourteenDaysAgo.setDate(now.getDate() - 14);
+  return fourteenDaysAgo.toISOString().split('T')[0];
 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +57,10 @@ const [endDate, setEndDate] = useState(() => {
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'search' | 'chart'>('search');
 
-  const fetchWeatherData = async (station: Station) => {
-    setIsLoading(true);
+  const fetchWeatherData = async (station: Station, skipLoadingState = false) => {
+    if (!skipLoadingState) {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -75,12 +78,16 @@ const [endDate, setEndDate] = useState(() => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setWeatherData([]);
     } finally {
-      setIsLoading(false);
+      if (!skipLoadingState) {
+        setIsLoading(false);
+      }
     }
   };
 
-const fetchHourlyData = async (station: Station) => {
-  setIsLoading(true);
+const fetchHourlyData = async (station: Station, skipLoadingState = false) => {
+  if (!skipLoadingState) {
+    setIsLoading(true);
+  }
   setError(null);
 
   try {
@@ -98,7 +105,9 @@ const fetchHourlyData = async (station: Station) => {
     setError(err instanceof Error ? err.message : 'An error occurred');
     setHourlyData([]);
   } finally {
-    setIsLoading(false);
+    if (!skipLoadingState) {
+      setIsLoading(false);
+    }
   }
 };
 
@@ -140,6 +149,89 @@ const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly')
     // Fetch hourly data
     setTimeout(() => fetchHourlyData(selectedStation), 100);
   }
+};
+
+// Handle quick date range selection from chart
+// Handle quick date range selection from chart
+const handleDateRangeChange = (range: string) => {
+  if (!selectedStation) return;
+  
+  const end = new Date(endDate);
+  let start = new Date(end);
+  
+  switch (range) {
+    case '7D':
+      start.setDate(end.getDate() - 7);
+      break;
+    case '14D':
+      start.setDate(end.getDate() - 14);
+      break;
+    case 'MTD':
+      start = new Date(end.getFullYear(), end.getMonth(), 1);
+      break;
+    case '1M':
+      start.setMonth(end.getMonth() - 1);
+      break;
+    case '3M':
+      start.setMonth(end.getMonth() - 3);
+      break;
+    case '6M':
+      start.setMonth(end.getMonth() - 6);
+      break;
+    case 'YTD':
+      start = new Date(end.getFullYear(), 0, 1);
+      break;
+    case '1Y':
+      start.setFullYear(end.getFullYear() - 1);
+      break;
+    default:
+      return;
+  }
+  
+  const newStartDate = start.toISOString().split('T')[0];
+  
+  // Only update if dates actually changed
+  if (newStartDate === startDate) {
+    return;
+  }
+  
+  // Update state for UI
+  setStartDate(newStartDate);
+  
+  // ⭐ KEY FIX: Fetch using the CALCULATED dates, not state
+  // Create a modified fetch that uses the new dates directly
+  const fetchWithNewDates = async () => {
+    setError(null);
+    
+    try {
+      const url = chartView === 'hourly'
+        ? `${API_URL}/api/weather/hourly?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`
+        : `${API_URL}/api/weather/daily?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`;
+      
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${chartView} weather data`);
+      }
+
+      const data = await response.json();
+      
+      if (chartView === 'hourly') {
+        setHourlyData(data);
+      } else {
+        setWeatherData(data);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (chartView === 'hourly') {
+        setHourlyData([]);
+      } else {
+        setWeatherData([]);
+      }
+    }
+  };
+  
+  fetchWithNewDates();
 };
 
 const handleBackToSearch = () => {
@@ -292,7 +384,7 @@ const handleBackToSearch = () => {
                     />
                   )}
                 </div> */}
-                <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
+  <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
   {chartView === 'temperature' ? (
     <EnhancedWeatherChart
       key="temperature-chart"
@@ -300,6 +392,9 @@ const handleBackToSearch = () => {
       stationId={selectedStation?.station_id || ''}
       stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
       darkMode={darkMode}
+      startDate={startDate}
+      endDate={endDate}
+      onDateRangeChange={handleDateRangeChange}
     />
   ) : chartView === 'precipitation' ? (
     <PrecipitationChart
@@ -308,6 +403,9 @@ const handleBackToSearch = () => {
       stationId={selectedStation?.station_id || ''}
       stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
       darkMode={darkMode}
+      startDate={startDate}
+      endDate={endDate}
+      onDateRangeChange={handleDateRangeChange}
     />
   ) : (
     <HourlyWeatherChart
