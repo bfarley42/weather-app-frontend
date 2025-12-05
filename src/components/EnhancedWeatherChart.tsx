@@ -7,10 +7,10 @@ import './EnhancedWeatherChart.css';
 const colors = {
   high: {
     light: {
-      line: ['#bd3440ff', '#9a000d'],
-      dot: '#BE0010',
-      shadow: 'rgba(190, 0, 16, 0.45)',
-      normal: 'rgba(190, 0, 16, 0.6)',
+      line: ['#ae3514cc', '#AE3514'],
+      dot: '#AE3514',
+      shadow: 'rgba(190, 92, 0, 0.45)',
+      normal: '#d30000ff',
     },
     dark: {
       line: ['#c03942ff', '#b3000fff'],
@@ -22,26 +22,26 @@ const colors = {
 
   low: {
     light: {
-      line: ['#00BEAE', '#00A696'],
-      dot: '#00BEAE',
+      line: ['#0888acc9', '#148dae'],
+      dot: '#148daede',
       shadow: 'rgba(0, 190, 174, 0.40)',
-      normal: 'rgba(0, 175, 155, 0.65)',
+      normal: '#04addbc9',
     },
     dark: {
       line: ['#66F5E6', '#00D5C2'],
       dot: '#66F5E6',
       shadow: 'rgba(0, 210, 190, 0.50)',
-      normal: 'rgba(0, 220, 200, 0.75)',
+      normal: '#148daed8',
     }
   },
 
   range: {
     light: [
-      'rgba(190,0,16,0.30)',
-      'rgba(190,0,16,0.15)',
-      'rgba(0,190,174,0.20)',
-      'rgba(0,190,174,0.05)',
-      'rgba(255, 255, 255, 0.15)'
+      'rgba(174, 53, 20, 0.6)',
+      'rgba(174, 53, 20, 0.2)',
+      'rgba(20, 141, 174, 0.25)',
+      'rgba(20,141,174,0.15)',
+      'rgba(189, 189, 189, 0)'
     ],
     dark: [
       'rgba(190,0,16,0.6)',
@@ -54,7 +54,7 @@ const colors = {
 
   precip: {
     light: [
-      'rgba(0,111,190,0.90)',
+      '#1440aed8',
       'rgba(0,111,190,0.45)'
     ],
     dark: [
@@ -64,8 +64,8 @@ const colors = {
   },
   snow: {  // ADD THIS ENTIRE BLOCK
     light: [
-      'rgba(128, 194, 252, 0.9)',  // Light ice blue at top
-      'rgba(193, 224, 248, 0.7)'   // Very light ice blue at bottom
+      'rgba(109, 184, 250, 0.9)',  // Light ice blue at top
+      'rgba(185, 222, 250, 0.7)'   // Very light ice blue at bottom
     ],
     dark: [
       'rgba(140,200,255,0.95)',  // Brighter ice blue for dark mode
@@ -315,6 +315,7 @@ if (allTemps.length > 0) {
     itemGap: 15,
     itemWidth: 20,
     itemHeight: 12,
+    // icon: 'rect',
     textStyle: {
       fontSize: 13,
       color: darkMode ? '#bdc3c7' : '#555'
@@ -336,7 +337,7 @@ if (allTemps.length > 0) {
       trigger: 'axis',
       backgroundColor: darkMode
         ? 'rgba(30, 38, 50, 0.95)'
-        : 'rgba(255, 255, 255, 0.95)',
+        : 'rgba(255, 255, 255, 1)',
       borderColor: darkMode ? '#34495e' : '#e0e0e0',
       borderWidth: 1,
       padding: isMobile ? 5 : 15,
@@ -492,7 +493,7 @@ if (allTemps.length > 0) {
         splitLine: {
           show: true,
           lineStyle: {
-            color: darkMode ? '#2c3e50' : '#f0f0f0'
+            color: darkMode ? '#2c3e50' : '#cfcdcd3b'
           }
         }
       },
@@ -525,7 +526,7 @@ if (allTemps.length > 0) {
     ],
     
     series: [
-      // 🔥 Always-on temperature shading from High Temp down to axis bottom
+      // Temperature Line and Shading
  // 🔥 Temperature shading from High Temp down to axis bottom
 {
   name: 'Temperature Shade',
@@ -543,7 +544,7 @@ if (allTemps.length > 0) {
       { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
       { offset: 0.15, color: darkMode ? colors.range.dark[1] : colors.range.light[1] },
       { offset: 0.35,  color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
-      { offset: 0.65, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
+      { offset: 0.55, color: darkMode ? colors.range.dark[3] : colors.range.light[3] },
       { offset: 1,    color: darkMode ? colors.range.dark[4] : colors.range.light[4] },
     ]),
   },
@@ -553,7 +554,7 @@ if (allTemps.length > 0) {
 },
 
 
-      // High temperature
+      // High temperature line
       ...(showHighTemp ? [{
         name: 'High Temp',
         type: 'line',
@@ -589,7 +590,7 @@ if (allTemps.length > 0) {
                 color: darkMode ? '#fff' : '#fff',
                 fontSize: isMobile ? 11 : 13,
                 fontWeight: 'semibold',
-                backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(190, 0, 16, 0.7)',
+                backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(192, 0, 16, 0.8)',
                 padding: [2.5, 7],
                 borderRadius: 6
               },
@@ -634,10 +635,10 @@ if (allTemps.length > 0) {
                 show: true,
                 formatter: '{c}°',
                 position: 'bottom',
-                color: darkMode ? '#fff' : '#2c3e50',
+                color: darkMode ? '#fff' : '#000',
                 fontSize: isMobile ? 11 : 13,
                 fontWeight: 'semibold',
-                backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(0, 190, 174, 0.6)',
+                backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(4, 167, 212, 0.38)',
                 padding: [2.5, 7],
                 borderRadius: 4
               },
@@ -656,13 +657,19 @@ if (allTemps.length > 0) {
         data: normalHighs,
         smooth: true,
         symbol: 'none',
-        legendIcon: 'rect',  // ADD THIS - forces dashed line icon
+        showSymbol: false,
+        // legendIcon: 'rect',  // ADD THIS - forces dashed line icon
         lineStyle: {
-          width: isMobile ? 2 : 3,
-          type: 'dashed',
+          width: isMobile ? 2.5 : 3,
+          type: 'dotted',
           opacity: 0.8,
           color: darkMode ? colors.high.dark.normal : colors.high.light.normal
         },
+      itemStyle: {
+        color: darkMode ? colors.high.dark.normal : '#ad0b0ba6', // 👈 match line
+        opacity: 0.5,
+      },
+
         yAxisIndex: 0,
         z: 1
       }] : []),
@@ -676,11 +683,15 @@ if (allTemps.length > 0) {
         symbol: 'none',
         legendIcon: 'rect',  // ADD THIS - forces dashed line icon
         lineStyle: {
-          width: isMobile ? 2 : 3,
-          type: 'dashed',
+          width: isMobile ? 2.5 : 3,
+          type: 'dotted',
           opacity: 0.8,
           color: darkMode ? colors.low.dark.normal : colors.low.light.normal
         },
+        itemStyle: {
+        color: darkMode ? colors.high.dark.normal : '#0b8dada6', // 👈 match line
+        opacity: 0.5,
+      },
         yAxisIndex: 0,
         z: 1
       }] : []),
