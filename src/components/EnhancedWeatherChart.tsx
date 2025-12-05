@@ -104,8 +104,8 @@ export default function EnhancedWeatherChart({
   stationId,
   stationName,
   darkMode = false,
-  startDate: _startDate,
-  endDate: _endDate,
+  startDate,
+  endDate,
   onDateRangeChange
 }: EnhancedWeatherChartProps) {
   const [showHighTemp, setShowHighTemp] = useState(true);
@@ -117,6 +117,19 @@ export default function EnhancedWeatherChart({
 
   const [showSnow, setShowSnow] = useState(false);  // ADD THIS - default to precip
   const [activeRange, setActiveRange] = useState<string>('14D');
+
+  // Calculate number of days in date range for line width adjustment
+  const daysDifference = (() => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  })();
+
+  // Adjust line width based on date range (thinner for 6+ months)
+  const isLongRange = daysDifference >= 180; // 6 months or more
+  const lineWidth = isMobile 
+    ? (isLongRange ? 1.5 : 2.5) 
+    : (isLongRange ? 2 : 3.5);
 
   // Detect mobile device
   useEffect(() => {
@@ -145,29 +158,6 @@ export default function EnhancedWeatherChart({
       }
     };
 
-// Set initial active range based on current date range (runs once on mount)
-// useEffect(() => {
-//   const start = new Date(startDate);
-//   const end = new Date(endDate);
-//   const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  
-//   // Month to date
-//   if (start.getDate() === 1 && start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-//     setActiveRange('MTD');
-//   }
-//   // Year to date
-//   else if (start.getMonth() === 0 && start.getDate() === 1 && start.getFullYear() === end.getFullYear()) {
-//     setActiveRange('YTD');
-//   }
-//   // Based on day difference
-//   else if (diffDays >= 6 && diffDays <= 8) setActiveRange('7D');
-//   else if (diffDays >= 13 && diffDays <= 15) setActiveRange('14D');
-//   else if (diffDays >= 28 && diffDays <= 32) setActiveRange('1M');
-//   else if (diffDays >= 85 && diffDays <= 95) setActiveRange('3M');
-//   else if (diffDays >= 175 && diffDays <= 185) setActiveRange('6M');
-//   else if (diffDays >= 360 && diffDays <= 370) setActiveRange('1Y');
-//   else setActiveRange('Custom');
-// }, []); // Empty array = only run once on mount
 
     if (stationId) {
       fetchNormals();
@@ -192,6 +182,24 @@ export default function EnhancedWeatherChart({
     const date = new Date(d.obs_date + 'T12:00:00');
     return date;
   });
+
+  const formatDisplayDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: '2-digit'
+    });
+  };
+
+  const shortenStationName = (name: string): string => {
+  if (!name) return '';
+  return name
+    .replace(/INTERNATIONAL/g, 'INTL')
+    .replace(/AIRPORT/g, 'AP')
+    .replace(/CENTER/g, 'CTR');
+};
   
   const maxTemps = data.map(d => d.tmax_f);
   const minTemps = data.map(d => d.tmin_f);
@@ -270,48 +278,46 @@ if (allTemps.length > 0) {
   };
 
   // Helper function to wrap long station names
-  const wrapStationName = (name: string, maxLength: number) => {
-    if (name.length <= maxLength) return name;
+  // const wrapStationName = (name: string, maxLength: number) => {
+  //   if (name.length <= maxLength) return name;
     
-    const words = name.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
+  //   const words = name.split(' ');
+  //   const lines: string[] = [];
+  //   let currentLine = '';
     
-    words.forEach(word => {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      if (testLine.length <= maxLength) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      }
-    });
+  //   words.forEach(word => {
+  //     const testLine = currentLine ? `${currentLine} ${word}` : word;
+  //     if (testLine.length <= maxLength) {
+  //       currentLine = testLine;
+  //     } else {
+  //       if (currentLine) lines.push(currentLine);
+  //       currentLine = word;
+  //     }
+  //   });
     
-    if (currentLine) lines.push(currentLine);
-    return lines.join('\n');
-  };
+  //   if (currentLine) lines.push(currentLine);
+  //   return lines.join('\n');
+  // };
 
-  const titleSettings = isMobile ? {
-    text: wrapStationName(stationName, 30),
-    left: 'center',
-    top: 5,
-    textStyle: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50',
-      lineHeight: 18
-    }
-  } : {
-    text: wrapStationName(stationName, 50),
-    left: 'center',
-    top: 10,
-    textStyle: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: darkMode ? '#ecf0f1' : '#2c3e50',
-      lineHeight: 24
-    }
-  };
+const titleSettings = {
+  text: shortenStationName(stationName),
+  subtext: `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`,
+  left: 'center',
+  top: 3,
+  itemGap: 2,
+  textStyle: {
+    fontSize: isMobile ? 15 : 20,
+    fontWeight: 700,
+    color: darkMode ? '#ecf0f1' : '#2c3e50',
+    lineHeight: isMobile ? 18 : 22
+  },
+  subtextStyle: {
+    fontSize: isMobile ? 12 : 14,
+    fontWeight: 500,
+    color: darkMode ? '#95a5a6' : '#7f8c8d',  // Lighter color for dates
+    lineHeight: isMobile ? 14 : 16
+  }
+};
 
   // Responsive legend
   const legendSettings = isMobile ? {
@@ -603,7 +609,7 @@ if (allTemps.length > 0) {
           borderWidth: isMobile ? 1 : 2,
         },
         lineStyle: {
-          width: isMobile ? 2 : 3,
+          width: lineWidth,
           color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
             (darkMode ? colors.high.dark.line : colors.high.light.line)
               .map((c, i) => ({ offset: i, color: c }))
@@ -651,7 +657,7 @@ if (allTemps.length > 0) {
           borderWidth: isMobile ? 1 : 2,
         },
         lineStyle: {
-          width: isMobile ? 2 : 3,
+          width: lineWidth,
           color: new echarts.graphic.LinearGradient(0, 0, 1, 0,
             (darkMode ? colors.low.dark.line : colors.low.light.line)
               .map((c, i) => ({ offset: i, color: c }))
@@ -768,6 +774,8 @@ if (allTemps.length > 0) {
 
   return (
     <div className={`enhanced-chart-container ${darkMode ? 'dark-mode' : ''}`}>
+  
+
       {/* Date Range Selector - CNBC Style */}
       <div style={{
         display: 'flex',
@@ -822,7 +830,6 @@ if (allTemps.length > 0) {
           </button>
         ))}
       </div>
-      
       <div style={{ 
         marginTop: '20px',
         width: '100%', 
