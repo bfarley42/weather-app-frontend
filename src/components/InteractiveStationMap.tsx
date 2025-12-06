@@ -1,6 +1,6 @@
 // src/components/InteractiveStationMap.tsx
 // V2 - Cleaner UI, proximity-based loading, hover tooltips
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -227,7 +227,7 @@ export default function InteractiveStationMap({
   }, [startDate, endDate, summaries]);
 
   // Handle bounds change - load nearby stations
-  const handleBoundsChange = useCallback((bounds: L.LatLngBounds, center: L.LatLng) => {
+  const handleBoundsChange = useCallback((_bounds: L.LatLngBounds, center: L.LatLng) => {
     fetchNearbyStations(center.lat, center.lng);
   }, [fetchNearbyStations]);
 
