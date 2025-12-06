@@ -189,17 +189,24 @@ export default function EnhancedWeatherChart({
     return d.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
-      year: '2-digit'
+      year: 'numeric'
     });
   };
 
   const shortenStationName = (name: string): string => {
-  if (!name) return '';
-  return name
-    .replace(/INTERNATIONAL/g, 'INTL')
-    .replace(/AIRPORT/g, 'AP')
-    .replace(/CENTER/g, 'CTR');
-};
+    if (!name) return '';
+
+    // Only shorten if the length is > 45
+    if (name.length > 45) {
+      return name
+        .replace(/INTERNATIONAL/g, 'INTL')
+        .replace(/AIRPORT/g, 'AP')
+        .replace(/CENTER/g, 'CTR');
+    }
+
+    // Otherwise return original name
+    return name;
+  };
   
   const maxTemps = data.map(d => d.tmax_f);
   const minTemps = data.map(d => d.tmin_f);

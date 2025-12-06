@@ -7,6 +7,8 @@ import WeatherSummary from './components/WeatherSummary';
 import { API_URL } from './config';
 import './App.css';
 import HourlyWeatherChart from './components/HourlyWeatherChart';
+import MapView from './components/MapView';
+import InteractiveStationMap from './components/InteractiveStationMap';
 
 interface Station {
   station_id: string;
@@ -37,10 +39,7 @@ interface HourlyWeather {
 function App() {
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [weatherData, setWeatherData] = useState<DailyWeather[]>([]);
-  // const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
-  // const [startDate, setStartDate] = useState('2024-11-01');
-  // const [endDate, setEndDate] = useState('2024-11-25');
 const [endDate, setEndDate] = useState(() => {
   const now = new Date();
   return now.toISOString().split('T')[0];
@@ -53,7 +52,7 @@ const [startDate, setStartDate] = useState(() => {
 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'search' | 'chart'>('search');
 
@@ -133,7 +132,7 @@ const handleDateChange = () => {
   }
 };
 
-const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly') => {
+const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map') => {
   setChartView(view);
   setError(null);
   
@@ -240,10 +239,11 @@ const handleBackToSearch = () => {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1>🌤️ Historical Weather Viewer</h1>
-        <p>Explore weather patterns from thousands of stations</p>
-      </header>
+<header className="app-header">
+  <h1>🌤️ Historical Weather Viewer</h1>
+  <p>Explore weather patterns from thousands of stations</p>
+    
+</header>
 
       <main className="app-main">
         {currentView === 'search' ? (
@@ -292,7 +292,7 @@ const handleBackToSearch = () => {
                 <p>Try searching for your city or airport code</p>
               </div>
             )}
-          </div>
+          </div>       
         ) : (
           // CHART VIEW - Shows chart with back button
           <>
@@ -360,30 +360,6 @@ const handleBackToSearch = () => {
                     <span>🌙 Dark Mode</span>
                   </label>
                 </div>
-
-                {/* <div className="chart-section">
-                  {chartView === 'temperature' ? (
-                    <EnhancedWeatherChart
-                      data={weatherData}
-                      stationId={selectedStation?.station_id || ''}
-                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                      darkMode={darkMode}
-                    />
-                  ) : chartView === 'precipitation' ? (
-                    <PrecipitationChart
-                      data={weatherData}
-                      stationId={selectedStation?.station_id || ''}
-                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                      darkMode={darkMode}
-                    />
-                  ) : (
-                    <HourlyWeatherChart
-                      data={hourlyData}
-                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                      darkMode={darkMode}
-                    />
-                  )}
-                </div> */}
   <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
   {chartView === 'temperature' ? (
     <EnhancedWeatherChart
@@ -407,14 +383,29 @@ const handleBackToSearch = () => {
       endDate={endDate}
       onDateRangeChange={handleDateRangeChange}
     />
-  ) : (
-    <HourlyWeatherChart
-      key="hourly-chart"
-      data={hourlyData}
-      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-      darkMode={darkMode}
-    />
-  )}
+) : chartView === 'hourly' ? (
+  <HourlyWeatherChart
+    key="hourly-chart"
+    data={hourlyData}
+    stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+    darkMode={darkMode}
+    startDate={startDate}
+    endDate={endDate}
+  />
+) : (
+  <InteractiveStationMap
+    startDate={startDate}
+    endDate={endDate}
+    darkMode={darkMode}
+    metric="tmax"
+    selectedStation={selectedStation!}  // Pass the selected station
+    onStationSelect={(station) => {
+      setSelectedStation(station);
+      fetchWeatherData(station);
+      setChartView('temperature');
+    }}
+  />
+)}
 </div>
 
                 {/* Chart View Selector below chart */}
@@ -437,6 +428,12 @@ const handleBackToSearch = () => {
                   >
                     ⏰ Hourly
                   </button>
+                  <button
+                  className={chartView === 'map' ? 'active' : ''}
+                  onClick={() => handleChartViewChange('map')}
+                >
+                  🗺️ Map
+                </button>
                 </div>
 
                 {/* Weather Summary below chart type buttons */}

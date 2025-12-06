@@ -19,12 +19,16 @@ interface HourlyWeatherChartProps {
   data: HourlyWeather[];
   stationName: string;
   darkMode?: boolean;
+  startDate: string;
+  endDate: string;
 }
 
 export default function HourlyWeatherChart({ 
   data, 
   stationName,
-  darkMode = false
+  darkMode = false,
+  startDate,
+  endDate,
 }: HourlyWeatherChartProps) {
   const [showWindOrPrecip, setShowWindOrPrecip] = useState<'precip' | 'wind'>('precip');  // Toggle between two
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);  // ADD THIS
@@ -113,20 +117,68 @@ export default function HourlyWeatherChart({
     return lines.join('\n');
   };
 
+  const formatDisplayDate = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric'
+  });
+  };
+
+  const shortenStationName = (name: string): string => {
+    if (!name) return '';
+
+    // Only shorten if the length is > 45
+    if (name.length > 45) {
+      return name
+        .replace(/INTERNATIONAL/g, 'INTL')
+        .replace(/AIRPORT/g, 'AP')
+        .replace(/CENTER/g, 'CTR');
+    }
+
+    // Otherwise return original name
+    return name;
+  };
+
+
+const titleSettings = {
+  text: shortenStationName(stationName),
+  subtext: `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`,
+  left: 'center',
+  top: 3,
+  itemGap: 2,
+  textStyle: {
+    fontSize: isMobile ? 15 : 20,
+    fontWeight: 700,
+    color: darkMode ? '#ecf0f1' : '#2c3e50',
+    lineHeight: isMobile ? 18 : 22
+  },
+  subtextStyle: {
+    fontSize: isMobile ? 12 : 14,
+    fontWeight: 500,
+    color: darkMode ? '#95a5a6' : '#7f8c8d',  // Lighter color for dates
+    lineHeight: isMobile ? 14 : 16
+  }
+};
+
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
     
-    title: {
-      text: wrapStationName(stationName, isMobile ? 30 : 50),  // Just station name
-      left: 'center',
-      top: isMobile ? 5 : 10,
-      textStyle: {
-        fontSize: isMobile ? 15 : 20,
-        fontWeight: 700,
-        color: darkMode ? '#ecf0f1' : '#2c3e50',
-        lineHeight: isMobile ? 18 : 24
-      }
-    },
+    title: titleSettings,
+    
+    // {
+    //   text: wrapStationName(stationName, isMobile ? 30 : 50),  // Just station name
+    //   left: 'center',
+    //   top: isMobile ? 5 : 10,
+    //   textStyle: {
+    //     fontSize: isMobile ? 15 : 20,
+    //     fontWeight: 700,
+    //     color: darkMode ? '#ecf0f1' : '#2c3e50',
+    //     lineHeight: isMobile ? 18 : 24
+    //   }
+    // },
     
     tooltip: {
       trigger: 'axis',
@@ -188,7 +240,7 @@ export default function HourlyWeatherChart({
       showWindOrPrecip === 'precip' ? 'Precipitation' : 'Wind Speed',
       ...(showWindOrPrecip === 'wind' && showWindGusts ? ['Wind Gusts'] : [])
     ],
-    top: isMobile ? 40 : 45,
+    top: isMobile ? 45 : 45,
     left: 'center',
     itemGap: isMobile ? 12 : 20,
     itemWidth: isMobile ? 15 : 20,
@@ -202,7 +254,7 @@ export default function HourlyWeatherChart({
     grid: isMobile ? {
       left: 45,
       right: 45,
-      top: 90,
+      top: 93,
       bottom: 90
     } : {
       left: 60,
@@ -514,6 +566,10 @@ export default function HourlyWeatherChart({
     width: 2,  // Make it prominent
     color: darkMode ? '#e74b0eff' : '#e25614ff'
   },
+    itemStyle: {
+        color: darkMode ? '#e74b0eff': '#e25614ff', // 👈 match line
+        opacity: darkMode ? 0.8: 0.5,
+      },
   markPoint: {  // ADD THIS
     data: [
       {
@@ -684,6 +740,10 @@ export default function HourlyWeatherChart({
     width: darkMode ? 1.5 : .2,
     color: darkMode ? '#0db0c58c' : '#189eb6ff'
   },
+      itemStyle: {
+        color: darkMode ? '#0db0c58c': '#189eb6ff', // 👈 match line
+        opacity: darkMode ? 0.8: 0.5,
+      },
   areaStyle: {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0, color: darkMode ? 'rgba(12, 196, 180, 0.2)' : 'rgba(11, 191, 236, 0.99)' },

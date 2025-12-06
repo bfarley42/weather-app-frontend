@@ -5,7 +5,10 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
+    // "types": ["node"],  // Add this line
+    "module": "ESNext",
     "moduleResolution": "bundler",
+    "noEmit": true,
     "allowImportingTsExtensions": true
-  }  
+  }
 }

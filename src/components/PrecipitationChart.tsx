@@ -32,8 +32,8 @@ export default function PrecipitationChart({
   stationId,
   stationName,
   darkMode = false,
-  startDate: _startDate,
-  endDate: _endDate,
+  startDate,
+  endDate,
   onDateRangeChange
 }: PrecipitationChartProps) {
   const [showSnow, setShowSnow] = useState(false); // false = precip, true = snow
@@ -147,6 +147,31 @@ useEffect(() => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+   const formatDisplayDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const shortenStationName = (name: string): string => {
+    if (!name) return '';
+
+    // Only shorten if the length is > 45
+    if (name.length > 45) {
+      return name
+        .replace(/INTERNATIONAL/g, 'INTL')
+        .replace(/AIRPORT/g, 'AP')
+        .replace(/CENTER/g, 'CTR');
+    }
+
+    // Otherwise return original name
+    return name;
+  }; 
+
   const dataType = showSnow ? 'Snow' : 'Precip';
   const barTop = showSnow
     ? (darkMode ? 'rgba(175, 215, 255, 0.98)' : 'rgba(205, 235, 255, 0.98)')
@@ -188,20 +213,42 @@ const wrapStationName = (name: string, maxLength: number) => {
   return lines.join('\n');
 };
 
+const titleSettings = {
+  text: shortenStationName(stationName),
+  subtext: `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`,
+  left: 'center',
+  top: 3,
+  itemGap: 2,
+  textStyle: {
+    fontSize: isMobile ? 15 : 20,
+    fontWeight: 700,
+    color: darkMode ? '#ecf0f1' : '#2c3e50',
+    lineHeight: isMobile ? 18 : 22
+  },
+  subtextStyle: {
+    fontSize: isMobile ? 12 : 14,
+    fontWeight: 500,
+    color: darkMode ? '#95a5a6' : '#7f8c8d',
+    lineHeight: isMobile ? 14 : 16
+  }
+};
+
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
     
-    title: {
-      text: wrapStationName(stationName, isMobile ? 30 : 50),  // Just station name, wrapped
-      left: 'center',
-      top: isMobile ? 5 : 10,
-      textStyle: {
-        fontSize: isMobile ? 15 : 20,
-        fontWeight: 700,
-        color: darkMode ? '#ecf0f1' : '#2c3e50',
-        lineHeight: isMobile ? 18 : 24
-      }
-    },
+    title: titleSettings,
+    
+    // {
+    //   text: wrapStationName(stationName, isMobile ? 30 : 50),  // Just station name, wrapped
+    //   left: 'center',
+    //   top: isMobile ? 5 : 10,
+    //   textStyle: {
+    //     fontSize: isMobile ? 15 : 20,
+    //     fontWeight: 700,
+    //     color: darkMode ? '#ecf0f1' : '#2c3e50',
+    //     lineHeight: isMobile ? 18 : 24
+    //   }
+    // },
 
 
     tooltip: {
