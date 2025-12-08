@@ -71,7 +71,18 @@ const colors = {
       'rgba(140,200,255,0.95)',  // Brighter ice blue for dark mode
       'rgba(180,220,255,0.45)'   // Lighter ice blue
     ],
+  },
+    avg: {  // ADD THIS BLOCK
+    light: {
+      line: '#E7B12C',
+      gradient: ['rgba(231, 177, 44, 0.5)', 'rgba(231, 177, 44, 0.05)']
+    },
+    dark: {
+      line: '#E7B12C',
+      gradient: ['rgba(231, 177, 44, 0.6)', 'rgba(231, 177, 44, 0.1)']
+    }
   }
+  
 };
 
 interface DailyWeather {
@@ -108,14 +119,15 @@ export default function EnhancedWeatherChart({
   endDate,
   onDateRangeChange
 }: EnhancedWeatherChartProps) {
-  const [showHighTemp, setShowHighTemp] = useState(true);
-  const [showLowTemp, setShowLowTemp] = useState(true);
-  const [showNormals, setShowNormals] = useState(true);
+  const [showHighTemp, _setShowHighTemp] = useState(true);
+  const [showLowTemp, _setShowLowTemp] = useState(true);
+  const [showNormals, _setShowNormals] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
-  const [isLoadingNormals, setIsLoadingNormals] = useState(false);
+  const [_isLoadingNormals, setIsLoadingNormals] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   const [showSnow, setShowSnow] = useState(false);  // ADD THIS - default to precip
+  const [showAvgTemp, setShowAvgTemp] = useState(false);  // ADD THIS LINE
   const [activeRange, setActiveRange] = useState<string>('14D');
 
   // Calculate number of days in date range for line width adjustment
@@ -213,6 +225,15 @@ export default function EnhancedWeatherChart({
   // const precip = data.map(d => d.prcp_in || 0);
   const precip = data.map(d => showSnow ? (d.snow_in || 0) : (d.prcp_in || 0));  // Toggle between precip and snow
 
+
+  // ADD THESE LINES - Calculate average temperatures
+  const avgTemps = data.map(d => {
+    if (d.tmax_f !== null && d.tmin_f !== null) {
+      return (d.tmax_f + d.tmin_f) / 2;
+    }
+    return null;
+  });  
+
   // Compute axis min/max for temperature, matching your old min/max logic
   const allTemps: number[] = [];
   maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
@@ -261,6 +282,14 @@ if (allTemps.length > 0) {
     const normal = normalsMap.get(mmdd);
     normalHighs.push(normal?.tmax_f ?? null);
     normalLows.push(normal?.tmin_f ?? null);
+  });
+
+  const normalAvgs = normalHighs.map((high, i) => {
+    const low = normalLows[i];
+    if (high !== null && low !== null) {
+      return (high + low) / 2;
+    }
+    return null;
   });
 
   // Format date labels - shorter for mobile
@@ -353,7 +382,9 @@ const titleSettings = {
       'Normal Low': true
     }
   } : {
-    data: [
+    data: showAvgTemp 
+  ? ['Avg Temp', showSnow ? 'Snow' : 'Precip', ...(showNormals ? ['Normal Avg'] : [])]
+  : [
       ...(showHighTemp ? ['High Temp'] : []),
       ...(showLowTemp ? ['Low Temp'] : []),
       showSnow ? 'Snow' : 'Precip',
@@ -587,7 +618,7 @@ const titleSettings = {
     width: 0,             // hide the line itself
     opacity: 0,
   },
-  areaStyle: {
+  areaStyle: showAvgTemp ? undefined : {
     origin: 'start',      // <--- key: fill down to yAxis.min, not 0
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
       { offset: 0,    color: darkMode ? colors.range.dark[0] : colors.range.light[0] },
@@ -604,7 +635,7 @@ const titleSettings = {
 
 
       // High temperature line
-      ...(showHighTemp ? [{
+      ...(showHighTemp && !showAvgTemp ? [{
         name: 'High Temp',
         type: 'line',
         data: maxTemps,
@@ -652,7 +683,7 @@ const titleSettings = {
       }] : []),
       
       // Low temperature
-      ...(showLowTemp ? [{
+      ...(showLowTemp && !showAvgTemp ? [{
         name: 'Low Temp',
         type: 'line',
         data: minTemps,
@@ -700,7 +731,7 @@ const titleSettings = {
       }] : []),
       
       // Normal high temp
-      ...(showNormals && showHighTemp ? [{
+      ...(showNormals && showHighTemp && !showAvgTemp ? [{
         name: 'Normal High',
         type: 'line',
         data: normalHighs,
@@ -724,7 +755,7 @@ const titleSettings = {
       }] : []),
       
       // Normal low temp
-      ...(showNormals && showLowTemp ? [{
+      ...(showNormals && showLowTemp && !showAvgTemp ? [{
         name: 'Normal Low',
         type: 'line',
         data: normalLows,
@@ -767,7 +798,53 @@ const titleSettings = {
         barWidth: isMobile ? '60%' : '70%',
         yAxisIndex: 1,
         z: 0
-      }
+      },
+// ADD THIS BLOCK - Average Temp line with gradient fill
+      ...(showAvgTemp ? [{
+        name: 'Avg Temp',
+        type: 'line',
+        data: avgTemps,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: isMobile ? 4 : 6,
+        lineStyle: {
+          width: lineWidth,
+          color: darkMode ? colors.avg.dark.line : colors.avg.light.line
+        },
+        itemStyle: {
+          color: darkMode ? colors.avg.dark.line : colors.avg.light.line
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: darkMode ? colors.avg.dark.gradient[0] : colors.avg.light.gradient[0] },
+            { offset: .5, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
+            { offset: 1, color: darkMode ? colors.avg.dark.gradient[1] : colors.avg.light.gradient[1] }
+          ])
+        },
+        yAxisIndex: 0,
+        z: 3
+      }] : []),
+
+      // Normal Average Temp
+      ...(showAvgTemp && showNormals ? [{
+        name: 'Normal Avg',
+        type: 'line',
+        data: normalAvgs,
+        smooth: true,
+        symbol: 'none',
+        lineStyle: {
+          width: isMobile ? 2.5 : 3,
+          type: 'dotted',
+          opacity: 0.8,
+          color: darkMode ? '#c9a227' : '#b8860b'  // Darker gold for normal
+        },
+        itemStyle: {
+          color: darkMode ? '#c9a227' : '#b8860b'
+        },
+        yAxisIndex: 0,
+        z: 2
+      }] : []),
+
     ],
     
     animation: true,
@@ -876,7 +953,9 @@ const titleSettings = {
   display: 'flex', 
   justifyContent: 'center', 
   marginTop: '15px',
-  marginBottom: '10px'
+  marginBottom: '10px',
+  gap: '12px'
+
 }}>
 <button
   onClick={() => setShowSnow(!showSnow)}
@@ -923,12 +1002,52 @@ const titleSettings = {
   )}
     <span>{showSnow ? 'Show Rain' : 'Show Snow'}</span>
   </button>
+ {/* SHOW AVG TEMP BUTTON */}
+  <button
+    onClick={() => setShowAvgTemp(!showAvgTemp)}
+    style={{
+      background: showAvgTemp 
+        ? 'linear-gradient(135deg, #E7B12C 0%, #c9a227 100%)'
+        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '10px 20px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: isMobile ? '13px' : '14px',
+      fontWeight: 600,
+      color: 'white',
+      transition: 'all 0.2s',
+      boxShadow: showAvgTemp 
+        ? '0 4px 12px rgba(231, 177, 44, 0.4)'
+        : '0 4px 12px rgba(102, 126, 234, 0.4)'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+    }}
+    title={showAvgTemp ? 'Show High/Low' : 'Show Average Temp'}
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2v20M2 12h20" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+    <span>{showAvgTemp ? 'Show Hi/Lo' : 'Show Avg'}</span>
+  </button>
+
+
+
 </div>
+
 
 {/* <div className="chart-controls">
   <div className="toggle-group"></div> */}
 
-
+{/* 
       <div className="chart-controls">
         <div className="toggle-group">
           <label className="toggle-label">
@@ -957,7 +1076,7 @@ const titleSettings = {
             <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
           </label>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

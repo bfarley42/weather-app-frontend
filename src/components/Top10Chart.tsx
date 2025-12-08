@@ -70,7 +70,7 @@ export default function Top10Chart({
   const [error, setError] = useState<string | null>(null);
   
   // Top10 has its own date range (default to 10 years)
-  const [yearsBack, setYearsBack] = useState(10);
+  const [yearsBack, setYearsBack] = useState(20);
   const endDate = new Date().toISOString().split('T')[0];
   const startDate = new Date(new Date().setFullYear(new Date().getFullYear() - yearsBack)).toISOString().split('T')[0];
   

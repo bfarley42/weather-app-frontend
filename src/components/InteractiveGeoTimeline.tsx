@@ -60,7 +60,7 @@ export default function InteractiveGeoTimeline({
   const [currentDateIndex, setCurrentDateIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [chartInstance, setChartInstance] = useState<any>(null);
+  const [_chartInstance, setChartInstance] = useState<any>(null);
 
   // Storage key for saved positions
   const STORAGE_KEY = `geo-timeline-positions-${region}`;
@@ -178,7 +178,7 @@ export default function InteractiveGeoTimeline({
   };
 
   // Calculate initial position based on lat/lon with some spacing
-  const calculateInitialPosition = (station: StationData, allStations: StationData[]): [number, number] => {
+  const calculateInitialPosition = (station: StationData, _allStations: StationData[]): [number, number] => {
     // For Michigan: lon range ~[-90, -83], lat range ~[42, 47]
     // Add some random offset to prevent exact overlaps
     const randomOffset = () => (Math.random() - 0.5) * 0.5;
