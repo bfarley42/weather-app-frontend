@@ -7,7 +7,8 @@ import WeatherSummary from './components/WeatherSummary';
 import { API_URL } from './config';
 import './App.css';
 import HourlyWeatherChart from './components/HourlyWeatherChart';
-import MapView from './components/MapView';
+// import MapView from './components/MapView';
+import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 
 interface Station {
@@ -52,7 +53,7 @@ const [startDate, setStartDate] = useState(() => {
 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'search' | 'chart'>('search');
 
@@ -392,6 +393,14 @@ const handleBackToSearch = () => {
     startDate={startDate}
     endDate={endDate}
   />
+) : chartView === 'top10' ? (
+  <Top10Chart
+    stationId={selectedStation?.station_id || ''}
+    stationName={selectedStation?.name || 'Weather Station'}
+    darkMode={darkMode}
+  />
+
+  
 ) : (
   <InteractiveStationMap
     startDate={startDate}
@@ -405,7 +414,10 @@ const handleBackToSearch = () => {
       setChartView('temperature');
     }}
   />
-)}
+)
+
+
+}
 </div>
 
                 {/* Chart View Selector below chart */}
@@ -428,6 +440,12 @@ const handleBackToSearch = () => {
                   >
                     ⏰ Hourly
                   </button>
+                  <button
+                  className={chartView === 'top10' ? 'active' : ''}
+                  onClick={() => setChartView('top10')}
+                >
+                  🏆 Top 10
+                </button>
                   <button
                   className={chartView === 'map' ? 'active' : ''}
                   onClick={() => handleChartViewChange('map')}

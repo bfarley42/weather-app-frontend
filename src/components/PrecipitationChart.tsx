@@ -192,26 +192,26 @@ useEffect(() => {
 //   : 'rgba(0, 145, 215, 1.0)';
 // // Helper function to wrap long station names
 
-const wrapStationName = (name: string, maxLength: number) => {
-  if (name.length <= maxLength) return name;
+// const wrapStationName = (name: string, maxLength: number) => {
+//   if (name.length <= maxLength) return name;
   
-  const words = name.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
+//   const words = name.split(' ');
+//   const lines: string[] = [];
+//   let currentLine = '';
   
-  words.forEach(word => {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    if (testLine.length <= maxLength) {
-      currentLine = testLine;
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-    }
-  });
+//   words.forEach(word => {
+//     const testLine = currentLine ? `${currentLine} ${word}` : word;
+//     if (testLine.length <= maxLength) {
+//       currentLine = testLine;
+//     } else {
+//       if (currentLine) lines.push(currentLine);
+//       currentLine = word;
+//     }
+//   });
   
-  if (currentLine) lines.push(currentLine);
-  return lines.join('\n');
-};
+//   if (currentLine) lines.push(currentLine);
+//   return lines.join('\n');
+// };
 
 const titleSettings = {
   text: shortenStationName(stationName),

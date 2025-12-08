@@ -118,6 +118,8 @@ export default function InteractiveStationMap({
   const [mapStyle, setMapStyle] = useState<keyof typeof MAP_STYLES>(darkMode ? 'dark' : 'light');
   const [zoomLevel, setZoomLevel] = useState(initialZoom);
   const lastFetchRef = useRef<string>('');
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [_locationLoading, setLocationLoading] = useState(true);
 
   // Update map style when darkMode changes
   useEffect(() => {
@@ -133,52 +135,80 @@ export default function InteractiveStationMap({
     });
   }, [startDate, endDate]);
 
-  // Fetch stations near a point (using proximity query)
-  const fetchNearbyStations = useCallback(async (lat: number, lon: number) => {
-    const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
-    if (lastFetchRef.current === cacheKey) return;
-    lastFetchRef.current = cacheKey;
+  // Get user's GPS location on mount
+useEffect(() => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const loc: [number, number] = [
+          position.coords.latitude, 
+          position.coords.longitude
+        ];
+        setUserLocation(loc);
+        setLocationLoading(false);
+        // Trigger station fetch for user's location
+        fetchNearbyStations(loc[0], loc[1]);
+      },
+      (error) => {
+        console.log('Geolocation unavailable:', error.message);
+        setLocationLoading(false);
+        // Will use initialCenter as fallback
+      },
+      { timeout: 5000 }
+    );
+  } else {
+    setLocationLoading(false);
+  }
+}, []);
 
-    setIsLoading(true);
-    try {
-      // Try the nearby endpoint first
-      let response = await fetch(
-        `${API_URL}/api/stations/nearby?lat=${lat}&lon=${lon}&limit=150`
-      );
+  // // Fetch stations near a point (using proximity query)
+  // const fetchNearbyStations = useCallback(async (lat: number, lon: number) => {
+  //   const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  //   if (lastFetchRef.current === cacheKey) return;
+  //   lastFetchRef.current = cacheKey;
+
+  //   setIsLoading(true);
+  //   try {
+  //     // Try the nearby endpoint first
+  //     let response = await fetch(
+  //       `${API_URL}/api/stations/nearby?lat=${lat}&lon=${lon}&limit=150`
+  //     );
       
-      // Fall back to list if nearby doesn't exist
-      if (!response.ok) {
-        response = await fetch(`${API_URL}/api/stations/list?limit=500`);
-      }
+  //     // Fall back to list if nearby doesn't exist
+  //     if (!response.ok) {
+  //       response = await fetch(`${API_URL}/api/stations/list?limit=500`);
+  //     }
       
-      if (response.ok) {
-        const data: Station[] = await response.json();
+  //     if (response.ok) {
+  //       const data: Station[] = await response.json();
         
-        // Initialize stations with no temp data yet
-        const stationsWithTemp: StationWithTemp[] = data.map(s => ({
-          ...s,
-          avg_temp: null,
-          hasData: false
-        }));
+  //       // Initialize stations with no temp data yet
+  //       const stationsWithTemp: StationWithTemp[] = data.map(s => ({
+  //         ...s,
+  //         avg_temp: null,
+  //         hasData: false
+  //       }));
         
-        setStations(stationsWithTemp);
-        
-        // Fetch temps for first batch (visible ones)
-        const firstBatch = stationsWithTemp.slice(0, 50);
-        firstBatch.forEach(s => fetchStationTemp(s));
-      }
-    } catch (error) {
-      console.error('Error fetching stations:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [startDate, endDate]);
+  //       setStations(stationsWithTemp);
+  //       console.log('Stations loaded:', stationsWithTemp.length);
+  //       console.log('Fetching temps for first 50...');
+                
+  //       // Fetch temps for first batch (visible ones)
+  //       const firstBatch = stationsWithTemp.slice(0, 50);
+  //       firstBatch.forEach(s => fetchStationTemp(s));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching stations:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [startDate, endDate]);
 
   // Fetch just the avg temp for a single station (lightweight)
   const fetchStationTemp = useCallback(async (station: Station) => {
     try {
       const response = await fetch(
-        `${API_URL}/api/weather/summary?station=${station.station_id}&start=${startDate}&end=${endDate}`
+        `${API_URL}/api/weather/summarystats?station=${station.station_id}&start=${startDate}&end=${endDate}`
       );
       
       if (response.ok) {
@@ -191,6 +221,7 @@ export default function InteractiveStationMap({
             : s
         ));
         
+        console.log('fetchStationTemp called for:', station.station_id);
         // Also cache the full summary
         setSummaries(prev => new Map(prev).set(station.station_id, {
           ...station,
@@ -201,6 +232,60 @@ export default function InteractiveStationMap({
       // Silent fail - station just won't have temp displayed
     }
   }, [startDate, endDate, metric]);
+  
+// Fetch stations near a point (using proximity query)
+const fetchNearbyStations = useCallback(async (lat: number, lon: number) => {
+  const cacheKey = `${lat.toFixed(1)},${lon.toFixed(1)}`; // Less precise = fewer duplicate calls
+  if (lastFetchRef.current === cacheKey) {
+    console.log('Skipping duplicate fetch:', cacheKey);
+    return;
+  }
+  lastFetchRef.current = cacheKey;
+
+  setIsLoading(true);
+  try {
+    let response = await fetch(
+      `${API_URL}/api/stations/nearby?lat=${lat}&lon=${lon}&limit=100`
+    );
+    
+    if (!response.ok) {
+      response = await fetch(`${API_URL}/api/stations/list?limit=500`);
+    }
+    
+    if (response.ok) {
+      const data: Station[] = await response.json();
+      console.log('Stations loaded:', data.length);
+      
+      // IMPORTANT: Preserve existing temps when updating stations
+      setStations(prev => {
+        // Create a map of existing temps
+        const existingTemps = new Map(
+          prev.map(s => [s.station_id, { avg_temp: s.avg_temp, hasData: s.hasData }])
+        );
+        
+        // Merge new stations with existing temps
+        return data.map(s => ({
+          ...s,
+          avg_temp: existingTemps.get(s.station_id)?.avg_temp ?? null,
+          hasData: existingTemps.get(s.station_id)?.hasData ?? false
+        }));
+      });
+      
+      // Only fetch temps for stations that don't have them yet
+      setStations(current => {
+        const stationsNeedingTemps = current.filter(s => s.avg_temp === null);
+        console.log(`Fetching temps for ${stationsNeedingTemps.length} stations without temps...`);
+        stationsNeedingTemps.slice(0, 50).forEach(s => fetchStationTemp(s));
+        return current; // Return unchanged
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching stations:', error);
+  } finally {
+    setIsLoading(false);
+  }
+}, [startDate, endDate, fetchStationTemp]);
+
 
   // Fetch full summary for hover
   const fetchFullSummary = useCallback(async (station: Station) => {
@@ -209,7 +294,7 @@ export default function InteractiveStationMap({
     setLoadingStationId(station.station_id);
     try {
       const response = await fetch(
-        `${API_URL}/api/weather/summary?station=${station.station_id}&start=${startDate}&end=${endDate}`
+        `${API_URL}/api/weather/summarystats?station=${station.station_id}&start=${startDate}&end=${endDate}`
       );
       
       if (response.ok) {
@@ -231,21 +316,29 @@ export default function InteractiveStationMap({
     fetchNearbyStations(center.lat, center.lng);
   }, [fetchNearbyStations]);
 
-  // Get color based on temperature
-  const getColor = (temp: number | null | undefined): string => {
-    if (temp === null || temp === undefined) return '#9CA3AF'; // Gray for no data
-    
-    // Temperature color scale
-    if (temp < 20) return '#1E40AF';  // Deep blue
-    if (temp < 32) return '#3B82F6';  // Blue
-    if (temp < 45) return '#06B6D4';  // Cyan
-    if (temp < 55) return '#10B981';  // Green
-    if (temp < 65) return '#84CC16';  // Lime
-    if (temp < 75) return '#EAB308';  // Yellow
-    if (temp < 85) return '#F97316';  // Orange
-    if (temp < 95) return '#EF4444';  // Red
-    return '#DC2626';                  // Dark red
-  };
+// Get color based on temperature
+const getColor = (temp: number | null | undefined): string => {
+  console.log('getColor called with:', temp, typeof temp);
+  
+  if (temp === null || temp === undefined) {
+    console.log('→ returning gray (no data)');
+    return '#9CA3AF';
+  }
+  
+  let color = '#9CA3AF';
+  if (temp < 20) color = '#1E40AF';
+  else if (temp < 32) color = '#3B82F6';
+  else if (temp < 45) color = '#06B6D4';
+  else if (temp < 55) color = '#10B981';
+  else if (temp < 65) color = '#84CC16';
+  else if (temp < 75) color = '#EAB308';
+  else if (temp < 85) color = '#F97316';
+  else if (temp < 95) color = '#EF4444';
+  else color = '#DC2626';
+  
+  console.log(`→ temp ${temp}°F = ${color}`);
+  return color;
+};
 
   // Format temperature for display
   const formatTemp = (temp: number | null | undefined): string => {
@@ -254,7 +347,7 @@ export default function InteractiveStationMap({
   };
 
   return (
-    <div style={{ 
+    <div className="map-root" style={{
       width: '100%', 
       height: '600px',
       borderRadius: '12px',
@@ -265,14 +358,18 @@ export default function InteractiveStationMap({
       position: 'relative',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
+
       <MapContainer
-        center={selectedStation ? [selectedStation.lat, selectedStation.lon] : initialCenter}
-        zoom={selectedStation ? 7 : initialZoom}
+        // className="map-root"
+        center={userLocation || (selectedStation ? [selectedStation.lat, selectedStation.lon] : initialCenter)}
+        zoom={userLocation ? 8 : (selectedStation ? 7 : initialZoom)}
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
+         
         <TileLayer
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+          className={darkMode ? "map-tiles dark-mode" : "map-tiles"}
           url={MAP_STYLES[mapStyle]}
         />
         
@@ -291,9 +388,12 @@ export default function InteractiveStationMap({
           
           return (
             <CircleMarker
-              key={station.station_id}
+              key={`${station.station_id}-${station.avg_temp ?? 'null'}`}
               center={[station.lat, station.lon]}
-              radius={isSelected ? 12 : isHovered ? 10 : 7}
+              radius={isSelected ? 10 : isHovered ? 10 : 
+                zoomLevel >= 8 ? 7 :
+                zoomLevel >= 6 ? 4 : 3
+              }
               fillColor={getColor(station.avg_temp)}
               color={isSelected ? '#FFD700' : (darkMode ? '#fff' : '#374151')}
               weight={isSelected ? 3 : 1}
@@ -401,11 +501,11 @@ export default function InteractiveStationMap({
               </Popup>
               
               {/* Always-visible Tooltip with Temp - only at higher zoom */}
-              {zoomLevel >= 7 && station.avg_temp !== null && (
+              {zoomLevel >= 8 && station.avg_temp !== null && (
                 <Tooltip 
                   permanent
                   direction="right"
-                  offset={[8, 0]}
+                  offset={[6, 0]}
                   className="temp-tooltip"
                   opacity={1}
                 >
@@ -424,7 +524,36 @@ export default function InteractiveStationMap({
             </CircleMarker>
           );
         })}
+        <div
+  className={
+    darkMode
+      ? "map-tint-overlay map-tint-overlay-dark"
+      : "map-tint-overlay map-tint-overlay-light"
+  }
+/>
+        
       </MapContainer>
+          {/* TINT OVERLAY – sits above tiles, below the UI badges */}
+
+    
+    {/* Loading indicator */}
+    {isLoading && (
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
+        color: darkMode ? '#F3F4F6' : '#1F2937',
+        padding: '8px 16px',
+        borderRadius: '20px',
+        fontSize: '13px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        zIndex: 1000
+      }}>
+        Loading stations...
+      </div>
+    )}
       
       {/* Loading indicator */}
       {isLoading && (
@@ -495,26 +624,81 @@ export default function InteractiveStationMap({
       
       {/* Custom CSS for tooltips */}
       <style>{`
-        .temp-tooltip {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-        }
-        .temp-tooltip::before {
-          display: none !important;
-        }
-        .station-popup .leaflet-popup-content-wrapper {
-          border-radius: 10px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-        .station-popup .leaflet-popup-content {
-          margin: 10px 12px;
-        }
-        .station-popup .leaflet-popup-tip {
-          display: none;
-        }
-      `}</style>
+/* The MapContainer must have class "map-root" */
+.map-root {
+  position: relative;
+}
+
+/* Tint overlay placed INSIDE MapContainer */
+.map-root .map-tint-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  pointer-events: none;
+
+  /* MUST be between tile-pane (z=200) and marker-pane (z=600) */
+  z-index: 450;
+
+  mix-blend-mode: multiply;
+}
+
+.map-tint-overlay-light {
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.map-tint-overlay-dark {
+  background: rgba(79, 70, 229, 0.25);
+}
+
+
+  /* === TOOLTIP & POPUP STYLES (unchanged) === */
+
+  .temp-tooltip {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .temp-tooltip::before {
+    display: none !important;
+  }
+  .station-popup .leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+  .station-popup .leaflet-popup-content {
+    margin: 10px 12px;
+  }
+  .station-popup .leaflet-popup-tip {
+    display: none;
+  }
+  .map-root {
+  position: relative;
+}
+
+.map-root .map-tint-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  pointer-events: none;
+  z-index: 450; /* ABOVE tile pane (z=200), BELOW markers (600) */
+  mix-blend-mode: multiply;
+}
+
+.map-tint-overlay-light {
+  background: rgba(0, 127, 247, 0.15);
+}
+.map-tint-overlay-dark {
+  background: rgba(79, 70, 229, 0.25);
+}  
+`}</style>
+
     </div>
   );
 }
