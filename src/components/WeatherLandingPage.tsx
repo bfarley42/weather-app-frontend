@@ -5,7 +5,7 @@ import * as echarts from 'echarts';
 import './WeatherLandingPage.css';
 // import nightPartlyCloudy from '../assets/weather/partly_cloudy_night.svg';
 import { WeatherIcon } from "./WeatherIcons";
-import type { WeatherIconType } from "./WeatherIcons";
+// import type { WeatherIconType } from "./WeatherIcons";
 
 interface WeatherLandingPageProps {
   stationId?: string;
@@ -83,25 +83,25 @@ const hourKey = (d: Date) => {
   return iso.slice(0, 13); // YYYY-MM-DDTHH
 };
 
-function renderIcon(icon: string) {
-  const isImage =
-    icon.startsWith("data:image") ||
-    icon.endsWith(".svg") ||
-    icon.endsWith(".png");
+// function renderIcon(icon: string) {
+//   const isImage =
+//     icon.startsWith("data:image") ||
+//     icon.endsWith(".svg") ||
+//     icon.endsWith(".png");
 
-  if (isImage) {
-    return (
-      <img
-        src={icon}
-        alt=""
-        style={{ width: 28, height: 28, objectFit: "contain" }}
-      />
-    );
-  }
+//   if (isImage) {
+//     return (
+//       <img
+//         src={icon}
+//         alt=""
+//         style={{ width: 28, height: 28, objectFit: "contain" }}
+//       />
+//     );
+//   }
 
-  // Otherwise it's an emoji
-  return icon;
-}
+//   // Otherwise it's an emoji
+//   return icon;
+// }
 
 
 // Open-Meteo weathercode → icon/description
