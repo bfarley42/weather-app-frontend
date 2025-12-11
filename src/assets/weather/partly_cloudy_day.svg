@@ -1,0 +1,11 @@
+<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+  <!-- Sun -->
+  <circle cx="15" cy="15" r="7"/>
+  <line x1="15" y1="3" x2="15" y2="8"/>
+  <line x1="15" y1="22" x2="15" y2="27"/>
+  <line x1="3" y1="15" x2="8" y2="15"/>
+  <line x1="22" y1="15" x2="27" y2="15"/>
+  
+  <!-- Cloud -->
+  <path d="M20 32h14a6 6 0 1 0-2-11 8 8 0 0 0-15-3 7 7 0 0 0 3 14z"/>
+</svg>

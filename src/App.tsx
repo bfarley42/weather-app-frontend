@@ -254,15 +254,15 @@ const handleBackToSearch = () => {
       <main className="app-main">
       {currentView === 'landing' ? (
         <WeatherLandingPage
-          stationId="PASI"
-          stationName="Sitka, AK"
-          location="Sitka,AK"
-          apiBaseUrl={API_URL}
-          visualCrossingApiKey={import.meta.env.VITE_VC_API_KEY}
-          // visualCrossingApiKey="QM893APRCHJDW5BRKB3G9YYM4"  // Direct for now
-          darkMode={true}
-          // onExplore={() => setCurrentView('search')}  // Optional: add navigation
-        />
+        stationId="PASI"
+        stationName="Sitka, AK"
+        lat={57.0531}
+        lon={-135.33}
+        // apiBaseUrl={import.meta.env.VITE_API_URL} 
+        apiBaseUrl={API_URL} 
+        // optional for future station obs
+        darkMode={true}
+      />
       ): currentView === 'search' ? (
           // SEARCH VIEW - Station and date selection
           <div className="controls-section">
