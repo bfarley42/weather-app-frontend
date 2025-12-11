@@ -10,6 +10,7 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 // import MapView from './components/MapView';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
+import WeatherLandingPage from './components/WeatherLandingPage';
 
 interface Station {
   station_id: string;
@@ -55,7 +56,7 @@ const [startDate, setStartDate] = useState(() => {
   const [error, setError] = useState<string | null>(null);
   const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
-  const [currentView, setCurrentView] = useState<'search' | 'chart'>('search');
+  const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
 
   const fetchWeatherData = async (station: Station, skipLoadingState = false) => {
     if (!skipLoadingState) {
@@ -238,16 +239,31 @@ const handleBackToSearch = () => {
   setCurrentView('search');
 };
 
+// console.log('VC Key:', import.meta.env.VITE_VC_API_KEY);
+
   return (
     <div className="app">
 <header className="app-header">
-  <h1>🌤️ Historical Weather Viewer</h1>
+  <h1 onClick={() => setCurrentView('landing')} style={{ cursor: 'pointer' }}>
+    🌤️ Historical Weather Viewer
+  </h1>
   <p>Explore weather patterns from thousands of stations</p>
     
 </header>
 
       <main className="app-main">
-        {currentView === 'search' ? (
+      {currentView === 'landing' ? (
+        <WeatherLandingPage
+          stationId="PASI"
+          stationName="Sitka, AK"
+          location="Sitka,AK"
+          apiBaseUrl={API_URL}
+          visualCrossingApiKey={import.meta.env.VITE_VC_API_KEY}
+          // visualCrossingApiKey="QM893APRCHJDW5BRKB3G9YYM4"  // Direct for now
+          darkMode={true}
+          // onExplore={() => setCurrentView('search')}  // Optional: add navigation
+        />
+      ): currentView === 'search' ? (
           // SEARCH VIEW - Station and date selection
           <div className="controls-section">
             <div className="control-group">
