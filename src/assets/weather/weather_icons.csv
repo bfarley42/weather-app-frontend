@@ -1,0 +1,23 @@
+id,filename,description,conditions,day_or_night
+clear_day,clear_day.svg,Clear sky,"CLR,SKC",day
+partly_cloudy_day,partly_cloudy_day.svg,Partly cloudy,"FEW,SCT",day
+mostly_cloudy_day,mostly_cloudy_day.svg,Mostly cloudy,"BKN",day
+overcast_day,overcast_day.svg,Overcast,"OVC",day
+rain_day,rain_day.svg,Rain,"-RA,RA,+RA",day
+rain_sun_day,rain_sun_day.svg,Rain with sun,"VCSH,SHRA",day
+snow_day,snow_day.svg,Snow,"SN,-SN,+SN",day
+rain_snow_day,rain_snow_day.svg,Mixed precip,"RASN,PL",day
+thunder_day,thunder_day.svg,Thunderstorm,"TS,TSRA",day
+fog_day,fog_day.svg,Fog,"FG,BR",day
+wind_day,wind_day.svg,Wind,"WND",day
+
+clear_night,clear_night.svg,Clear night,"CLR,SKC",night
+partly_cloudy_night,partly_cloudy_night.svg,Partly cloudy night,"FEW,SCT",night
+mostly_cloudy_night,mostly_cloudy_night.svg,Mostly cloudy night,"BKN",night
+overcast_night,overcast_night.svg,Overcast night,"OVC",night
+rain_night,rain_night.svg,Rain night,"-RA,RA,+RA",night
+snow_night,snow_night.svg,Snow night,"SN,-SN,+SN",night
+rain_snow_night,rain_snow_night.svg,Mixed precip night,"RASN,PL",night
+thunder_night,thunder_night.svg,Thunderstorm night,"TS,TSRA",night
+fog_night,fog_night.svg,Fog night,"FG,BR",night
+wind_night,wind_night.svg,Wind night,"WND",night
