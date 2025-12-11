@@ -78,8 +78,10 @@ const getWeatherIcon = (icon: string | undefined): string => {
 };
 
 // Map METAR sky condition codes to icons (for historical data)
-const getMetarIcon = (skyc1: string | null, wxcodes: string | null, hour: number): string => {
+export const getMetarIcon = (skyc1: string | null, wxcodes: string | null, hour: number): string => {
   const isNight = hour < 6 || hour >= 20;
+
+
   
   // Check weather codes first (precipitation takes priority)
   if (wxcodes) {
