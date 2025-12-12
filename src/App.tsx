@@ -1,5 +1,6 @@
 // src/App.tsx
-import { useState } from 'react';
+// import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StationSearch from './components/StationSearch';
 import EnhancedWeatherChart from './components/EnhancedWeatherChart';
 import PrecipitationChart from './components/PrecipitationChart';
@@ -11,6 +12,7 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
+import LocationSearch from './components/LocationSearch';
 
 interface Station {
   station_id: string;
@@ -57,6 +59,16 @@ const [startDate, setStartDate] = useState(() => {
   const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
+  const [currentLocation, setCurrentLocation] = useState<{
+    stationId: string;
+    stationName: string;
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  
 
   const fetchWeatherData = async (station: Station, skipLoadingState = false) => {
     if (!skipLoadingState) {
@@ -84,6 +96,88 @@ const [startDate, setStartDate] = useState(() => {
       }
     }
   };
+
+// Auto-detect user location on mount
+useEffect(() => {
+  detectUserLocation();
+}, []);
+
+const detectUserLocation = async () => {
+  if (!navigator.geolocation) {
+    // Fallback to default location (Sitka, AK)
+    setCurrentLocation({
+      stationId: 'PASI',
+      stationName: 'Sitka, AK',
+      lat: 57.0531,
+      lon: -135.33,
+    });
+    return;
+  }
+
+  setIsLocating(true);
+  setLocationError(null);
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+      try {
+        // Find nearest station
+        const response = await fetch(
+          `${API_URL}/api/locations/nearby?lat=${latitude}&lon=${longitude}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentLocation({
+            stationId: data.station_id,
+            stationName: `${data.name} (${data.distance_mi} mi)`,
+            lat: data.lat,
+            lon: data.lon,
+          });
+        } else {
+          throw new Error('Could not find nearby station');
+        }
+      } catch (err) {
+        console.error('Error finding nearby station:', err);
+        setLocationError('Could not find nearby weather station');
+        // Fallback
+        setCurrentLocation({
+          stationId: 'PASI',
+          stationName: 'Sitka, AK',
+          lat: 57.0531,
+          lon: -135.33,
+        });
+      } finally {
+        setIsLocating(false);
+      }
+    },
+    (error) => {
+      console.error('Geolocation error:', error);
+      setIsLocating(false);
+      // Fallback to default
+      setCurrentLocation({
+        stationId: 'PASI',
+        stationName: 'Sitka, AK',
+        lat: 57.0531,
+        lon: -135.33,
+      });
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+  );
+};
+
+const handleLocationSelect = (location: {
+  display_name: string;
+  station_id: string;
+  lat: number;
+  lon: number;
+}) => {
+  setCurrentLocation({
+    stationId: location.station_id,
+    stationName: location.display_name,
+    lat: location.lat,
+    lon: location.lon,
+  });
+};
 
 const fetchHourlyData = async (station: Station, skipLoadingState = false) => {
   if (!skipLoadingState) {
@@ -253,17 +347,49 @@ const handleBackToSearch = () => {
 
       <main className="app-main">
       {currentView === 'landing' ? (
-        <WeatherLandingPage
-        stationId="PASI"
-        stationName="Sitka, AK"
-        lat={57.0531}
-        lon={-135.33}
-        // apiBaseUrl={import.meta.env.VITE_API_URL} 
-        apiBaseUrl={API_URL} 
-        // optional for future station obs
-        darkMode={true}
-      />
-      ): currentView === 'search' ? (
+        <>
+          {/* Location Search - positioned at top */}
+          <div style={{ 
+            maxWidth: '400px', 
+            margin: '0 auto 16px',
+            padding: '0 12px'
+          }}>
+            <LocationSearch
+              onSelectLocation={handleLocationSelect}
+              onUseCurrentLocation={detectUserLocation}
+              darkMode={true}
+              placeholder="Search city, zip, or station..."
+              currentLocationName={isLocating ? 'Locating...' : undefined}
+            />
+          </div>
+          
+          {/* Show loading state */}
+          {isLocating && (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>
+              📍 Finding your location...
+            </div>
+          )}
+          
+          {/* Show error if any */}
+          {locationError && (
+            <div style={{ textAlign: 'center', padding: '10px', color: '#f87171', fontSize: '13px' }}>
+              {locationError}
+            </div>
+          )}
+          
+          {/* Weather Landing Page */}
+          {currentLocation && !isLocating && (
+            <WeatherLandingPage
+              stationId={currentLocation.stationId}
+              stationName={currentLocation.stationName}
+              lat={currentLocation.lat}
+              lon={currentLocation.lon}
+              apiBaseUrl={API_URL}
+              darkMode={true}
+            />
+          )}
+        </>
+      ) : currentView === 'search' ? (
           // SEARCH VIEW - Station and date selection
           <div className="controls-section">
             <div className="control-group">
