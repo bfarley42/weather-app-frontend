@@ -42,18 +42,18 @@
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.highlight {
-  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-  border-color: #667eea40;
+  background: linear-gradient(135deg, #667eea2d 20%, #764ba215 100%);
+  border-color: #667eea2d;
 }
 
 .stat-label {
   font-size: 0.85rem;
-  color: #666;
+  color: #272727;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -69,20 +69,21 @@
 }
 
 .stat-value.temp-high {
-  color: #ff6b6b;
+  /* color: #ff6b6b; */
+  color: #b3000fff;
 }
 
 .stat-value.temp-low {
-  color: #4ecdc4;
+  color:#1db4dd;
 }
 
 .stat-value.precip {
-  color: #95a5a6;
+  color:#1440aed8;
 }
 
 .stat-detail {
   font-size: 0.8rem;
-  color: #888;
+  color: #505050;
   margin-top: 6px;
 }
 
@@ -110,4 +111,108 @@
   .summary-grid {
     grid-template-columns: 1fr;
   }
+}
+.stat-variance {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-variance.above {
+  color: #c0392b;
+}
+
+.stat-variance.below {
+  color: #2980b9;
+}
+
+.dark-mode .stat-variance.above {
+  color: #e74c3c;
+}
+
+.dark-mode .stat-variance.below {
+  color: #3498db;
+}
+
+.temp-avg {
+  color: #d68910;
+}
+
+.dark-mode .temp-avg {
+  color: #f39c12;
+}
+.stat-variance {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-variance.above {
+  color: #c0392b;
+}
+
+.stat-variance.below {
+  color: #2980b9;
+}
+
+.dark-mode .stat-variance.above {
+  color: #e74c3c;
+}
+
+.dark-mode .stat-variance.below {
+  color: #3498db;
+}
+
+.temp-avg {
+  color: #d68910;
+}
+
+.dark-mode .temp-avg {
+  color: #f39c12;
+}
+/* Variance arrows */
+.variance-arrow {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+.stat-variance.above .variance-arrow {
+  color: #27ae60;
+}
+
+.stat-variance.below .variance-arrow {
+  color: #e74c3c;
+}
+
+.dark-mode .stat-variance.above .variance-arrow {
+  color: #2ecc71;
+}
+
+.dark-mode .stat-variance.below .variance-arrow {
+  color: #e74c3c;
+}
+
+/* Stat icons */
+.stat-icon {
+  vertical-align: middle;
+  margin-right: 6px;
+  margin-bottom: 2px;
+}
+
+.stat-icon.hot {
+  color: #e74c3c;
+}
+
+.stat-icon.cold {
+  color: #3498db;
+}
+
+.stat-icon.wet {
+  color: #2980b9;
+}
+
+.stat-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

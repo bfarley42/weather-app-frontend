@@ -21,6 +21,7 @@ interface HourlyWeatherChartProps {
   darkMode?: boolean;
   startDate: string;
   endDate: string;
+  onDateRangeChange: (range: string) => void;
 }
 
 export default function HourlyWeatherChart({ 
@@ -29,8 +30,10 @@ export default function HourlyWeatherChart({
   darkMode = false,
   startDate,
   endDate,
+  onDateRangeChange,
 }: HourlyWeatherChartProps) {
-  const [showWindOrPrecip, setShowWindOrPrecip] = useState<'precip' | 'wind'>('precip');  // Toggle between two
+  const [showWindOrPrecip, setShowWindOrPrecip] = useState<'precip' | 'wind'>('precip');
+  const [activeRange, setActiveRange] = useState<string>('3D'); // Toggle between two
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);  // ADD THIS
   const [showFeelsLike, setShowFeelsLike] = useState(false);  // ADD THIS
   const [showWindGusts, setShowWindGusts] = useState(false);  // ADD THIS
@@ -45,6 +48,11 @@ export default function HourlyWeatherChart({
       window.addEventListener('resize', checkMobile);
       return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+  const handleRangeClick = (range: string) => {
+    setActiveRange(range);
+    onDateRangeChange(range);
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -76,22 +84,58 @@ export default function HourlyWeatherChart({
 
   // Format for x-axis (shorter)
 // Format for x-axis (only show date at midnight, "12pm" at noon)
+ // Format for x-axis - varies by selected range
   const formatAxisLabel = (date: Date) => {
     const hour = date.getHours();
     
-    // Show date at midnight
+    // Always show date at midnight
     if (hour === 0) {
       const month = date.toLocaleDateString('en-US', { month: 'short' });
       const day = date.getDate();
-      return `{date|${month} ${day}}`;  // Use rich text style
+      return `{date|${month} ${day}}`;
     }
     
-    // Show "12pm" at noon
+    // Format hour for display
+    const formatHour = (h: number) => {
+      const ampm = h >= 12 ? 'pm' : 'am';
+      const displayHour = h % 12 || 12;
+      return `${displayHour}${ampm}`;
+    };
+    
+    // 10D or 14D: no time labels, only dates
+    if (activeRange === '10D' || activeRange === '14D') {
+      return '';
+    }
+    
+    // 7D: only 12pm
+    if (activeRange === '7D') {
+      if (hour === 12) {
+        return `{small|${formatHour(hour)}}`;
+      }
+      return '';
+    }
+    
+    // 3D: 6am, 12pm, 6pm
+    if (activeRange === '3D') {
+      if (hour === 6 || hour === 12 || hour === 18) {
+        return `{small|${formatHour(hour)}}`;
+      }
+      return '';
+    }
+    
+    // 1D: every 3 hours (3am, 6am, 9am, 12pm, 3pm, 6pm, 9pm)
+    if (activeRange === '1D') {
+      if (hour % 3 === 0 && hour !== 0) {
+        return `{small|${formatHour(hour)}}`;
+      }
+      return '';
+    }
+    
+    // Default fallback: 12pm only
     if (hour === 12) {
-      return '{small|12pm}';  // Use rich text style
+      return `{small|${formatHour(hour)}}`;
     }
     
-    // Hide all other hours
     return '';
   };
 
@@ -832,11 +876,65 @@ const titleSettings = {
     animationEasing: 'cubicOut'
   };
 
-  return (
+return (
     <div className="hourly-chart-container">
 
-          
-    <div style={{ 
+      {/* Date Range Selector */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: isMobile ? '5px' : '8px',
+        marginBottom: '15px',
+        marginTop: '10px',
+        flexWrap: 'wrap',
+        padding: '0 10px'
+      }}>
+        {['1D', '3D', '7D', '10D', '14D'].map(range => (
+          <button
+            key={range}
+            onClick={() => handleRangeClick(range)}
+            style={{
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              fontSize: isMobile ? '11px' : '13px',
+              fontWeight: activeRange === range ? 700 : 500,
+              color: activeRange === range 
+                ? '#fff' 
+                : (darkMode ? '#95a5a6' : '#666'),
+              background: activeRange === range
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : (darkMode ? 'rgba(52, 73, 94, 0.3)' : 'rgba(0, 0, 0, 0.04)'),
+              border: activeRange === range
+                ? 'none'
+                : `1px solid ${darkMode ? 'rgba(149, 165, 166, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeRange === range
+                ? '0 2px 8px rgba(102, 126, 234, 0.3)'
+                : 'none',
+              minWidth: isMobile ? '42px' : '48px'
+            }}
+            onMouseEnter={(e) => {
+              if (activeRange !== range) {
+                e.currentTarget.style.background = darkMode 
+                  ? 'rgba(52, 73, 94, 0.5)' 
+                  : 'rgba(0, 0, 0, 0.08)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeRange !== range) {
+                e.currentTarget.style.background = darkMode 
+                  ? 'rgba(52, 73, 94, 0.3)' 
+                  : 'rgba(0, 0, 0, 0.04)';
+              }
+            }}
+          >
+            {range}
+          </button>
+        ))}
+      </div>
+
+      <div style={{
       width: '100%', 
       height: isMobile ? '540px' : '510px',  // Match other charts
       background: darkMode ? '#1a1a2e' : '#ffffff',

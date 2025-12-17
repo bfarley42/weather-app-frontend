@@ -1,6 +1,5 @@
 // src/App.tsx
-// import { useState } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import StationSearch from './components/StationSearch';
 import EnhancedWeatherChart from './components/EnhancedWeatherChart';
 import PrecipitationChart from './components/PrecipitationChart';
@@ -8,11 +7,10 @@ import WeatherSummary from './components/WeatherSummary';
 import { API_URL } from './config';
 import './App.css';
 import HourlyWeatherChart from './components/HourlyWeatherChart';
-// import MapView from './components/MapView';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
-import LocationSearch from './components/LocationSearch';
+import { Thermometer, CloudRain, Clock, Trophy, Map, Moon } from 'lucide-react';
 
 interface Station {
   station_id: string;
@@ -44,41 +42,33 @@ function App() {
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [weatherData, setWeatherData] = useState<DailyWeather[]>([]);
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
-const [endDate, setEndDate] = useState(() => {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
-});
-const [startDate, setStartDate] = useState(() => {
-  const now = new Date();
-  const fourteenDaysAgo = new Date(now);
-  fourteenDaysAgo.setDate(now.getDate() - 14);
-  return fourteenDaysAgo.toISOString().split('T')[0];
-});
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  });
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    const fourteenDaysAgo = new Date(now);
+    fourteenDaysAgo.setDate(now.getDate() - 14);
+    return fourteenDaysAgo.toISOString().split('T')[0];
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
-  const [currentLocation, setCurrentLocation] = useState<{
-    stationId: string;
-    stationName: string;
-    lat: number;
-    lon: number;
-  } | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
-
   
 
-  const fetchWeatherData = async (station: Station, skipLoadingState = false) => {
-    if (!skipLoadingState) {
-      setIsLoading(true);
-    }
+  const fetchWeatherData = async (station: Station, customStartDate?: string, customEndDate?: string) => {
+    setIsLoading(true);
     setError(null);
+
+    const fetchStart = customStartDate || startDate;
+    const fetchEnd = customEndDate || endDate;
 
     try {
       const response = await fetch(
-        `${API_URL}/api/weather/daily?station=${station.station_id}&start=${startDate}&end=${endDate}`
+        `${API_URL}/api/weather/daily?station=${station.station_id}&start=${fetchStart}&end=${fetchEnd}`
       );
 
       if (!response.ok) {
@@ -91,306 +81,245 @@ const [startDate, setStartDate] = useState(() => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setWeatherData([]);
     } finally {
-      if (!skipLoadingState) {
-        setIsLoading(false);
-      }
-    }
-  };
-
-// Auto-detect user location on mount
-useEffect(() => {
-  detectUserLocation();
-}, []);
-
-const detectUserLocation = async () => {
-  if (!navigator.geolocation) {
-    // Fallback to default location (Sitka, AK)
-    setCurrentLocation({
-      stationId: 'PASI',
-      stationName: 'Sitka, AK',
-      lat: 57.0531,
-      lon: -135.33,
-    });
-    return;
-  }
-
-  setIsLocating(true);
-  setLocationError(null);
-
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const { latitude, longitude } = position.coords;
-      try {
-        // Find nearest station
-        const response = await fetch(
-          `${API_URL}/api/locations/nearby?lat=${latitude}&lon=${longitude}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setCurrentLocation({
-            stationId: data.station_id,
-            stationName: `${data.name} (${data.distance_mi} mi)`,
-            lat: data.lat,
-            lon: data.lon,
-          });
-        } else {
-          throw new Error('Could not find nearby station');
-        }
-      } catch (err) {
-        console.error('Error finding nearby station:', err);
-        setLocationError('Could not find nearby weather station');
-        // Fallback
-        setCurrentLocation({
-          stationId: 'PASI',
-          stationName: 'Sitka, AK',
-          lat: 57.0531,
-          lon: -135.33,
-        });
-      } finally {
-        setIsLocating(false);
-      }
-    },
-    (error) => {
-      console.error('Geolocation error:', error);
-      setIsLocating(false);
-      // Fallback to default
-      setCurrentLocation({
-        stationId: 'PASI',
-        stationName: 'Sitka, AK',
-        lat: 57.0531,
-        lon: -135.33,
-      });
-    },
-    { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-  );
-};
-
-const handleLocationSelect = (location: {
-  display_name: string;
-  station_id: string;
-  lat: number;
-  lon: number;
-}) => {
-  setCurrentLocation({
-    stationId: location.station_id,
-    stationName: location.display_name,
-    lat: location.lat,
-    lon: location.lon,
-  });
-};
-
-const fetchHourlyData = async (station: Station, skipLoadingState = false) => {
-  if (!skipLoadingState) {
-    setIsLoading(true);
-  }
-  setError(null);
-
-  try {
-    const response = await fetch(
-      `${API_URL}/api/weather/hourly?station=${station.station_id}&start=${startDate}&end=${endDate}`
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch hourly weather data');
-    }
-
-    const data = await response.json();
-    setHourlyData(data);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'An error occurred');
-    setHourlyData([]);
-  } finally {
-    if (!skipLoadingState) {
       setIsLoading(false);
     }
-  }
-};
-
-  const handleStationSelect = (station: Station) => {
-    setSelectedStation(station);
-    fetchWeatherData(station);
-    setCurrentView('chart'); // Navigate to chart view
   };
 
-const handleDateChange = () => {
-  if (selectedStation) {
-    if (chartView === 'hourly') {
-      // Check if date range is valid for hourly (max 7 days)
-      const daysDiff = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDiff > 7) {
-        setError('Hourly view limited to 7 days. Please adjust date range.');
-        return;
-      }
-      fetchHourlyData(selectedStation);
-    } else {
-      fetchWeatherData(selectedStation);
-    }
-  }
-};
-
-const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map') => {
-  setChartView(view);
-  setError(null);
-  
-  // Auto-adjust dates for hourly view
-  if (view === 'hourly' && selectedStation) {
-    const today = new Date();
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 7);
-    
-    setStartDate(sevenDaysAgo.toISOString().split('T')[0]);
-    setEndDate(today.toISOString().split('T')[0]);
-    
-    // Fetch hourly data
-    setTimeout(() => fetchHourlyData(selectedStation), 100);
-  }
-};
-
-// Handle quick date range selection from chart
-// Handle quick date range selection from chart
-const handleDateRangeChange = (range: string) => {
-  if (!selectedStation) return;
-  
-  const end = new Date(endDate);
-  let start = new Date(end);
-  
-  switch (range) {
-    case '7D':
-      start.setDate(end.getDate() - 7);
-      break;
-    case '14D':
-      start.setDate(end.getDate() - 14);
-      break;
-    case 'MTD':
-      start = new Date(end.getFullYear(), end.getMonth(), 1);
-      break;
-    case '1M':
-      start.setMonth(end.getMonth() - 1);
-      break;
-    case '3M':
-      start.setMonth(end.getMonth() - 3);
-      break;
-    case '6M':
-      start.setMonth(end.getMonth() - 6);
-      break;
-    case 'YTD':
-      start = new Date(end.getFullYear(), 0, 1);
-      break;
-    case '1Y':
-      start.setFullYear(end.getFullYear() - 1);
-      break;
-    default:
-      return;
-  }
-  
-  const newStartDate = start.toISOString().split('T')[0];
-  
-  // Only update if dates actually changed
-  if (newStartDate === startDate) {
-    return;
-  }
-  
-  // Update state for UI
-  setStartDate(newStartDate);
-  
-  // ⭐ KEY FIX: Fetch using the CALCULATED dates, not state
-  // Create a modified fetch that uses the new dates directly
-  const fetchWithNewDates = async () => {
+  const fetchHourlyData = async (station: Station, customStartDate?: string, customEndDate?: string) => {
+    setIsLoading(true);
     setError(null);
-    
-    try {
-      const url = chartView === 'hourly'
-        ? `${API_URL}/api/weather/hourly?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`
-        : `${API_URL}/api/weather/daily?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`;
+
+    const fetchStart = customStartDate || startDate;
+    const fetchEnd = customEndDate || endDate;
+
+        // DEBUG: Log what we're fetching
+    console.log('Fetching hourly data:', {
+      station: station.station_id,
+      fetchStart,
+      fetchEnd,
+      customStartDate,
+      customEndDate,
+      stateStartDate: startDate,
+      stateEndDate: endDate
+    });
+
+  //   try {
+  //     const response = await fetch(
+  //       `${API_URL}/api/weather/hourly?station=${station.station_id}&start=${fetchStart}&end=${fetchEnd}`
+  //     );
+      
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch hourly weather data');
+  //     }
+
+  //     const data = await response.json();
+  //     setHourlyData(data);
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'An error occurred');
+  //     setHourlyData([]);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+      try {
+      const url = `${API_URL}/api/weather/hourly?station=${station.station_id}&start=${fetchStart}&end=${fetchEnd}`;
+      console.log('Hourly API URL:', url);  // DEBUG
       
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch ${chartView} weather data`);
+        throw new Error('Failed to fetch hourly weather data');
       }
 
       const data = await response.json();
+      console.log('Hourly data received:', data.length, 'records');  // DEBUG
+      console.log('First record:', data[0]);  // DEBUG
+      console.log('Last record:', data[data.length - 1]);  // DEBUG
       
-      if (chartView === 'hourly') {
-        setHourlyData(data);
-      } else {
-        setWeatherData(data);
-      }
+      setHourlyData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setHourlyData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStationSelect = (station: Station) => {
+    setSelectedStation(station);
+    fetchWeatherData(station);
+    setCurrentView('chart');
+  };
+ 
+
+
+  // Handle End Date change - auto-update Start Date to 14 days prior
+  const handleEndDateChange = (newEndDate: string) => {
+    const end = new Date(newEndDate);
+    const start = new Date(end);
+    start.setDate(end.getDate() - 14);
+    
+    const newStartDate = start.toISOString().split('T')[0];
+    
+    setEndDate(newEndDate);
+    setStartDate(newStartDate);
+  };
+
+  const handleUpdateClick = () => {
+    if (selectedStation) {
       if (chartView === 'hourly') {
-        setHourlyData([]);
+        const daysDiff = Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff > 7) {
+          setError('Hourly view limited to 7 days. Please adjust date range.');
+          return;
+        }
+        fetchHourlyData(selectedStation);
       } else {
-        setWeatherData([]);
+        fetchWeatherData(selectedStation);
       }
     }
   };
-  
-  fetchWithNewDates();
-};
 
-const handleBackToSearch = () => {
-  setCurrentView('search');
-};
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map') => {
+    setChartView(view);
+    setError(null);
+    
+    if (view === 'hourly' && selectedStation) {
+      const today = new Date();
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setDate(today.getDate() - 3);  // Default to 3D
+      
+      const newStart = threeDaysAgo.toISOString().split('T')[0];
+      const newEnd = today.toISOString().split('T')[0];
+      
+      setStartDate(newStart);
+      setEndDate(newEnd);
+      
+      setTimeout(() => fetchHourlyData(selectedStation, newStart, newEnd), 100);
+    }
+  };
 
-// console.log('VC Key:', import.meta.env.VITE_VC_API_KEY);
+const handleDateRangeChange = (range: string) => {
+    if (!selectedStation) return;
+    
+    const end = new Date(endDate);
+    let start = new Date(end);
+    
+    switch (range) {
+      case '1D':
+        start.setDate(end.getDate() - 1);
+        break;
+      case '3D':
+        start.setDate(end.getDate() - 3);
+        break;
+      case '7D':
+        start.setDate(end.getDate() - 7);
+        break;
+      case '10D':
+        start.setDate(end.getDate() - 10);
+        break;
+      case '14D':
+        start.setDate(end.getDate() - 14);
+        break;
+      case 'MTD':
+        start = new Date(end.getFullYear(), end.getMonth(), 1);
+        break;
+      case '1M':
+        start.setMonth(end.getMonth() - 1);
+        break;
+      case '3M':
+        start.setMonth(end.getMonth() - 3);
+        break;
+      case '6M':
+        start.setMonth(end.getMonth() - 6);
+        break;
+      case 'YTD':
+        start = new Date(end.getFullYear(), 0, 1);
+        break;
+      case '1Y':
+        start.setFullYear(end.getFullYear() - 1);
+        break;
+      default:
+        return;
+    }
+        
+    const newStartDate = start.toISOString().split('T')[0];
+    
+    if (newStartDate === startDate) {
+      return;
+    }
+    
+    setStartDate(newStartDate);
+    
+    const fetchWithNewDates = async () => {
+      setError(null);
+      
+      try {
+        const url = chartView === 'hourly'
+          ? `${API_URL}/api/weather/hourly?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`
+          : `${API_URL}/api/weather/daily?station=${selectedStation.station_id}&start=${newStartDate}&end=${endDate}`;
+        
+        const response = await fetch(url);
 
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${chartView} weather data`);
+        }
+
+        const data = await response.json();
+        
+        if (chartView === 'hourly') {
+          setHourlyData(data);
+        } else {
+          setWeatherData(data);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        if (chartView === 'hourly') {
+          setHourlyData([]);
+        } else {
+          setWeatherData([]);
+        }
+      }
+    };
+    
+    fetchWithNewDates();
+  };
+
+  const handleBackToSearch = () => {
+    setCurrentView('landing');
+  };
+
+  // Landing page renders full-screen (outside normal app layout)
+  if (currentView === 'landing') {
+    return (
+      <WeatherLandingPage
+        onStationSelect={handleStationSelect}
+        apiBaseUrl={API_URL}
+      />
+    );
+  }
+
+  // Search and Chart views use normal app layout
   return (
     <div className="app">
-<header className="app-header">
-  <h1 onClick={() => setCurrentView('landing')} style={{ cursor: 'pointer' }}>
-    🌤️ Historical Weather Viewer
-  </h1>
-  <p>Explore weather patterns from thousands of stations</p>
-    
-</header>
+      {/* Video background */}
+      <div className="app-video-bg">
+        <video autoPlay muted loop playsInline>
+          <source src="/clouds.mp4" type="video/mp4" />
+        </video>
+        <div className="video-overlay" />
+      </div>
+
+      <header className="app-header">
+        <h1 onClick={() => setCurrentView('landing')} style={{ cursor: 'pointer' }}>
+          🌤️ Historical Weather Viewer
+        </h1>
+        <p>Explore weather patterns from thousands of stations</p>
+      </header>
 
       <main className="app-main">
-      {currentView === 'landing' ? (
-        <>
-          {/* Location Search - positioned at top */}
-          <div style={{ 
-            maxWidth: '400px', 
-            margin: '0 auto 16px',
-            padding: '0 12px'
-          }}>
-            <LocationSearch
-              onSelectLocation={handleLocationSelect}
-              onUseCurrentLocation={detectUserLocation}
-              darkMode={true}
-              placeholder="Search city, zip, or station..."
-              currentLocationName={isLocating ? 'Locating...' : undefined}
-            />
-          </div>
-          
-          {/* Show loading state */}
-          {isLocating && (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>
-              📍 Finding your location...
-            </div>
-          )}
-          
-          {/* Show error if any */}
-          {locationError && (
-            <div style={{ textAlign: 'center', padding: '10px', color: '#f87171', fontSize: '13px' }}>
-              {locationError}
-            </div>
-          )}
-          
-          {/* Weather Landing Page */}
-          {currentLocation && !isLocating && (
-            <WeatherLandingPage
-              stationId={currentLocation.stationId}
-              stationName={currentLocation.stationName}
-              lat={currentLocation.lat}
-              lon={currentLocation.lon}
-              apiBaseUrl={API_URL}
-              darkMode={true}
-            />
-          )}
-        </>
-      ) : currentView === 'search' ? (
-          // SEARCH VIEW - Station and date selection
+        {currentView === 'search' ? (
+          // SEARCH VIEW
           <div className="controls-section">
             <div className="control-group">
               <label>Search Station:</label>
@@ -398,35 +327,23 @@ const handleBackToSearch = () => {
             </div>
 
             {selectedStation && (
-              <>
-                <div className="date-controls">
-                  <div className="control-group">
-                    <label htmlFor="start-date">Start Date:</label>
-                    <input
-                      id="start-date"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="date-input"
-                    />
-                  </div>
-
-                  <div className="control-group">
-                    <label htmlFor="end-date">End Date:</label>
-                    <input
-                      id="end-date"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="date-input"
-                    />
-                  </div>
-
-                  <button onClick={handleDateChange} className="update-button">
-                    Update Chart
-                  </button>
+              <div className="date-controls">
+                <div className="control-group">
+                  <label htmlFor="end-date">End Date:</label>
+                  <input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
+                    className="date-input"
+                  />
                 </div>
-              </>
+
+                <button onClick={handleUpdateClick} className="update-button">
+                  Update Chart
+                </button>
+              </div>
             )}
 
             {!selectedStation && (
@@ -435,45 +352,93 @@ const handleBackToSearch = () => {
                 <p>Try searching for your city or airport code</p>
               </div>
             )}
-          </div>       
+          </div>
         ) : (
-          // CHART VIEW - Shows chart with back button
+          // CHART VIEW
           <>
-            {/* Back button in top-left */}
-            <button onClick={handleBackToSearch} className="back-button">
-              ← Back
-            </button>
+            {/* Row 1: Home button + End Date (aligned) */}
+            <div className="chart-top-controls">
+              <button onClick={handleBackToSearch} className="back-button">
+                ← Home
+              </button>
 
-            {/* Date controls for updating chart */}
-            <div className="chart-date-controls">
-              <div className="control-group">
-                <label htmlFor="chart-start-date">Start Date:</label>
-                <input
-                  id="chart-start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="date-input"
-                />
-              </div>
-
-              <div className="control-group">
+              <div className="end-date-group">
                 <label htmlFor="chart-end-date">End Date:</label>
                 <input
                   id="chart-end-date"
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
                   className="date-input"
                 />
               </div>
+            </div>
 
-              <button onClick={handleDateChange} className="update-button">
-                Update
+            {/* Row 2: Station Search with Map button */}
+            <div className="station-search-box">
+              <label>Change Station:</label>
+              <StationSearch onSelectStation={handleStationSelect} />
+              <button
+                className={`map-button ${chartView === 'map' ? 'active' : ''}`}
+                onClick={() => handleChartViewChange('map')}
+                title="Find station on map"
+              >
+                <Map size={20} />
               </button>
             </div>
 
+{/* Row 3: Update button */}
+            <div className="update-row">
+              <button onClick={handleUpdateClick} className="update-button">
+                Update Chart
+              </button>
+            </div>
+
+            {/* Chart View Icons - Below Update Button */}
+            {selectedStation && weatherData.length > 0 && (
+              <div className="chart-view-icons">
+                <span className="chart-view-label">Chart Selection</span>
+                <button
+                  className={`icon-button ${chartView === 'temperature' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('temperature')}
+                  title="Temperature"
+                >
+                  <Thermometer size={24} />
+                </button>
+                <button
+                  className={`icon-button ${chartView === 'precipitation' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('precipitation')}
+                  title="Precipitation & Snow"
+                >
+                  <CloudRain size={24} />
+                </button>
+                <button
+                  className={`icon-button ${chartView === 'hourly' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('hourly')}
+                  title="Hourly"
+                >
+                  <Clock size={24} />
+                </button>
+                <button
+                  className={`icon-button ${chartView === 'top10' ? 'active' : ''}`}
+                  onClick={() => setChartView('top10')}
+                  title="Top 10"
+                >
+                  <Trophy size={24} />
+                </button>
+                {/* <button
+                  className={`icon-button ${chartView === 'map' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('map')}
+                  title="Map"
+                >
+                  <Map size={24} />
+                </button> */}
+              </div>
+            )}
+
             {isLoading && (
+
               <div className="loading-message">
                 Loading weather data...
               </div>
@@ -487,83 +452,83 @@ const handleBackToSearch = () => {
 
             {!isLoading && !error && weatherData.length > 0 && selectedStation && (
               <>
-                {/* Dark mode toggle above chart */}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  marginTop: '20px',
-                  marginBottom: '10px'
-                }}>
-                  <label className="toggle-label dark-mode-toggle">
-                    <input
-                      type="checkbox"
-                      checked={darkMode}
-                      onChange={(e) => setDarkMode(e.target.checked)}
+
+
+                <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
+                  {chartView === 'temperature' ? (
+                    <EnhancedWeatherChart
+                      key="temperature-chart"
+                      data={weatherData}
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onDateRangeChange={handleDateRangeChange}
                     />
-                    <span>🌙 Dark Mode</span>
-                  </label>
+                  ) : chartView === 'precipitation' ? (
+                    <PrecipitationChart
+                      key="precipitation-chart"
+                      data={weatherData}
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onDateRangeChange={handleDateRangeChange}
+                    />
+                  ) : chartView === 'hourly' ? (
+                    <HourlyWeatherChart
+                      key="hourly-chart"
+                      data={hourlyData}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onDateRangeChange={handleDateRangeChange}
+                    />
+                  ) : chartView === 'top10' ? (
+                    <Top10Chart
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || 'Weather Station'}
+                      darkMode={darkMode}
+                    />
+                  ) : (
+                    <InteractiveStationMap
+                      startDate={startDate}
+                      endDate={endDate}
+                      darkMode={darkMode}
+                      metric="tmax"
+                      selectedStation={selectedStation!}
+                      onStationSelect={(station) => {
+                        setSelectedStation(station);
+                        fetchWeatherData(station);
+                        setChartView('temperature');
+                      }}
+                    />
+                  )}
                 </div>
-  <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
-  {chartView === 'temperature' ? (
-    <EnhancedWeatherChart
-      key="temperature-chart"
-      data={weatherData}
-      stationId={selectedStation?.station_id || ''}
-      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-      darkMode={darkMode}
-      startDate={startDate}
-      endDate={endDate}
-      onDateRangeChange={handleDateRangeChange}
-    />
-  ) : chartView === 'precipitation' ? (
-    <PrecipitationChart
-      key="precipitation-chart"
-      data={weatherData}
-      stationId={selectedStation?.station_id || ''}
-      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-      darkMode={darkMode}
-      startDate={startDate}
-      endDate={endDate}
-      onDateRangeChange={handleDateRangeChange}
-    />
-) : chartView === 'hourly' ? (
-  <HourlyWeatherChart
-    key="hourly-chart"
-    data={hourlyData}
-    stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-    darkMode={darkMode}
-    startDate={startDate}
-    endDate={endDate}
-  />
-) : chartView === 'top10' ? (
-  <Top10Chart
-    stationId={selectedStation?.station_id || ''}
-    stationName={selectedStation?.name || 'Weather Station'}
-    darkMode={darkMode}
-  />
+                <WeatherSummary 
+                  data={weatherData}
+                  stationId={selectedStation?.station_id || ''}
+                  stationName={selectedStation?.name || ''}
+                  startDate={startDate}
+                  endDate={endDate}
+                  darkMode={darkMode}
+                />
+                {/* Dark Mode Toggle - Bottom */}
+                <div className="dark-mode-footer">
+                  <button
+                    className={`dark-mode-button ${darkMode ? 'active' : ''}`}
+                    onClick={() => setDarkMode(!darkMode)}
+                    title="Toggle Dark Mode"
+                  >
+                    <Moon size={18} />
+                    <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                  </button>
+                </div>
 
-  
-) : (
-  <InteractiveStationMap
-    startDate={startDate}
-    endDate={endDate}
-    darkMode={darkMode}
-    metric="tmax"
-    selectedStation={selectedStation!}  // Pass the selected station
-    onStationSelect={(station) => {
-      setSelectedStation(station);
-      fetchWeatherData(station);
-      setChartView('temperature');
-    }}
-  />
-)
-
-
-}
-</div>
-
-                {/* Chart View Selector below chart */}
-                <div className="chart-view-selector">
+                {/* <div className="chart-view-selector">
                   <button
                     className={chartView === 'temperature' ? 'active' : ''}
                     onClick={() => handleChartViewChange('temperature')}
@@ -583,33 +548,28 @@ const handleBackToSearch = () => {
                     ⏰ Hourly
                   </button>
                   <button
-                  className={chartView === 'top10' ? 'active' : ''}
-                  onClick={() => setChartView('top10')}
-                >
-                  🏆 Top 10
-                </button>
+                    className={chartView === 'top10' ? 'active' : ''}
+                    onClick={() => setChartView('top10')}
+                  >
+                    🏆 Top 10
+                  </button>
                   <button
-                  className={chartView === 'map' ? 'active' : ''}
-                  onClick={() => handleChartViewChange('map')}
-                >
-                  🗺️ Map
-                </button>
-                </div>
+                    className={chartView === 'map' ? 'active' : ''}
+                    onClick={() => handleChartViewChange('map')}
+                  >
+                    🗺️ Map
+                  </button>
+                </div> */}
 
-                {/* Weather Summary below chart type buttons */}
-                <WeatherSummary
-                  data={weatherData}
-                  stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
+
               </>
             )}
           </>
         )}
       </main>
     </div>
-  );
+
+);
 }
 
 export default App;
