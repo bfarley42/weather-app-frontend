@@ -11,13 +11,78 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0f172a;
   min-height: 100vh;
+}
+
+/* ========================================
+   ANIMATED GRADIENT BACKGROUND
+   ======================================== */
+.app-bg-animated {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background: linear-gradient(
+    135deg,
+    #1e3a5f 0%,
+    #2d4a6f 25%,
+    #3d5a7f 50%,
+    #2d4a6f 75%,
+    #1e3a5f 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Optional: Add subtle cloud-like overlay */
+.app-bg-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 60%);
+  animation: cloudDrift 30s ease-in-out infinite;
+}
+
+@keyframes cloudDrift {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(20px) translateY(-10px);
+  }
+  50% {
+    transform: translateX(-10px) translateY(20px);
+  }
+  75% {
+    transform: translateX(-20px) translateY(-5px);
+  }
 }
 
 .app {
   min-height: 100vh;
   padding: 20px;
+  position: relative;
 }
 
 .app-header {
@@ -30,20 +95,28 @@ body {
   font-size: 2.5rem;
   margin-bottom: 10px;
   font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .4);
 }
 
 .app-header p {
   font-size: 1.1rem;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
 }
 
 .app-main {
+  position: relative;
+  z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
-  background: white;
+  background: rgb(255, 255, 255);  /* 75% white */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .controls-section {
@@ -109,7 +182,7 @@ body {
 }
 
 .back-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-size: 15px;
   font-weight: 600;
   background: white;
@@ -119,13 +192,98 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  margin-bottom: 20px;
 }
 
 .back-button:hover {
   border-color: #667eea;
   background: #f0f0ff;
   transform: translateY(-2px);
+}
+
+/* ========================================
+   CHART VIEW TOP CONTROLS
+   ======================================== */
+.chart-top-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.chart-top-controls .back-button {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.end-date-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.end-date-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ========================================
+   STATION SEARCH BOX (visible border)
+   ======================================== */
+.station-search-box {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.station-search-box label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+.station-search-box .station-search {
+  width: 100%;
+}
+
+.station-search-box .station-search input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+}
+
+.station-search-box .station-search input:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* ========================================
+   UPDATE ROW
+   ======================================== */
+.update-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.update-row .update-button {
+  padding: 12px 32px;
+  font-size: 16px;
 }
 
 .chart-date-controls {
@@ -261,17 +419,17 @@ body {
 /* Mobile responsive (phones) */
 @media (max-width: 767px) {
   .app {
-    padding: 5px;  /* CRITICAL: 20px → 5px */
+    padding: 5px;
   }
 
   .app-header {
     margin-bottom: 15px;
-    padding: 0 10px;  /* ADD THIS - gives breathing room */
-    position: relative;  /* ADD THIS - ensures proper stacking */
-    z-index: 1;  /* ADD THIS - keeps header above other elements */
+    padding: 0 10px;
+    position: relative;
+    z-index: 1;
   }
 
-    .chart-section-precip {
+  .chart-section-precip {
     margin-top: 15px;
     padding: 0;
     background: transparent;
@@ -287,7 +445,7 @@ body {
   }
 
   .app-main {
-    padding: 8px;  /* CRITICAL: 32px → 8px */
+    padding: 12px;
     border-radius: 8px;
   }
 
@@ -305,7 +463,7 @@ body {
   }
 
   .date-controls {
-    flex-direction: row;  /* Changed from column */
+    flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 8px;
@@ -314,31 +472,71 @@ body {
   }
 
   .date-controls .control-group {
-    flex: 1 1 45%;  /* Allow date inputs to share space equally */
+    flex: 1 1 45%;
     min-width: 140px;
   }
 
   .date-input {
     width: 100%;
-    padding: 10px 8px;  /* Reduced padding for narrower inputs */
+    padding: 10px 8px;
     font-size: 14px;
   }
 
   .update-button {
-    flex: 1 1 100%;  /* Take full width on new line */
+    flex: 1 1 100%;
     padding: 12px 20px;
     font-size: 14px;
   }
 
   .back-button {
     width: auto;
-    padding: 8px 16px;
+    padding: 10px 16px;
     font-size: 14px;
-    margin-bottom: 15px;
+  }
+
+  /* Chart top controls - mobile */
+  .chart-top-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .end-date-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .end-date-group label {
+    display: none; /* Hide label on mobile */
+  }
+
+  .end-date-group .date-input {
+    flex: 1;
+  }
+
+  /* Station search box - mobile */
+  .station-search-box {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .station-search-box label {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  /* Update row - mobile */
+  .update-row {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
+
+  .update-row .update-button {
+    width: 100%;
+    padding: 14px 24px;
   }
 
   .chart-date-controls {
-    flex-direction: row;  /* Changed from column */
+    flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: 8px;
@@ -347,13 +545,13 @@ body {
   }
 
   .chart-date-controls .control-group {
-    flex: 1 1 45%;  /* Allow date inputs to share space equally */
+    flex: 1 1 45%;
     min-width: 140px;
-    margin-bottom: 0;  /* Remove bottom margin */
+    margin-bottom: 0;
   }
 
   .chart-date-controls .update-button {
-    flex: 1 1 100%;  /* Take full width on new line */
+    flex: 1 1 100%;
   }
 
   .toggle-label {
@@ -378,16 +576,16 @@ body {
 
   .chart-section {
     margin-top: 15px;
-    padding: 0px;  /* CRITICAL: 10px → 0px - no padding needed on mobile! */
+    padding: 0px;
     background: transparent;
   }
 
   .chart-section-precip {
-  margin-top: 0;
-  padding: 0;  /* No padding for precipitation chart */
-  background: transparent;  /* Transparent background */
-  border-radius: 0;
-}
+    margin-top: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+  }
 
   .loading-message {
     padding: 40px 15px;
@@ -466,11 +664,6 @@ body {
   }
 }
 
-/* Dark mode support (if you add it later) */
-@media (prefers-color-scheme: dark) {
-  /* Add dark mode styles here if needed */
-}
-
 /* Ensure touch targets are at least 44x44px on mobile */
 @media (max-width: 767px) {
   button,
@@ -493,7 +686,6 @@ body {
   }
 }
 
-
 /* Prevent all horizontal scrolling */
 html, body, #root {
   width: 100%;
@@ -508,4 +700,242 @@ html, body, #root {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+}
+.global-video-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background: rgb(0, 0, 0); /* fallback */
+}
+
+.bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45; /* tweak as desired */
+}
+/* DEBUG - Force video visible */
+.app-video-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background: red; /* Debug: should see red if container exists */
+}
+
+.app-video-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: blue; /* Debug: should see blue if video element exists */
+}
+/* ========================================
+   VIDEO BACKGROUND
+   ======================================== */
+.app-video-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.app-video-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-video-bg .video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.3) 0%,
+    rgba(15, 23, 42, 0.5) 50%,
+    rgba(15, 23, 42, 0.7) 100%
+  );
+}
+.app {
+  position: relative;
+  z-index: 0;
+  background: transparent;
+}
+
+.app-main {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* Translucent station search box */
+.station-search-box {
+  background: rgba(248, 250, 252, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Translucent chart section */
+.chart-section {
+  margin-top: 0;
+  padding: 20px;
+  background: rgba(249, 249, 249, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 12px;
+}
+
+.chart-section-precip {
+  background: rgba(249, 249, 249, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* Chart View Icon Buttons */
+.chart-view-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 20px auto;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  width: fit-content;
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.icon-button:hover {
+  background: rgba(102, 126, 234, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.icon-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.icon-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.icon-button.active svg {
+  stroke: white;
+}
+
+/* Dark Mode Footer Button */
+.dark-mode-footer {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0;
+}
+
+.dark-mode-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark-mode-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode-button.active {
+  background: #2c3e50;
+  color: #f1c40f;
+  border-color: #34495e;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chart-view-icons {
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .icon-button {
+    width: 60px;
+    height: 44px;
+    border-radius: 10px;
+  }
+  .icon-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+.chart-view-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
+  padding-right: 12px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+.station-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.map-button:hover {
+  background: rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.map-button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.map-button.active svg {
+  stroke: white;
 }

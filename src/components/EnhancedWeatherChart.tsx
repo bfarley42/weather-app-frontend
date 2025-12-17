@@ -98,6 +98,7 @@ interface ClimateNormal {
   tmax_f: number | null;
   tmin_f: number | null;
   prcp_in: number | null;
+  snow_in: number | null;
 }
 
 interface EnhancedWeatherChartProps {
@@ -209,7 +210,7 @@ export default function EnhancedWeatherChart({
     if (!name) return '';
 
     // Only shorten if the length is > 45
-    if (name.length > 45) {
+    if (name.length > 40) {
       return name
         .replace(/INTERNATIONAL/g, 'INTL')
         .replace(/AIRPORT/g, 'AP')
@@ -313,27 +314,6 @@ if (allTemps.length > 0) {
     bottom: 90
   };
 
-  // Helper function to wrap long station names
-  // const wrapStationName = (name: string, maxLength: number) => {
-  //   if (name.length <= maxLength) return name;
-    
-  //   const words = name.split(' ');
-  //   const lines: string[] = [];
-  //   let currentLine = '';
-    
-  //   words.forEach(word => {
-  //     const testLine = currentLine ? `${currentLine} ${word}` : word;
-  //     if (testLine.length <= maxLength) {
-  //       currentLine = testLine;
-  //     } else {
-  //       if (currentLine) lines.push(currentLine);
-  //       currentLine = word;
-  //     }
-  //   });
-    
-  //   if (currentLine) lines.push(currentLine);
-  //   return lines.join('\n');
-  // };
 
 const titleSettings = {
   text: shortenStationName(stationName),
@@ -356,20 +336,21 @@ const titleSettings = {
 };
 
   // Responsive legend
-  const legendSettings = isMobile ? {
-    data: [
-      ...(showHighTemp ? ['High Temp'] : []),
-      ...(showLowTemp ? ['Low Temp'] : []),
-      showSnow ? 'Snow' : 'Precip',
-      ...(showNormals ? ['Normal High', 'Normal Low'] : [])
-    ],
+const legendSettings = isMobile ? {
+    data: showAvgTemp 
+      ? ['Avg Temp', showSnow ? 'Snow' : 'Precip', ...(showNormals ? ['Normal Avg'] : [])]
+      : [
+        ...(showHighTemp ? ['High Temp'] : []),
+        ...(showLowTemp ? ['Low Temp'] : []),
+        showSnow ? 'Snow' : 'Precip',
+        ...(showNormals ? ['Normal High', 'Normal Low'] : [])
+      ],
     top: 45,
     left: 'center',
     width: '110%',
     itemGap: 7,
     itemWidth: 8,
     itemHeight: 7,
-    //  icon: 'rect',
     textStyle: {
       fontSize: 11,
       color: darkMode ? '#bdc3c7' : '#555'
@@ -379,7 +360,9 @@ const titleSettings = {
       'Low Temp': true,
       'Precip': true,
       'Normal High': true,
-      'Normal Low': true
+      'Normal Low': true,
+      'Avg Temp': true,
+      'Normal Avg': true
     }
   } : {
     data: showAvgTemp 
@@ -815,15 +798,107 @@ const titleSettings = {
           color: darkMode ? colors.avg.dark.line : colors.avg.light.line
         },
         areaStyle: {
+          origin: 'start',
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: darkMode ? colors.avg.dark.gradient[0] : colors.avg.light.gradient[0] },
             { offset: .5, color: darkMode ? colors.range.dark[2] : colors.range.light[2] },
             { offset: 1, color: darkMode ? colors.avg.dark.gradient[1] : colors.avg.light.gradient[1] }
           ])
         },
+        markPoint: {
+          data: [
+            // Max High Temp marker
+            {
+              name: 'Max High',
+              coord: [
+                dates[maxTemps.indexOf(Math.max(...maxTemps.filter((t): t is number => t !== null)))],
+                Math.max(...maxTemps.filter((t): t is number => t !== null))
+              ],
+              label: {
+                show: true,
+                formatter: () => `${Math.max(...maxTemps.filter((t): t is number => t !== null))}°`,
+                position: 'top',
+                color: '#fff',
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.85)' : 'rgba(192, 0, 16, 0.85)',
+                padding: [3, 8],
+                borderRadius: 6
+              },
+              symbolSize: 0
+            },
+            // Min Low Temp marker
+            {
+              name: 'Min Low',
+              coord: [
+                dates[minTemps.indexOf(Math.min(...minTemps.filter((t): t is number => t !== null)))],
+                Math.min(...minTemps.filter((t): t is number => t !== null))
+              ],
+              label: {
+                show: true,
+                formatter: () => `${Math.min(...minTemps.filter((t): t is number => t !== null))}°`,
+                position: 'bottom',
+                color: darkMode ? '#fff' : '#000',
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.85)' : 'rgba(4, 167, 212, 0.5)',
+                padding: [3, 8],
+                borderRadius: 6
+              },
+              symbolSize: 0
+            }
+          ]
+        },
         yAxisIndex: 0,
         z: 3
+}] : []),
+
+ // Avg Temp markers when showing Avg (invisible line, just for markPoint)
+      ...(showAvgTemp ? [{
+        name: 'Avg Marker',
+        type: 'line',
+        data: avgTemps,
+        symbol: 'none',
+        lineStyle: { width: 0, opacity: 0 },
+        silent: true,
+        markPoint: {
+          data: [
+            {
+              type: 'max',
+              label: {
+                show: true,
+                formatter: (params: any) => `${Math.round(params.value)}°`,
+                position: 'top',
+                color: '#fff',
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.9)' : 'rgba(184, 134, 11, 0.9)',
+                padding: [3, 8],
+                borderRadius: 6
+              },
+              symbolSize: 0
+            },
+            {
+              type: 'min',
+              label: {
+                show: true,
+                formatter: (params: any) => `${Math.round(params.value)}°`,
+                position: 'bottom',
+                color: darkMode ? '#fff' : '#000',
+                fontSize: isMobile ? 11 : 13,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.6)' : 'rgba(184, 134, 11, 0.5)',
+                padding: [3, 8],
+                borderRadius: 6
+              },
+              symbolSize: 0
+            }
+          ]
+        },
+        yAxisIndex: 0,
+        z: 10
       }] : []),
+
 
       // Normal Average Temp
       ...(showAvgTemp && showNormals ? [{
@@ -864,7 +939,7 @@ const titleSettings = {
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        gap: isMobile ? '6px' : '8px',
+        gap: isMobile ? '5px' : '8px',
         marginBottom: '15px',
         marginTop: '10px',
         flexWrap: 'wrap',
@@ -933,7 +1008,7 @@ const titleSettings = {
         />
         
         {/* Landscape button - bottom left corner */}
-        <button
+        {/* <button
           className="landscape-button"
           onClick={() => {
             console.log('Landscape view coming soon!');
@@ -946,7 +1021,7 @@ const titleSettings = {
             <path d="M21 3l-7 7" />
             <path d="M3 21l7-7" />
           </svg>
-        </button>
+        </button> */}
       </div>
 {/* Snow/Rain Toggle - Below chart, above checkboxes */}
 <div style={{ 
@@ -1039,44 +1114,7 @@ const titleSettings = {
     <span>{showAvgTemp ? 'Show Hi/Lo' : 'Show Avg'}</span>
   </button>
 
-
-
 </div>
-
-
-{/* <div className="chart-controls">
-  <div className="toggle-group"></div> */}
-
-{/* 
-      <div className="chart-controls">
-        <div className="toggle-group">
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={showHighTemp}
-              onChange={(e) => setShowHighTemp(e.target.checked)}
-            />
-            <span>High Temp</span>
-          </label>
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={showLowTemp}
-              onChange={(e) => setShowLowTemp(e.target.checked)}
-            />
-            <span>Low Temp</span>
-          </label>
-          <label className="toggle-label">
-            <input
-              type="checkbox"
-              checked={showNormals}
-              onChange={(e) => setShowNormals(e.target.checked)}
-              disabled={isLoadingNormals || normals.length === 0}
-            />
-            <span>Climate Normals {isLoadingNormals && '(loading...)'}</span>
-          </label>
-        </div>
-      </div> */}
-    </div>
+</div>
   );
 }

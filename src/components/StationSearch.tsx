@@ -49,11 +49,14 @@ export default function StationSearch({ onSelectStation }: StationSearchProps) {
     return () => clearTimeout(debounce);
   }, [query]);
 
-  const handleSelect = (station: Station) => {
-    setQuery(`${station.name} (${station.station_id})`);
-    setShowResults(false);
-    onSelectStation(station);
-  };
+const handleSelect = (station: Station) => {
+  onSelectStation(station);
+
+  // Clear search UI completely
+  setQuery('');
+  setResults([]);
+  setShowResults(false);
+};
 
   return (
     <div className="station-search">
@@ -88,11 +91,11 @@ export default function StationSearch({ onSelectStation }: StationSearchProps) {
         </div>
       )}
 
-      {showResults && query.length >= 2 && results.length === 0 && !isLoading && (
-        <div className="search-results">
-          <div className="no-results">No stations found</div>
-        </div>
-      )}
+    {showResults && query.trim().length >= 2 && !isLoading && results.length === 0 && (
+      <div className="search-results">
+        <div className="no-results">No stations found</div>
+      </div>
+    )}
     </div>
   );
 }
