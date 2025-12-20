@@ -12,5 +12,6 @@
     "noUnusedLocals": false,         // Set this to false
     "noUnusedParameters": false,     // Set this to false (optional, but related)
     "allowImportingTsExtensions": true
-  }
+  },
+  
 }

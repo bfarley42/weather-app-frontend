@@ -45,7 +45,7 @@ interface StationCompareProps {
   currentStationName?: string;
 }
 
-const ANIMATION_INTERVAL_MS = 25; // 👈 speed control (lower = faster)
+// const ANIMATION_INTERVAL_MS = 25; // 👈 speed control (lower = faster)
 
 const METRICS: { value: MetricType; label: string; icon: string }[] = [
   { value: 'precipitation', label: 'Precipitation', icon: '🌧️' },
@@ -90,6 +90,7 @@ export default function StationCompare({
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [controlsCollapsed, setControlsCollapsed] = useState(false);
   const [showEndLabels, setShowEndLabels] = useState(false);
+  const [chartReady, setChartReady] = useState(false);
 //   const [zoomEnd, setZoomEnd] = useState(0);
 
   const animationRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -105,11 +106,11 @@ export default function StationCompare({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (compareData) {
-        updateChartFrame(0);
-    }
-    }, [compareData]);  
+//   useEffect(() => {
+//     if (compareData) {
+//         updateChartFrame(0);
+//     }
+//     }, [compareData]);  
 
   // Close search dropdown when clicking outside
   useEffect(() => {
@@ -133,31 +134,44 @@ export default function StationCompare({
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 20 }, (_, i) => currentYear - i);
 
-    const updateChartFrame = (frameIndex: number) => {
-    const chart = chartRef.current?.getEchartsInstance();
-    if (!chart || !compareData) return;
+    // const updateChartFrame = (frameIndex: number) => {
+    // const chart = chartRef.current?.getEchartsInstance();
+    // if (!chart || !compareData) return;
 
-    const dates = compareData.data
-        .slice(0, frameIndex + 1)
-        .map(d => formatChartDate(d.date));
+    // const dates = compareData.data
+    //     .slice(0, frameIndex + 1)
+    //     .map(d => formatChartDate(d.date));
 
-    const series = selectedStations.map(station => ({
-        name: station.display_name,
-        data: compareData.data
-        .slice(0, frameIndex + 1)
-        .map(d => d[station.station_id] as number || 0),
-    }));
+    // const series = selectedStations.map(station => ({
+    //     name: station.display_name,
+    //     data: compareData.data
+    //     .slice(0, frameIndex + 1)
+    //     .map(d => d[station.station_id] as number || 0),
+    // }));
 
-    chart.setOption(
-        {
-        xAxis: { data: dates },
-        series,
-        },
-        false, // notMerge
-        true   // lazyUpdate
-    );
-    };
+    // chart.setOption(
+    //     {
+    //     xAxis: { data: dates },
+    //     series,
+    //     },
+    //     false, // notMerge
+    //     true   // lazyUpdate
+    // );
+    // };
 
+const getYAxisMax = () => {
+  if (!compareData) return undefined;
+
+  let max = 0;
+  for (const row of compareData.data) {
+    for (const s of selectedStations) {
+      const v = Number(row[s.station_id]);
+      if (!isNaN(v)) max = Math.max(max, v);
+    }
+  }
+
+  return Math.ceil(max * 1.1 * 10) / 10; // round nicely
+};
 // const showFinalEndLabels = () => {
 //   const chart = chartRef.current?.getEchartsInstance();
 //   if (!chart || !compareData) return;
@@ -182,29 +196,30 @@ export default function StationCompare({
 // };
 
 
-const easeInMidOutFast = (t: number) => {
-  // t is 0 → 1
-  // clamp
-  t = Math.min(Math.max(t, 0), 1);
+// const easeInMidOutFast = (t: number) => {
+//   // t is 0 → 1
+//   // clamp
+//   t = Math.min(Math.max(t, 0), 1);
 
-  if (t < 0.3) {
-    // slower, more visible start
-    return 0.5 * t * t;
-  }
- if (t < 0.5) {
-    // slower, more visible start
-    return 1 * t * t;
-  }
+//   if (t < 0.3) {
+//     // slower, more visible start
+//     return 0.5 * t * t;
+//   }
+//  if (t < 0.5) {
+//     // slower, more visible start
+//     return 1 * t * t;
+//   }
 
-  if (t < 0.7) {
-    // steady middle
-    return t - 0.15;
-  }
+//   if (t < 0.7) {
+//     // steady middle
+//     return t - 0.15;
+//   }
 
-  // accelerated finish
-  const u = (t - 0.7) / 0.3;
-  return 0.55 + 0.45 * (1 - Math.pow(1 - u, 2));
-};
+//   // accelerated finish
+//   const u = (t - 0.7) / 0.3;
+// //   return 0.55 + 0.45 * (1 - Math.pow(1 - u, 2));
+//   return 0.55 + 0.45 * (1 - Math.pow(1 - u, 3));
+// };
 
 
   // Search for stations
@@ -284,6 +299,8 @@ const easeInMidOutFast = (t: number) => {
     setAnimationIndex(null);
     setIsPlaying(false);
     setControlsCollapsed(true);
+    setChartReady(false);
+    setShowEndLabels(false);
 
     const stationIds = selectedStations.map((s) => s.station_id).join(',');
     
@@ -306,6 +323,8 @@ const easeInMidOutFast = (t: number) => {
       }
 
       const data = await response.json();
+      // 1. Calculate the global max for the Y-axis scale immediately
+
       
       // Update station colors from response
       const updatedStations = selectedStations.map((s, i) => ({
@@ -314,10 +333,18 @@ const easeInMidOutFast = (t: number) => {
       }));
       setSelectedStations(updatedStations);
       setCompareData(data);
-      // 🔥 start animated build immediately
-    requestAnimationFrame(() => {
-    startAnimation();
-    });
+      setAnimationIndex(0); // Initialize at frame 0 immediately
+        setControlsCollapsed(true); // Collapse inputs
+
+        // Delay slightly to allow the 'frame 0' render to happen before playing
+        setTimeout(() => {
+        startAnimation();
+        }, 100);
+
+    //   // 🔥 start animated build immediately
+    // requestAnimationFrame(() => {
+    // startAnimation();
+    // });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -326,35 +353,67 @@ const easeInMidOutFast = (t: number) => {
   }, [selectedStations, metric, year]);
 
     // Animation controls
-const startAnimation = () => {
+  const startAnimation = () => {
     setShowEndLabels(false);
+    setChartReady(true);
   if (!compareData) return;
 
   if (animationRef.current) clearInterval(animationRef.current);
+    const yMax = getYAxisMax();
+    const chart = chartRef.current?.getEchartsInstance();
+
+
+    if (chart && yMax) {
+    chart.setOption({
+        yAxis: {
+        max: yMax,
+        },
+    });
+    }
 
   setIsPlaying(true);
 
   const total = compareData.data.length;
-  const durationMs = 6000; // 👈 total animation time (6s feels great)
+  const durationMs = 8000; // 👈 total animation time (6s feels great)
   const startTime = performance.now();
 
   animationRef.current = setInterval(() => {
     const elapsed = performance.now() - startTime;
     const t = Math.min(elapsed / durationMs, 1);
+    
+//     const eased = easeInMidOutFast(t);
+//     const frame = Math.floor(eased * (total - 1));
 
-    const eased = easeInMidOutFast(t);
-    const frame = Math.floor(eased * (total - 1));
+//     updateChartFrame(frame);
 
-    updateChartFrame(frame);
+//     if (t >= 1) {
+//       clearInterval(animationRef.current!);
+//       animationRef.current = null;
+//       setIsPlaying(false);
+//       setShowEndLabels(true);
+//     //   showFinalEndLabels(); // 👈 add labels at end
+//     }
+//   }, 30);
+// 1. Use LINEAR timing for smooth "days per second" flow
+    // This replaces the complex easeInMidOutFast logic
+    const frame = Math.floor(t * (total - 1));
 
     if (t >= 1) {
-      clearInterval(animationRef.current!);
+      // STOP ANIMATION
+      if (animationRef.current) clearInterval(animationRef.current);
       animationRef.current = null;
       setIsPlaying(false);
+      
+      // CRITICAL FIX: Lock the frame to the very last index
+      setAnimationIndex(total - 1);
+      
+      // Show the final labels
       setShowEndLabels(true);
-    //   showFinalEndLabels(); // 👈 add labels at end
+    } else {
+      // Update frame while running
+      setAnimationIndex(frame);
     }
-  }, 30);
+  }, 1000 / 60); // Run at ~60fps (approx 16ms)
 };
 
 
@@ -379,11 +438,16 @@ const startAnimation = () => {
     const getChartData = () => {
     if (!compareData) return { dates: [], series: [] };
 
-    const dates = compareData.data.map(d => formatChartDate(d.date));
+    // CHANGE: Slice data based on animationIndex.
+    // If animationIndex is null, default to 0 (start) instead of full length.
+    const limit = animationIndex !== null ? animationIndex + 1 : 0;
+    
+    const slicedData = compareData.data.slice(0, limit);
+    const dates = slicedData.map(d => formatChartDate(d.date));
 
     const series = selectedStations.map(station => ({
         name: station.display_name,
-        data: compareData.data.map(d => d[station.station_id] as number || 0),
+        data: slicedData.map(d => d[station.station_id] as number || 0),
         color: station.color
     }));
 
@@ -468,33 +532,7 @@ const startAnimation = () => {
         containLabel: false,
       },
 
-    //   dataZoom: [
-    //     {
-    //       type: 'inside',
-    //       start: 0,
-    //       end: zoomEnd,
-    //       zoomOnMouseWheel: true,
-    //       moveOnMouseMove: true,
-    //     },
-    //     {
-    //       type: 'slider',
-    //       start: 0,
-    //       end: zoomEnd,
-    //       height: isMobile ? 25 : 30,
-    //       bottom: isMobile ? 10 : 15,
-    //       borderColor: darkMode ? '#444' : '#ddd',
-    //       fillerColor: darkMode ? 'rgba(102, 126, 234, 0.3)' : 'rgba(102, 126, 234, 0.2)',
-    //       handleStyle: {
-    //         color: '#667eea',
-    //       },
-    //       textStyle: {
-    //         color: darkMode ? '#bdc3c7' : '#666',
-    //         fontSize: isMobile ? 10 : 11,
-    //       },
-    //     },
-    //   ],
-
-      xAxis: {
+       xAxis: {
         type: 'category',
         data: dates,
         boundaryGap: false,
@@ -511,6 +549,7 @@ const startAnimation = () => {
       yAxis: {
         type: 'value',
         name: compareData?.unit || '',
+        max: getYAxisMax(),
         nameTextStyle: {
           color: darkMode ? '#bdc3c7' : '#666',
           fontSize: isMobile ? 11 : 12,
@@ -544,68 +583,45 @@ const startAnimation = () => {
           color: s.color,
         },
         areastyle: undefined,
-        // areaStyle: {
-        //   color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        //     { offset: 0, color: `${s.color}40` },
-        //     { offset: 1, color: `${s.color}05` },
-        //   ]),
-        // },
+
         emphasis: {
           focus: 'series',
           lineStyle: { width: 4 },
         },
         // End label with station name and total
-        endLabel: showEndLabels
-            ? {
-                show: true,
-                formatter: () => {
-                    const total = s.data[s.data.length - 1] || 0;
-                    return `${s.name}\n${total.toFixed(2)} ${compareData?.unit}`;
-                },
-                color: s.color,
-                fontSize: 11,
-                fontWeight: 600,
-                distance: 8,
-                }
-            : { show: false },
-        //   show: !isMobile && s.data.length > 0,
-        //   formatter: () => {
-        //     const total = s.data[s.data.length - 1] || 0;
-        //     const shortName = s.name.length > 12 ? s.name.substring(0, 12) + '...' : s.name;
-        //     return `${shortName}\n${total.toFixed(2)}`;
-        //   },
-        //   color: s.color,
-        //   fontSize: 11,
-        //   fontWeight: 600,
-        //   distance: 8,
-        // },
+        // endLabel: showEndLabels
+        //     ? {
+        //         show: true,
+        //         formatter: () => {
+        //             const total = s.data[s.data.length - 1] || 0;
+        //             return `${s.name}\n${total.toFixed(2)} ${compareData?.unit}`;
+        //         },
+        //         color: s.color,
+        //         fontSize: 11,
+        //         fontWeight: 600,
+        //         distance: 8,
+        //         }
+        //     : { show: false },
+            endLabel: {
+            show: showEndLabels, // Controlled by state
+            formatter: () => {
+                // Get the very last value from the FULL dataset, not just the slice
+                const lastValue = s.data[s.data.length - 1] || 0;
+                return `${s.name}\n${lastValue.toFixed(2)} ${compareData?.unit}`;
+            },
+            color: s.color,
+            fontSize: 11,
+            fontWeight: 600,
+            distance: 10,
+            },
+
+
         // Mark the final point
         markpoint: undefined,
-        // markPoint: isMobile ? {
-        //   data: [{
-        //     name: s.name,
-        //     coord: [dates.length - 1, s.data[s.data.length - 1]],
-        //     value: s.data[s.data.length - 1],
-        //     label: {
-        //       show: true,
-        //       formatter: (params: any) => `${params.value?.toFixed(1) || ''}`,
-        //       position: 'top',
-        //       fontSize: 10,
-        //       fontWeight: 'bold',
-        //       color: s.color,
-        //       backgroundColor: darkMode ? 'rgba(30,30,50,0.8)' : 'rgba(255,255,255,0.8)',
-        //       padding: [2, 4],
-        //       borderRadius: 2,
-        //     },
-        //     symbolSize: 0,
-        //   }],
-        // } : undefined,
         z: 10 - index, // Layer ordering
       })),
 
       animation: false,
-    //   animationDuration: 500,
-    //   animationEasing: 'cubicOut',
     };
 
     return option;
@@ -753,13 +769,9 @@ const startAnimation = () => {
               disabled={selectedStations.length < 2 || isLoading}
             >
               {isLoading ? 'Loading...' : 'Compare'}
-            </button>
-          
-          
+            </button>        
           </div>
-       
         </div>
-        
       </div>
       )}
       {controlsCollapsed && (
@@ -776,7 +788,7 @@ const startAnimation = () => {
       
 
       {/* Chart */}
-      {compareData && compareData.data.length > 0 && (
+      {chartReady && compareData && compareData.data.length > 0 && (
         <div className="compare-chart-container">
           {/* Animation Controls */}
           <div className="animation-controls">
