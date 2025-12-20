@@ -861,6 +861,8 @@ const legendSettings = isMobile ? {
         symbol: 'none',
         lineStyle: { width: 0, opacity: 0 },
         silent: true,
+        tooltip: {
+          show: false },
         markPoint: {
           data: [
             {
