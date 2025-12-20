@@ -246,9 +246,15 @@ body {
 .station-search-box label {
   display: block;
   font-weight: 600;
-  margin-bottom: 10px;
-  color: #333;
-  font-size: 14px;
+  margin-top: 2px;
+  margin-bottom: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+  color: #525252;
+  font-size: 12px;
+  margin-right: 4px;
+  padding-right: 5px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .station-search-box .station-search {
@@ -938,4 +944,47 @@ html, body, #root {
 
 .map-button.active svg {
   stroke: white;
+}
+/* Station Compare Modal */
+.compare-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.compare-nav-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compare-nav-button:hover {
+  background: #e5e7eb;
+}
+
+.dark .compare-nav-button {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .compare-nav-button:hover {
+  background: #4b5563;
 }

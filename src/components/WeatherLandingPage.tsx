@@ -12,15 +12,16 @@ interface Station {
 }
 
 interface SearchResult {
+  result_type: 'city' | 'zipcode' | 'station';
+  display_name: string;
   station_id: string;
-  name: string;
-  state: string;
+  station_name: string | null;
   lat: number;
   lon: number;
-  display_name: string;
-  distance_mi?: number;
+  state: string | null;
+  population: number | null;
+  distance_mi: number | null;
 }
-
 interface WeatherLandingPageProps {
   onStationSelect: (station: Station) => void;
   apiBaseUrl: string;
@@ -68,14 +69,20 @@ const WeatherLandingPage: React.FC<WeatherLandingPageProps> = ({
           );
           if (response.ok) {
             const data = await response.json();
+            // Build display name, handling missing state
+            const displayName = data.state 
+              ? `${data.name}, ${data.state}`
+              : data.name;
             setNearbyStation({
+              result_type: 'station',
               station_id: data.station_id,
-              name: data.name,
-              state: data.state,
+              station_name: data.name,
+              state: data.state || null,
               lat: data.lat,
               lon: data.lon,
-              display_name: `${data.name}, ${data.state}`,
+              display_name: displayName,
               distance_mi: data.distance_mi,
+              population: null,
             });
           }
         } catch (err) {
@@ -115,7 +122,7 @@ const WeatherLandingPage: React.FC<WeatherLandingPageProps> = ({
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/locations/search?q=${encodeURIComponent(query)}`
+        `${apiBaseUrl}/api/stations/search?q=${encodeURIComponent(query)}&limit=10`
       );
       if (response.ok) {
         const data = await response.json();
@@ -131,8 +138,8 @@ const WeatherLandingPage: React.FC<WeatherLandingPageProps> = ({
   const handleSelectStation = (result: SearchResult) => {
     onStationSelect({
       station_id: result.station_id,
-      name: result.name,
-      state: result.state,
+      name: result.station_name || result.station_id,
+      state: result.state || '',
       lat: result.lat,
       lon: result.lon,
     });
@@ -206,18 +213,31 @@ const WeatherLandingPage: React.FC<WeatherLandingPageProps> = ({
               {isSearching ? (
                 <div className="search-loading">Searching...</div>
               ) : searchResults.length > 0 ? (
-                searchResults.map((result) => (
-                  <button
-                    key={result.station_id}
-                    className="search-result-item"
-                    onClick={() => handleSelectStation(result)}
-                  >
-                    <span className="result-icon">📍</span>
-                    <div className="result-text">
+                searchResults.map((result, index) => (
+              <button
+                key={`${result.station_id}-${index}`}
+                className="search-result-item"
+                onClick={() => handleSelectStation(result)}
+              >
+                <div className="result-text">
+                  {result.result_type === 'city' || result.result_type === 'zipcode' ? (
+                    <>
                       <span className="result-name">{result.display_name}</span>
-                      <span className="result-station">{result.station_id}</span>
-                    </div>
-                  </button>
+                      <span className="result-secondary">
+                        Pop. {result.population?.toLocaleString() || 'N/A'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="result-name">
+                        {result.station_name || result.station_id} ({result.station_id})
+                        {result.distance_mi ? ` (${result.distance_mi.toFixed(1)} mi)` : ''}
+                      </span>
+                      <span className="result-secondary">Weather Station</span>
+                    </>
+                  )}
+                </div>
+              </button>
                 ))
               ) : searchQuery.length >= 2 ? (
                 <div className="search-no-results">No locations found</div>

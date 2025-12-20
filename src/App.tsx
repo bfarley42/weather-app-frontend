@@ -10,7 +10,9 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
-import { Thermometer, CloudRain, Clock, Trophy, Map, Moon } from 'lucide-react';
+import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare } from 'lucide-react';
+import StationCompare from './components/StationCompare';
+
 
 interface Station {
   station_id: string;
@@ -54,10 +56,10 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10' | 'compare'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
-  
+  // const [showCompare, setShowCompare] = useState(false);
 
   const fetchWeatherData = async (station: Station, customStartDate?: string, customEndDate?: string) => {
     setIsLoading(true);
@@ -180,7 +182,7 @@ function App() {
     }
   };
 
-  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map') => {
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10' | 'compare') => {
     setChartView(view);
     setError(null);
     
@@ -377,7 +379,7 @@ const handleDateRangeChange = (range: string) => {
 
             {/* Row 2: Station Search with Map button */}
             <div className="station-search-box">
-              <label>Change Station:</label>
+              <label>Change Station</label>
               <StationSearch onSelectStation={handleStationSelect} />
               <button
                 className={`map-button ${chartView === 'map' ? 'active' : ''}`}
@@ -427,6 +429,13 @@ const handleDateRangeChange = (range: string) => {
                 >
                   <Trophy size={24} />
                 </button>
+                <button
+                  className={`icon-button ${chartView === 'compare' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('compare')}
+                  title="Compare Stations"
+                >
+                  <GitCompare size={24} />
+                </button>
                 {/* <button
                   className={`icon-button ${chartView === 'map' ? 'active' : ''}`}
                   onClick={() => handleChartViewChange('map')}
@@ -449,6 +458,14 @@ const handleDateRangeChange = (range: string) => {
                 ⚠️ {error}
               </div>
             )}
+            {/* {showCompare && (
+              <div className="compare-modal-overlay">
+                <StationCompare
+                  darkMode={darkMode}
+                  onClose={() => setShowCompare(false)}
+                />
+              </div>
+            )} */}
 
             {!isLoading && !error && weatherData.length > 0 && selectedStation && (
               <>
@@ -492,6 +509,13 @@ const handleDateRangeChange = (range: string) => {
                       stationId={selectedStation?.station_id || ''}
                       stationName={selectedStation?.name || 'Weather Station'}
                       darkMode={darkMode}
+                    />
+                  ) : chartView === 'compare' ? (
+                    <StationCompare
+                      key="compare-chart"
+                      darkMode={darkMode}
+                      currentStationId={selectedStation?.station_id}
+                      currentStationName={selectedStation?.name || selectedStation?.station_id}
                     />
                   ) : (
                     <InteractiveStationMap

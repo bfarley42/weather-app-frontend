@@ -1,0 +1,652 @@
+/* src/components/StationCompare.css */
+
+.station-compare {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.station-compare.dark {
+  background: #1a1a2e;
+  color: #ecf0f1;
+}
+
+/* Header */
+.compare-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.station-compare.dark .compare-header {
+  border-bottom-color: #333;
+}
+
+.compare-header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.station-compare.dark .compare-header h2 {
+  color: #ecf0f1;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.station-compare.dark .close-button {
+  color: #95a5a6;
+}
+
+.station-compare.dark .close-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ecf0f1;
+}
+
+/* Controls */
+.compare-controls {
+  background: #f8f9fa;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.station-compare.dark .compare-controls {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #333;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Selected Stations */
+.selected-stations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.station-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.station-compare.dark .station-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #444;
+}
+
+.station-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.station-name {
+  font-weight: 500;
+  color: #333;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-compare.dark .station-name {
+  color: #ecf0f1;
+}
+
+.remove-station {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.remove-station:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.primary-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Station Search */
+.station-search {
+  position: relative;
+  min-width: 250px;
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #999;
+  pointer-events: none;
+}
+
+.station-search input {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.station-compare.dark .station-search input {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #444;
+  color: #ecf0f1;
+}
+
+.station-search input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.station-compare.dark .search-dropdown {
+  background: #2a2a4a;
+  border-color: #444;
+}
+
+.search-loading,
+.search-no-results {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.station-compare.dark .search-result-item {
+  border-bottom-color: #333;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.add-icon {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
+.result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.result-primary {
+  font-weight: 500;
+  color: #333;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.station-compare.dark .result-primary {
+  color: #ecf0f1;
+}
+
+.result-secondary {
+  font-size: 11px;
+  color: #999;
+}
+
+/* Control Sections (Metric, Year, Button) */
+.control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-section label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.station-compare.dark .control-section label {
+  color: #95a5a6;
+}
+
+.metric-select,
+.year-select {
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  min-width: 180px;
+  transition: all 0.2s;
+}
+
+.station-compare.dark .metric-select,
+.station-compare.dark .year-select {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #444;
+  color: #ecf0f1;
+}
+
+.metric-select:focus,
+.year-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.compare-button {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.compare-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.compare-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error */
+.compare-error {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.station-compare.dark .compare-error {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Chart Container */
+.compare-chart-container {
+  margin-top: 20px;
+}
+
+/* Animation Controls */
+.animation-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.station-compare.dark .animation-controls {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.animation-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.animation-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.animation-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.animation-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+  margin-left: 10px;
+}
+
+.station-compare.dark .animation-date {
+  color: #a0a0ff;
+}
+
+/* Chart Wrapper */
+.chart-wrapper {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Current Values / Leaderboard */
+.current-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.station-compare.dark .current-values {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.value-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 200px;
+  transition: all 0.2s;
+}
+
+.station-compare.dark .value-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #444;
+}
+
+.value-card.leader {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+}
+
+.station-compare.dark .value-card.leader {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+}
+
+.value-rank {
+  font-size: 16px;
+  font-weight: 700;
+  color: #999;
+  min-width: 30px;
+}
+
+.value-card.leader .value-rank {
+  color: #667eea;
+}
+
+.value-name {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-compare.dark .value-name {
+  color: #ecf0f1;
+}
+
+.value-amount {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Empty State */
+.compare-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.station-compare.dark .compare-empty {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compare-empty p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .station-compare {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .compare-header {
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+  }
+
+  .compare-header h2 {
+    font-size: 18px;
+  }
+
+  .compare-controls {
+    padding: 12px;
+  }
+
+  .control-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .selected-stations {
+    width: 100%;
+  }
+
+  .station-chip {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .station-name {
+    max-width: 120px;
+  }
+
+  .station-search {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .control-section {
+    width: 100%;
+  }
+
+  .metric-select,
+  .year-select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .compare-button {
+    width: 100%;
+  }
+
+  .animation-controls {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+  }
+
+  .animation-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .current-values {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .value-card {
+    min-width: unset;
+    padding: 10px 12px;
+  }
+
+  .value-rank {
+    font-size: 14px;
+  }
+
+  .value-amount {
+    font-size: 14px;
+  }
+
+  .compare-empty {
+    padding: 40px 15px;
+  }
+
+  .compare-empty p {
+    font-size: 14px;
+  }
+}
+.edit-inputs-button {
+  margin: 5px 0;
+  padding: 4px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+}
+.animation-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.animation-controls select {
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
