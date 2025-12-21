@@ -379,7 +379,7 @@ const handleDateRangeChange = (range: string) => {
 
             {/* Row 2: Station Search with Map button */}
             <div className="station-search-box">
-              <label>Change Station</label>
+              <label>Change <br/> Station</label>
               <StationSearch onSelectStation={handleStationSelect} />
               <button
                 className={`map-button ${chartView === 'map' ? 'active' : ''}`}
@@ -400,7 +400,8 @@ const handleDateRangeChange = (range: string) => {
             {/* Chart View Icons - Below Update Button */}
             {selectedStation && weatherData.length > 0 && (
               <div className="chart-view-icons">
-                <span className="chart-view-label">Chart Selection</span>
+                <span className="desktop-text">Chart <br/> Selection</span>
+                <span className="mobile-icon">⚙️</span>
                 <button
                   className={`icon-button ${chartView === 'temperature' ? 'active' : ''}`}
                   onClick={() => handleChartViewChange('temperature')}
