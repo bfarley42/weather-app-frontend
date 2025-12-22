@@ -10,7 +10,7 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
-import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare } from 'lucide-react';
+import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake } from 'lucide-react';
 import StationCompare from './components/StationCompare';
 
 
@@ -56,7 +56,7 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10' | 'compare'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
   // const [showCompare, setShowCompare] = useState(false);
@@ -182,7 +182,7 @@ function App() {
     }
   };
 
-  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'hourly' | 'map' | 'top10' | 'compare') => {
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare') => {
     setChartView(view);
     setError(null);
     
@@ -412,9 +412,16 @@ const handleDateRangeChange = (range: string) => {
                 <button
                   className={`icon-button ${chartView === 'precipitation' ? 'active' : ''}`}
                   onClick={() => handleChartViewChange('precipitation')}
-                  title="Precipitation & Snow"
+                  title="Precipitation"
                 >
                   <CloudRain size={24} />
+                </button>
+                <button
+                  className={`icon-button ${chartView === 'snow' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('snow')}
+                  title="Snowfall"
+                >
+                  <Snowflake size={24} />
                 </button>
                 <button
                   className={`icon-button ${chartView === 'hourly' ? 'active' : ''}`}
@@ -494,6 +501,18 @@ const handleDateRangeChange = (range: string) => {
                       startDate={startDate}
                       endDate={endDate}
                       onDateRangeChange={handleDateRangeChange}
+                    />
+                  ) : chartView === 'snow' ? (
+                    <PrecipitationChart
+                      key="snow-chart"
+                      data={weatherData}
+                      stationId={selectedStation?.station_id || ''}
+                      stationName={selectedStation?.name || selectedStation?.station_id || 'Weather Station'}
+                      darkMode={darkMode}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onDateRangeChange={handleDateRangeChange}
+                      initialShowSnow={true}
                     />
                   ) : chartView === 'hourly' ? (
                     <HourlyWeatherChart

@@ -27,6 +27,17 @@ interface PrecipitationChartProps {
   onDateRangeChange: (range: string) => void;
 }
 
+interface PrecipitationChartProps {
+  data: DailyWeather[];
+  stationId: string;
+  stationName: string;
+  darkMode?: boolean;
+  startDate: string;
+  endDate: string;
+  onDateRangeChange: (range: string) => void;
+  initialShowSnow?: boolean;  // ADD THIS LINE
+}
+
 export default function PrecipitationChart({ 
   data, 
   stationId,
@@ -34,9 +45,10 @@ export default function PrecipitationChart({
   darkMode = false,
   startDate,
   endDate,
-  onDateRangeChange
+  onDateRangeChange,
+  initialShowSnow = false  // ADD THIS LINE
 }: PrecipitationChartProps) {
-  const [showSnow, setShowSnow] = useState(false); // false = precip, true = snow
+  const [showSnow, setShowSnow] = useState(initialShowSnow); // Changed from useState(false)
   const [showNormalsCumulative, setShowNormalsCumulative] = useState(true);
   const [normals, setNormals] = useState<ClimateNormal[]>([]);
   const [isLoadingNormals, setIsLoadingNormals] = useState(false);

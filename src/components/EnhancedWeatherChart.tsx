@@ -140,8 +140,9 @@ export default function EnhancedWeatherChart({
 
   // Adjust line width based on date range (thinner for 6+ months)
   const isLongRange = daysDifference >= 180; // 6 months or more
+  const isLongestRange = daysDifference >=250
   const lineWidth = isMobile 
-    ? (isLongRange ? 1.5 : 2.5) 
+    ? (isLongRange ? isLongestRange ? 1 : 1.5: 2.5) 
     : (isLongRange ? 2 : 3.5);
 
   // Detect mobile device
@@ -235,6 +236,20 @@ export default function EnhancedWeatherChart({
     return null;
   });  
 
+  // Find last valid data point for endpoint labels
+  const findLastValidIndex = (arr: (number | null)[]): { index: number; value: number } | null => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (arr[i] !== null && arr[i] !== undefined) {
+        return { index: i, value: arr[i] as number };
+      }
+    }
+    return null;
+  };
+
+  const lastHigh = findLastValidIndex(maxTemps);
+  const lastLow = findLastValidIndex(minTemps);
+  const lastAvg = findLastValidIndex(avgTemps);
+
   // Compute axis min/max for temperature, matching your old min/max logic
   const allTemps: number[] = [];
   maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
@@ -269,8 +284,19 @@ if (allTemps.length > 0) {
     axisMin = roundedMin;        // negative temps → use the real minimum
   }
 
-  axisMax = roundedMax;
+  // axisMax = roundedMax;
+  // 👉 80-base logic:
+  if (roundedMax >= 80) {
+    axisMax = roundedMax;                 // zero-base the graph
+  } else {
+    axisMax = 80;        // negative temps → use the real minimum
+  }
+
+  // axisMax = roundedMin;
+
 }
+
+
 
 
   // Match normals to observed dates
@@ -642,29 +668,63 @@ const legendSettings = isMobile ? {
             shadowColor: darkMode ? colors.high.dark.shadow : colors.high.light.shadow,
           }
         },
-        markPoint: {
-          data: [
-            {
-              type: 'max',
-              label: {
-                show: true,
-                formatter: '{c}°',
-                position: 'top',
-                color: darkMode ? '#fff' : '#fff',
-                fontSize: isMobile ? 11 : 13,
-                fontWeight: 'semibold',
-                backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(192, 0, 16, 0.8)',
-                padding: [2.5, 7],
-                borderRadius: 6
-              },
-              symbolSize: 0
-            }
-          ]
-        },
+        
+
+markPoint: {
+  data: lastHigh ? [
+    {
+      type: 'max',
+      label: {
+        show: true,
+        formatter: '{c}°',
+        position: 'top',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(192, 0, 16, 0.8)',
+        padding: [2.5, 7],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    },
+    {
+      coord: [lastHigh.index, lastHigh.value],
+      label: {
+        show: true,
+        formatter: `${Math.round(lastHigh.value)}°`,
+        position: 'right',
+        color: '#fff',
+        fontSize: isMobile ? 10 : 12,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(168, 168, 168, 0.7)' : 'rgba(139, 139, 139, 0.7)',
+        padding: [2, 6],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ] : [
+    {
+      type: 'max',
+      label: {
+        show: true,
+        formatter: '{c}°',
+        position: 'top',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(192, 0, 16, 0.8)',
+        padding: [2.5, 7],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    }
+  ]
+},
         yAxisIndex: 0,
         z: 2
       }] : []),
-      
+
+
       // Low temperature
       ...(showLowTemp && !showAvgTemp ? [{
         name: 'Low Temp',
@@ -690,25 +750,56 @@ const legendSettings = isMobile ? {
             shadowColor: darkMode ? colors.low.dark.shadow : colors.low.light.shadow,
           }
         },
-        markPoint: {
-          data: [
-            {
-              type: 'min',
-              label: {
-                show: true,
-                formatter: '{c}°',
-                position: 'bottom',
-                color: darkMode ? '#fff' : '#000',
-                fontSize: isMobile ? 11 : 13,
-                fontWeight: 'semibold',
-                backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(4, 167, 212, 0.38)',
-                padding: [2.5, 7],
-                borderRadius: 4
-              },
-              symbolSize: 0
-            }
-          ]
-        },
+markPoint: {
+  data: lastLow ? [
+    {
+      type: 'min',
+      label: {
+        show: true,
+        formatter: '{c}°',
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#000',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(4, 167, 212, 0.38)',
+        padding: [2.5, 7],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    },
+    {
+      coord: [lastLow.index, lastLow.value],
+      label: {
+        show: true,
+        formatter: `${Math.round(lastLow.value)}°`,
+        position: 'right',
+        color: darkMode ? '#fff' : '#ffffffff',
+        fontSize: isMobile ? 10 : 12,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(168, 168, 168, 0.7)' : 'rgba(139, 139, 139, 0.7)',
+        padding: [2, 6],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ] : [
+    {
+      type: 'min',
+      label: {
+        show: true,
+        formatter: '{c}°',
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#000',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(4, 167, 212, 0.38)',
+        padding: [2.5, 7],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ]
+},
         yAxisIndex: 0,
         z: 2
       }] : []),
@@ -863,40 +954,86 @@ const legendSettings = isMobile ? {
         silent: true,
         tooltip: {
           show: false },
-        markPoint: {
-          data: [
-            {
-              type: 'max',
-              label: {
-                show: true,
-                formatter: (params: any) => `${Math.round(params.value)}°`,
-                position: 'top',
-                color: '#fff',
-                fontSize: isMobile ? 11 : 13,
-                fontWeight: 'bold',
-                backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.9)' : 'rgba(184, 134, 11, 0.9)',
-                padding: [3, 8],
-                borderRadius: 6
-              },
-              symbolSize: 0
-            },
-            {
-              type: 'min',
-              label: {
-                show: true,
-                formatter: (params: any) => `${Math.round(params.value)}°`,
-                position: 'bottom',
-                color: darkMode ? '#fff' : '#000',
-                fontSize: isMobile ? 11 : 13,
-                fontWeight: 'bold',
-                backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.6)' : 'rgba(184, 134, 11, 0.5)',
-                padding: [3, 8],
-                borderRadius: 6
-              },
-              symbolSize: 0
-            }
-          ]
-        },
+markPoint: {
+  data: lastAvg ? [
+    {
+      type: 'max',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'top',
+        color: '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.9)' : 'rgba(184, 134, 11, 0.9)',
+        padding: [3, 8],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    },
+    {
+      type: 'min',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#000',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'bold',
+        backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.6)' : 'rgba(184, 134, 11, 0.5)',
+        padding: [3, 8],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    },
+    {
+      coord: [lastAvg.index, lastAvg.value],
+      label: {
+        show: true,
+        formatter: `${Math.round(lastAvg.value)}°`,
+        position: 'right',
+        color: '#fff',
+        fontSize: isMobile ? 10 : 12,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(168, 168, 168, 0.7)' : 'rgba(139, 139, 139, 0.7)',
+        padding: [3, 8],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ] : [
+    {
+      type: 'max',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'top',
+        color: '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'bold',
+        backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.9)' : 'rgba(184, 134, 11, 0.9)',
+        padding: [3, 8],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    },
+    {
+      type: 'min',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#000',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'bold',
+        backgroundColor: darkMode ? 'rgba(231, 177, 44, 0.6)' : 'rgba(184, 134, 11, 0.5)',
+        padding: [3, 8],
+        borderRadius: 6
+      },
+      symbolSize: 0
+    }
+  ]
+},
         yAxisIndex: 0,
         z: 10
       }] : []),
