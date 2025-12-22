@@ -146,6 +146,10 @@ useEffect(() => {
   const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
   const cumulativeNormals: number[] = [];
   let cumNormalSum = 0;
+
+  const maxDailyValue = Math.max(...dailyValues);
+  const defaultAxisMax = showSnow ? 3 : 1;  // 3" for snow, 1" for precip
+  const dailyAxisMax = maxDailyValue > defaultAxisMax ? undefined : defaultAxisMax;
   
   dates.forEach(date => {
     const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -397,6 +401,8 @@ const titleSettings = {
           fontWeight: 600
         },
         position: 'left',
+        min: 0,
+        max: dailyAxisMax,
         axisLine: {
           show: true,
           lineStyle: {
