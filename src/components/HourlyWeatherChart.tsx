@@ -71,6 +71,19 @@ export default function HourlyWeatherChart({
   const feelsLike = data.map(d => d.feelslike_f);  // ADD THIS
   // const relHumdity = data.map(d => d.relh_pct);  // ADD THIS
 
+// Find last valid data point for endpoint labels
+const findLastValidIndex = (arr: (number | null)[]): { index: number; value: number } | null => {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i] !== null && arr[i] !== undefined) {
+      return { index: i, value: arr[i] as number };
+    }
+  }
+  return null;
+};
+
+const lastTemp = findLastValidIndex(temps);
+const lastFeelsLike = findLastValidIndex(feelsLike);
+
   // Format timestamp for display
   const formatTimestamp = (date: Date) => {
     const month = date.toLocaleDateString('en-US', { month: 'short' });
@@ -552,43 +565,57 @@ const titleSettings = {
 
 
       },
-      markPoint: showFeelsLike ? undefined : {  // Only show when feels like is OFF
-        data: [
-          {
-            type: 'max',
-            name: 'High',
-            label: {
-              show: true,
-              formatter: (params: any) => `${Math.round(params.value)}°`,
-              position: 'top',
-              // offset: [0, -10],
-              color: darkMode ? '#fff' : '#fff',
-              fontSize: isMobile ? 11 : 13,
-              fontWeight: 'semibold',
-              backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(190, 0, 16, 0.7)',
-              padding: [2.5, 7],
-              borderRadius: 6
-            },
-            symbolSize: 0
-          },
-          {
-            type: 'min',
-            name: 'Low',
-            label: {
-              show: true,
-              formatter: (params: any) => `${Math.round(params.value)}°`,
-              position: 'bottom',
-              color: darkMode ? '#fff' : '#fff',
-              fontSize: isMobile ? 11 : 13,
-              fontWeight: 'semibold',
-              backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
-              padding: [2.5, 7],
-              borderRadius: 4
-            },
-            symbolSize: 0
-          },
-        ]
+markPoint: showFeelsLike ? undefined : (lastTemp ? {
+  data: [
+    {
+      type: 'max',
+      name: 'High',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'top',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(190, 0, 16, 0.8)' : 'rgba(190, 0, 16, 0.7)',
+        padding: [2.5, 7],
+        borderRadius: 6
       },
+      symbolSize: 0
+    },
+    {
+      type: 'min',
+      name: 'Low',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
+        padding: [2.5, 7],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    },
+    {
+      coord: [lastTemp.index, lastTemp.value],
+      label: {
+        show: true,
+        formatter: `${Math.round(lastTemp.value)}°`,
+        position: 'right',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 10 : 12,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(150, 150, 150, 0.7)' : 'rgba(117, 117, 117, 0.6)',
+        padding: [2, 6],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ]
+} : undefined),
       emphasis: {
         focus: 'series',
         itemStyle: {
@@ -614,44 +641,57 @@ const titleSettings = {
         color: darkMode ? '#e74b0eff': '#e25614ff', // 👈 match line
         opacity: darkMode ? 0.8: 0.5,
       },
-  markPoint: {  // ADD THIS
-    data: [
-      {
-        type: 'max',
-        name: 'High',
-        label: {
-          show: true,
-          formatter: (params: any) => `${Math.round(params.value)}°`,
-          position: 'top',
-          // offset: [0, -10],
-          color: darkMode ? '#fff' : '#2c3e50',
-          fontSize: isMobile ? 11 : 13,
-          fontWeight: 'semibold',
-          backgroundColor: darkMode ? 'rgba(255, 160, 122, 0.8)' : 'rgba(255, 140, 105, 0.9)',
-          padding: [3,7],
-          borderRadius: 4
-        },
-        symbolSize: 0
+markPoint: lastFeelsLike ? {
+  data: [
+    {
+      type: 'max',
+      name: 'High',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'top',
+        color: darkMode ? '#fff' : '#2c3e50',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(255, 160, 122, 0.8)' : 'rgba(255, 140, 105, 0.9)',
+        padding: [3, 7],
+        borderRadius: 4
       },
-      {
-        type: 'min',
-        name: 'Low',
-        label: {
-          show: true,
-          formatter: (params: any) => `${Math.round(params.value)}°`,
-          position: 'bottom',
-          // offset: [0, 10],
-              color: darkMode ? '#fff' : '#fff',
-              fontSize: isMobile ? 11 : 13,
-              fontWeight: 'semibold',
-              backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
-          padding: [3, 7],
-          borderRadius: 4
-        },
-        symbolSize: 0
-      }
-    ]
-  },
+      symbolSize: 0
+    },
+    {
+      type: 'min',
+      name: 'Low',
+      label: {
+        show: true,
+        formatter: (params: any) => `${Math.round(params.value)}°`,
+        position: 'bottom',
+        color: darkMode ? '#fff' : '#fff',
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(0, 190, 174, 0.8)' : 'rgba(11, 116, 202, 0.66)',
+        padding: [3, 7],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    },
+    {
+      coord: [lastFeelsLike.index, lastFeelsLike.value],
+      label: {
+        show: true,
+        formatter: `${Math.round(lastFeelsLike.value)}°`,
+        position: 'right',
+        color: darkMode ? '#fff' : '#ffffffff',
+        fontSize: isMobile ? 10 : 12,
+        fontWeight: 'semibold',
+        backgroundColor: darkMode ? 'rgba(150, 150, 150, 0.7)' : 'rgba(117, 117, 117, 0.6)',
+        padding: [2, 6],
+        borderRadius: 4
+      },
+      symbolSize: 0
+    }
+  ]
+} : undefined,
   emphasis: {
     focus: 'series',
     lineStyle: {
