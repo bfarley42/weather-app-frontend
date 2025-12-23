@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
-import * as echarts from 'echarts';
+// import * as echarts from 'echarts';
 // import { API_URL } from '../config'; // Uncomment when ready for real data
 import './StationScatterChart.css'; // You'll need to create this simple CSS file
 
@@ -69,7 +69,7 @@ export default function StationScatterChart({ darkMode = false }: StationScatter
     // '0' is the seriesIndex of our scatter plot
     // @ts-ignore - 'getModel' is private but stable in ECharts API for this use case
     const seriesModel = chartInstance.getModel().getSeriesByIndex(0);
-    const dataIndex = seriesModel.getData().indexOfNearest('x', pointInPixel[0]);
+    // const dataIndex = seriesModel.getData().indexOfNearest('x', pointInPixel[0]);
     
     // Wait, ECharts has a simpler native API for coordinate conversion:
     const option = chartInstance.getOption() as any;
