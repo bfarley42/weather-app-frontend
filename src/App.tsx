@@ -10,9 +10,9 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
-import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake } from 'lucide-react';
+import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake, TrendingUp } from 'lucide-react';
 import StationCompare from './components/StationCompare';
-
+import StationScatterChart from './components/StationScatterChart';
 
 interface Station {
   station_id: string;
@@ -56,7 +56,7 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
   // const [showCompare, setShowCompare] = useState(false);
@@ -182,7 +182,7 @@ function App() {
     }
   };
 
-  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare') => {
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter') => {
     setChartView(view);
     setError(null);
     
@@ -444,6 +444,16 @@ const handleDateRangeChange = (range: string) => {
                 >
                   <GitCompare size={24} />
                 </button>
+                {/* --- ADD THIS BUTTON --- */}
+                <button
+                  className={`icon-button ${chartView === 'scatter' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('scatter')} // You might need to cast this if TS complains, or just ensure step 2 is done
+                  title="Climate Analysis"
+                >
+                  <TrendingUp size={24} />
+                </button>
+                {/* ----------------------- */}
+
                 {/* <button
                   className={`icon-button ${chartView === 'map' ? 'active' : ''}`}
                   onClick={() => handleChartViewChange('map')}
@@ -537,6 +547,13 @@ const handleDateRangeChange = (range: string) => {
                       currentStationId={selectedStation?.station_id}
                       currentStationName={selectedStation?.name || selectedStation?.station_id}
                     />
+                  // --- ADD THIS BLOCK ---
+                  ) : chartView === 'scatter' ? (
+                    <StationScatterChart 
+                      darkMode={darkMode} 
+                    />
+                  // ----------------------
+
                   ) : (
                     <InteractiveStationMap
                       startDate={startDate}

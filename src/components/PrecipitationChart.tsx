@@ -196,39 +196,7 @@ useEffect(() => {
   const barBottom = showSnow
     ? (darkMode ? 'rgba(70, 130, 190, 0.92)' : 'rgba(80, 155, 225, 0.92)')
     : (darkMode ? 'rgba(0, 70, 130, 0.90)' : 'rgba(0,111,190,0.45)');
-    // : (darkMode ? '#4a90e2' : '#000000');  // Blue for precip
   
-//   const lineColor = showSnow
-//     ? (darkMode ? '#95a5a6' : '#636e72')  // Dark gray for snow line
-//     // : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
-//     : (darkMode ? '#2980b9' : '#0984e3');  // Darker blue for precip line
-
-//  const snowLineColor = darkMode
-//   ? 'rgba(140, 205, 255, 1.0)'
-//   : 'rgba(0, 145, 215, 1.0)';
-// // Helper function to wrap long station names
-
-// const wrapStationName = (name: string, maxLength: number) => {
-//   if (name.length <= maxLength) return name;
-  
-//   const words = name.split(' ');
-//   const lines: string[] = [];
-//   let currentLine = '';
-  
-//   words.forEach(word => {
-//     const testLine = currentLine ? `${currentLine} ${word}` : word;
-//     if (testLine.length <= maxLength) {
-//       currentLine = testLine;
-//     } else {
-//       if (currentLine) lines.push(currentLine);
-//       currentLine = word;
-//     }
-//   });
-  
-//   if (currentLine) lines.push(currentLine);
-//   return lines.join('\n');
-// };
-
 const titleSettings = {
   text: shortenStationName(stationName),
   subtext: `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`,
