@@ -36,7 +36,7 @@ interface CompareData {
   data: Array<{ date: string; [key: string]: string | number }>;
 }
 
-type MetricType = 'precipitation' | 'snowfall' | 'rainy_days' | 'hot_days' | 'cold_days';
+type MetricType = 'precipitation' | 'snowfall' | 'rainy_days' | 'hot_days' | 'cold_days' | 'very_hot_days' | 'very_cold_days';
 
 interface StationCompareProps {
   darkMode: boolean;
@@ -51,8 +51,10 @@ const METRICS: { value: MetricType; label: string; icon: string }[] = [
   { value: 'precipitation', label: 'Precipitation', icon: '🌧️' },
   { value: 'snowfall', label: 'Snowfall', icon: '❄️' },
   { value: 'rainy_days', label: 'Rainy Days', icon: '☔' },
-  { value: 'hot_days', label: 'Hot Days (90°F+)', icon: '🔥' },
+  { value: 'hot_days', label: 'Hot Days (90°F+)', icon: '🌡️' },
+  { value: 'very_hot_days', label: 'Very Hot Days (100°F+)', icon: '🔥' },
   { value: 'cold_days', label: 'Cold Days (≤32°F)', icon: '🥶' },
+  { value: 'very_cold_days', label: 'Very Cold Days (≤0°F)', icon: '🧊' },
 ];
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
@@ -134,30 +136,6 @@ export default function StationCompare({
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 20 }, (_, i) => currentYear - i);
 
-    // const updateChartFrame = (frameIndex: number) => {
-    // const chart = chartRef.current?.getEchartsInstance();
-    // if (!chart || !compareData) return;
-
-    // const dates = compareData.data
-    //     .slice(0, frameIndex + 1)
-    //     .map(d => formatChartDate(d.date));
-
-    // const series = selectedStations.map(station => ({
-    //     name: station.display_name,
-    //     data: compareData.data
-    //     .slice(0, frameIndex + 1)
-    //     .map(d => d[station.station_id] as number || 0),
-    // }));
-
-    // chart.setOption(
-    //     {
-    //     xAxis: { data: dates },
-    //     series,
-    //     },
-    //     false, // notMerge
-    //     true   // lazyUpdate
-    // );
-    // };
 
 const getYAxisMax = () => {
   if (!compareData) return undefined;
@@ -172,55 +150,6 @@ const getYAxisMax = () => {
 
   return Math.ceil(max * 1.1 * 10) / 10; // round nicely
 };
-// const showFinalEndLabels = () => {
-//   const chart = chartRef.current?.getEchartsInstance();
-//   if (!chart || !compareData) return;
-
-//   chart.setOption({
-//     series: selectedStations.map(station => {
-//       const last = compareData.data.at(-1)?.[station.station_id] ?? 0;
-
-//       return {
-//         name: station.display_name,
-//         endLabel: {
-//           show: true,
-//           formatter: () =>
-//             `${station.display_name}\n${Number(last).toFixed(2)} ${compareData.unit}`,
-//           color: station.color,
-//           fontSize: 11,
-//           fontWeight: 600,
-//         },
-//       };
-//     }),
-//   });
-// };
-
-
-// const easeInMidOutFast = (t: number) => {
-//   // t is 0 → 1
-//   // clamp
-//   t = Math.min(Math.max(t, 0), 1);
-
-//   if (t < 0.3) {
-//     // slower, more visible start
-//     return 0.5 * t * t;
-//   }
-//  if (t < 0.5) {
-//     // slower, more visible start
-//     return 1 * t * t;
-//   }
-
-//   if (t < 0.7) {
-//     // steady middle
-//     return t - 0.15;
-//   }
-
-//   // accelerated finish
-//   const u = (t - 0.7) / 0.3;
-// //   return 0.55 + 0.45 * (1 - Math.pow(1 - u, 2));
-//   return 0.55 + 0.45 * (1 - Math.pow(1 - u, 3));
-// };
-
 
   // Search for stations
   const handleSearchChange = (query: string) => {
@@ -381,19 +310,6 @@ const getYAxisMax = () => {
     const elapsed = performance.now() - startTime;
     const t = Math.min(elapsed / durationMs, 1);
     
-//     const eased = easeInMidOutFast(t);
-//     const frame = Math.floor(eased * (total - 1));
-
-//     updateChartFrame(frame);
-
-//     if (t >= 1) {
-//       clearInterval(animationRef.current!);
-//       animationRef.current = null;
-//       setIsPlaying(false);
-//       setShowEndLabels(true);
-//     //   showFinalEndLabels(); // 👈 add labels at end
-//     }
-//   }, 30);
 // 1. Use LINEAR timing for smooth "days per second" flow
     // This replaces the complex easeInMidOutFast logic
     const frame = Math.floor(t * (total - 1));
@@ -588,20 +504,6 @@ const getYAxisMax = () => {
           focus: 'series',
           lineStyle: { width: 4 },
         },
-        // End label with station name and total
-        // endLabel: showEndLabels
-        //     ? {
-        //         show: true,
-        //         formatter: () => {
-        //             const total = s.data[s.data.length - 1] || 0;
-        //             return `${s.name}\n${total.toFixed(2)} ${compareData?.unit}`;
-        //         },
-        //         color: s.color,
-        //         fontSize: 11,
-        //         fontWeight: 600,
-        //         distance: 8,
-        //         }
-        //     : { show: false },
             endLabel: {
             show: showEndLabels, // Controlled by state
             formatter: () => {

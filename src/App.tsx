@@ -10,9 +10,10 @@ import HourlyWeatherChart from './components/HourlyWeatherChart';
 import Top10Chart from './components/Top10Chart';
 import InteractiveStationMap from './components/InteractiveStationMap';
 import WeatherLandingPage from './components/WeatherLandingPage';
-import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake, TrendingUp } from 'lucide-react';
+import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake, TrendingUp, BarChart3 } from 'lucide-react';
 import StationCompare from './components/StationCompare';
 import StationScatterChart from './components/StationScatterChart';
+import StationRankChart from './components/StationRankChart';
 
 interface Station {
   station_id: string;
@@ -56,7 +57,7 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
   // const [showCompare, setShowCompare] = useState(false);
@@ -182,7 +183,7 @@ function App() {
     }
   };
 
-  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter') => {
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank') => {
     setChartView(view);
     setError(null);
     
@@ -453,6 +454,16 @@ const handleDateRangeChange = (range: string) => {
                   <TrendingUp size={24} />
                 </button>
                 {/* ----------------------- */}
+                {/* --- ADD THIS BUTTON --- */}
+                <button
+                  className={`icon-button ${chartView === 'rank' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('rank')}
+                  title="Station Rankings"
+                >
+                  <BarChart3 size={24} />
+                </button>
+                {/* ----------------------- */}
+
 
                 {/* <button
                   className={`icon-button ${chartView === 'map' ? 'active' : ''}`}
@@ -553,7 +564,13 @@ const handleDateRangeChange = (range: string) => {
                       darkMode={darkMode} 
                     />
                   // ----------------------
-
+                  // --- ADD THIS BLOCK ---
+                  ) : chartView === 'rank' ? (
+                    <StationRankChart 
+                      darkMode={darkMode}
+                      // eventually you will pass real data here: data={stationChangeData}
+                    />
+                  // ----------------------
                   ) : (
                     <InteractiveStationMap
                       startDate={startDate}
