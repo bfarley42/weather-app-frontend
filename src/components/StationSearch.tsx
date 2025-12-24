@@ -109,7 +109,7 @@ export default function StationSearch({ onSelectStation }: StationSearchProps) {
         />
         {isLoading && <div className="loading-spinner">⏳</div>}
       </div>
-
+{/* 
       {showResults && results.length > 0 && (
         <div className="search-results">
           {results.map((result, index) => (
@@ -146,7 +146,52 @@ export default function StationSearch({ onSelectStation }: StationSearchProps) {
             </div>
           ))}
         </div>
-      )}
+      )} */}
+
+      {showResults && results.length > 0 && (
+  <div className="search-results">
+    {results.map((result, index) => (
+      <div
+        key={`${result.station_id}-${index}`}
+        className={getResultClass(result.result_type)}
+        onClick={() => handleSelect(result)}
+      >
+        <div className="result-content">
+          {result.result_type === 'city' || result.result_type === 'zipcode' ? (
+            <>
+              <div className="result-primary">
+                {result.result_type === 'city' 
+                  ? `${result.display_name.split(',')[0]}, ${result.state} `
+                  : `${result.display_name.split('—')[0].trim()}`
+                }
+                    {result.population ? (
+                <span className="result-secondary result-pop-inline">
+                  {` • Pop. ${result.population.toLocaleString()}`}
+                </span>
+              ) : null}
+              </div>
+              <div className="result-secondary">
+                {result.station_name || result.station_id} ({result.station_id})
+                {result.distance_mi ? ` • ${result.distance_mi.toFixed(1)} mi` : ''}
+                {/* {result.population ? ` • Pop. ${result.population.toLocaleString()}` : ''} */}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="result-primary">
+                {result.station_name || result.station_id} ({result.station_id})
+              </div>
+              <div className="result-secondary">
+                Weather Station
+                {result.distance_mi ? ` • ${result.distance_mi.toFixed(1)} mi` : ''}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
       {showResults && query.trim().length >= 2 && !isLoading && results.length === 0 && (
         <div className="search-results">
