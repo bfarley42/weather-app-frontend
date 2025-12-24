@@ -257,10 +257,46 @@ export default function EnhancedWeatherChart({
 
 
 
+  // Match normals to observed dates
+  const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
+  const normalHighs: (number | null)[] = [];
+  const normalLows: (number | null)[] = [];
+
+  dates.forEach(date => {
+    const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const normal = normalsMap.get(mmdd);
+    normalHighs.push(normal?.tmax_f ?? null);
+    normalLows.push(normal?.tmin_f ?? null);
+  });
+
+  const normalAvgs = normalHighs.map((high, i) => {
+    const low = normalLows[i];
+    if (high !== null && low !== null) {
+      return (high + low) / 2;
+    }
+    return null;
+  });
+
+
   // Compute raw min/max from the data
 // const allTemps = [];
-maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
-minTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+// maxTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+// minTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+
+// Include normals in axis calculation when they're displayed
+if (showNormals && !showAvgTemp) {
+  normalHighs.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+  normalLows.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+}
+
+// Include average temps when displayed
+if (showAvgTemp) {
+  avgTemps.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+  if (showNormals) {
+    normalAvgs.forEach(t => { if (typeof t === 'number') allTemps.push(t); });
+  }
+}
+
 
 let axisMin = 0;
 let axisMax = 0;
@@ -285,39 +321,18 @@ if (allTemps.length > 0) {
   }
 
   // axisMax = roundedMax;
-  // 👉 80-base logic:
-  if (roundedMax >= 80) {
-    axisMax = roundedMax;                 // zero-base the graph
-  } else {
-    axisMax = 80;        // negative temps → use the real minimum
-  }
+  // // 👉 80-base logic:
+  // if (roundedMax >= 80) {
+  //   axisMax = roundedMax;                 // zero-base the graph
+  // } else {
+  //   axisMax = 80;        // negative temps → use the real minimum
+  // }
 
-  // axisMax = roundedMin;
+  axisMax = roundedMax;
 
 }
 
 
-
-
-  // Match normals to observed dates
-  const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
-  const normalHighs: (number | null)[] = [];
-  const normalLows: (number | null)[] = [];
-
-  dates.forEach(date => {
-    const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    const normal = normalsMap.get(mmdd);
-    normalHighs.push(normal?.tmax_f ?? null);
-    normalLows.push(normal?.tmin_f ?? null);
-  });
-
-  const normalAvgs = normalHighs.map((high, i) => {
-    const low = normalLows[i];
-    if (high !== null && low !== null) {
-      return (high + low) / 2;
-    }
-    return null;
-  });
 
   // Format date labels - shorter for mobile
   const formatDate = (date: Date) => {
