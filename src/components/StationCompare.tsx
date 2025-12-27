@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { X, Plus, Search, Play, Pause, RotateCcw } from 'lucide-react';
+import { X, Plus, Search, SatelliteDish } from 'lucide-react';
 import { API_URL } from '../config';
 import './StationCompare.css';
 
@@ -57,7 +57,15 @@ const METRICS: { value: MetricType; label: string; icon: string }[] = [
   { value: 'very_cold_days', label: 'Very Cold Days (≤0°F)', icon: '🧊' },
 ];
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+const COLORS = [
+  'rgba(21, 124, 179, 0.9)',  // Blue
+  'rgba(223, 189, 37, 1)',  // Red
+  'rgba(65, 93, 250, 1)',  // Green
+  'rgba(20, 174, 130, 1)',  // Orange
+  'rgba(223, 47, 161, 1)',  // Purple
+];
+
+
 
 export default function StationCompare({ 
   darkMode, 
@@ -83,19 +91,15 @@ export default function StationCompare({
   const [compareData, setCompareData] = useState<CompareData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [animationIndex, setAnimationIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [controlsCollapsed, setControlsCollapsed] = useState(false);
-  const [showEndLabels, setShowEndLabels] = useState(false);
   const [chartReady, setChartReady] = useState(false);
 //   const [zoomEnd, setZoomEnd] = useState(0);
 
-  const animationRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<ReactECharts>(null);
@@ -125,12 +129,12 @@ export default function StationCompare({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Clean up animation on unmount
-  useEffect(() => {
-    return () => {
-      if (animationRef.current) clearInterval(animationRef.current);
-    };
-  }, []);
+  // Auto-fetch when year changes (if we have enough stations)
+useEffect(() => {
+  if (selectedStations.length >= 2 && compareData) {
+    fetchCompareData();
+  }
+}, [year]);  // Only trigger on year change
 
   // Generate year options
   const currentYear = new Date().getFullYear();
@@ -208,13 +212,11 @@ const getYAxisMax = () => {
     setCompareData(null);
   };
 
-  // Remove station (but not the primary station)
-  const handleRemoveStation = (stationId: string) => {
-    // Don't allow removing the primary station
-    if (stationId === currentStationId) return;
-    setSelectedStations(selectedStations.filter((s) => s.station_id !== stationId));
-    setCompareData(null);
-  };
+// Remove station
+const handleRemoveStation = (stationId: string) => {
+  setSelectedStations(selectedStations.filter((s) => s.station_id !== stationId));
+  setCompareData(null);
+};
 
   // Fetch comparison data
   const fetchCompareData = useCallback(async () => {
@@ -225,11 +227,9 @@ const getYAxisMax = () => {
 
     setIsLoading(true);
     setError(null);
-    setAnimationIndex(null);
-    setIsPlaying(false);
     setControlsCollapsed(true);
     setChartReady(false);
-    setShowEndLabels(false);
+
 
     const stationIds = selectedStations.map((s) => s.station_id).join(',');
     
@@ -256,24 +256,19 @@ const getYAxisMax = () => {
 
       
       // Update station colors from response
+// const updatedStations = selectedStations.map((s, i) => ({
+//   ...s,
+//   color: COLORS[i % COLORS.length]  // Always use local colors
+// }));
       const updatedStations = selectedStations.map((s, i) => ({
         ...s,
         color: data.stations?.find((ds: Station) => ds.station_id === s.station_id)?.color || COLORS[i % COLORS.length]
       }));
       setSelectedStations(updatedStations);
       setCompareData(data);
-      setAnimationIndex(0); // Initialize at frame 0 immediately
-        setControlsCollapsed(true); // Collapse inputs
+      setControlsCollapsed(true);
+      setChartReady(true);
 
-        // Delay slightly to allow the 'frame 0' render to happen before playing
-        setTimeout(() => {
-        startAnimation();
-        }, 100);
-
-    //   // 🔥 start animated build immediately
-    // requestAnimationFrame(() => {
-    // startAnimation();
-    // });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -281,68 +276,7 @@ const getYAxisMax = () => {
     }
   }, [selectedStations, metric, year]);
 
-    // Animation controls
-  const startAnimation = () => {
-    setShowEndLabels(false);
-    setChartReady(true);
-  if (!compareData) return;
 
-  if (animationRef.current) clearInterval(animationRef.current);
-    const yMax = getYAxisMax();
-    const chart = chartRef.current?.getEchartsInstance();
-
-
-    if (chart && yMax) {
-    chart.setOption({
-        yAxis: {
-        max: yMax,
-        },
-    });
-    }
-
-  setIsPlaying(true);
-
-  const total = compareData.data.length;
-  const durationMs = 8000; // 👈 total animation time (6s feels great)
-  const startTime = performance.now();
-
-  animationRef.current = setInterval(() => {
-    const elapsed = performance.now() - startTime;
-    const t = Math.min(elapsed / durationMs, 1);
-    
-// 1. Use LINEAR timing for smooth "days per second" flow
-    // This replaces the complex easeInMidOutFast logic
-    const frame = Math.floor(t * (total - 1));
-
-    if (t >= 1) {
-      // STOP ANIMATION
-      if (animationRef.current) clearInterval(animationRef.current);
-      animationRef.current = null;
-      setIsPlaying(false);
-      
-      // CRITICAL FIX: Lock the frame to the very last index
-      setAnimationIndex(total - 1);
-      
-      // Show the final labels
-      setShowEndLabels(true);
-    } else {
-      // Update frame while running
-      setAnimationIndex(frame);
-    }
-  }, 1000 / 60); // Run at ~60fps (approx 16ms)
-};
-
-
-  const pauseAnimation = () => {
-    if (animationRef.current) clearInterval(animationRef.current);
-    setIsPlaying(false);
-  };
-
-  const resetAnimation = () => {
-    if (animationRef.current) clearInterval(animationRef.current);
-    setIsPlaying(false);
-    setAnimationIndex(null);
-  };
 
   // Format date for display
   const formatChartDate = (dateStr: string): string => {
@@ -351,189 +285,282 @@ const getYAxisMax = () => {
   };
 
   // Get chart data (sliced for animation)
-    const getChartData = () => {
+  const getChartData = () => {
     if (!compareData) return { dates: [], series: [] };
 
-    // CHANGE: Slice data based on animationIndex.
-    // If animationIndex is null, default to 0 (start) instead of full length.
-    const limit = animationIndex !== null ? animationIndex + 1 : 0;
-    
-    const slicedData = compareData.data.slice(0, limit);
-    const dates = slicedData.map(d => formatChartDate(d.date));
+    const dates = compareData.data.map(d => formatChartDate(d.date));
 
     const series = selectedStations.map(station => ({
-        name: station.display_name,
-        data: slicedData.map(d => d[station.station_id] as number || 0),
-        color: station.color
+      name: station.display_name,
+      data: compareData.data.map(d => d[station.station_id] as number || 0),
+      color: station.color
     }));
 
     return { dates, series };
-    };
+  };
 
   // Get current values for ranking
-  const getCurrentValues = () => {
-    if (!compareData || compareData.data.length === 0) return [];
-    
-    const dataIndex = animationIndex !== null ? animationIndex : compareData.data.length - 1;
-    const currentData = compareData.data[dataIndex];
+const getCurrentValues = () => {
+  if (!compareData || compareData.data.length === 0) return [];
+  
+  const currentData = compareData.data[compareData.data.length - 1];
 
-    return selectedStations
-      .map((station) => ({
-        ...station,
-        value: (currentData[station.station_id] as number) || 0,
-      }))
-      .sort((a, b) => b.value - a.value);
-  };
+  const lineColors = [
+    { hex: 'rgba(40, 131, 180, 0.63)', rgb: '40, 131, 180' },    // Orange
+    { hex: 'rgba(223, 189, 37, 1)', rgb: '223, 189, 37' },    // Tomato red  
+    { hex: 'rgba(226, 111, 4, 1)', rgb: '226, 111, 4' },   // Dodger blue
+    { hex: 'rgba(20, 174, 130, 1)', rgb: '20, 174, 130' },    // Lime green
+    { hex: 'rgba(137, 60, 199, 1)', rgb: '137, 60, 199' },  // Medium purple
+  ];
+
+  // Assign colors by original index BEFORE sorting
+  const withColors = selectedStations.map((station, index) => ({
+    ...station,
+    color: lineColors[index % lineColors.length].hex,
+    value: (currentData[station.station_id] as number) || 0,
+  }));
+
+  // Sort by value but keep assigned colors
+  return withColors.sort((a, b) => b.value - a.value);
+};
 
   // Build ECharts option
-  const getChartOption = () => {
-    const { dates, series } = getChartData();
+const getChartOption = () => {
+  const { dates, series } = getChartData();
+  
+  if (dates.length === 0) return {};
+
+  const option: echarts.EChartsOption = {
+    backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
     
-    if (dates.length === 0) return {};
-
-    const option: echarts.EChartsOption = {
-      backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
-      
-      title: {
-        text: `Cumulative ${compareData?.metric_label || ''} (${year})`,
-        left: 'center',
-        top: 10,
-        textStyle: {
-          fontSize: isMobile ? 15 : 18,
-          fontWeight: 700,
-          color: darkMode ? '#ecf0f1' : '#2c3e50',
-        },
+    title: {
+      text: `Cumulative ${compareData?.metric_label || ''} Comparison`,
+      subtext: `${year}`,
+      left: 'center',
+      top: 3,
+      itemGap: 2,
+      textStyle: {
+        fontSize: isMobile ? 15 : 20,
+        fontWeight: 700,
+        color: darkMode ? '#ecf0f1' : '#2c3e50',
+        lineHeight: isMobile ? 18 : 22
       },
+      subtextStyle: {
+        fontSize: isMobile ? 12 : 14,
+        fontWeight: 500,
+        color: darkMode ? '#95a5a6' : '#7f8c8d',
+        lineHeight: isMobile ? 14 : 16
+      }
+    },
 
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: darkMode ? 'rgba(30, 30, 50, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        borderColor: darkMode ? '#444' : '#ddd',
-        textStyle: { color: darkMode ? '#ecf0f1' : '#2c3e50' },
-        formatter: (params: any) => {
-          if (!Array.isArray(params) || params.length === 0) return '';
-          
-          let result = `<strong>${params[0].axisValue}</strong><br/>`;
-          
-          // Sort by value descending
-          const sorted = [...params].sort((a, b) => (b.value || 0) - (a.value || 0));
-          
-          sorted.forEach((param: any) => {
-            const value = param.value !== null && param.value !== undefined ? param.value.toFixed(2) : 'N/A';
-            result += `${param.marker} ${param.seriesName}: ${value} ${compareData?.unit || ''}<br/>`;
-          });
-          
-          return result;
-        },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: darkMode ? 'rgba(44, 44, 62, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      borderColor: darkMode ? '#34495e' : '#e0e0e0',
+      borderWidth: 1,
+      padding: isMobile ? 8 : 15,
+      textStyle: {
+        color: darkMode ? '#ecf0f1' : '#333',
+        fontSize: isMobile ? 13 : 14
       },
-
-      legend: {
-        data: series.map(s => s.name),
-        top: isMobile ? 40 : 45,
-        left: 'center',
-        textStyle: {
-          color: darkMode ? '#bdc3c7' : '#555',
-          fontSize: isMobile ? 11 : 12,
-        },
-        type: 'scroll',
-        pageButtonItemGap: 5,
-        pageButtonGap: 10,
+      axisPointer: {
+        type: 'cross',
+        crossStyle: {
+          color: darkMode ? '#7f8c8d' : '#999',
+          type: 'dashed'
+        }
       },
+      formatter: (params: any) => {
+        if (!Array.isArray(params) || params.length === 0) return '';
+        
+        let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: ${isMobile ? '12px' : '14px'};">${params[0].axisValue}</div>`;
+        
+        const sorted = [...params].sort((a, b) => (b.value || 0) - (a.value || 0));
+        
+        sorted.forEach((param: any) => {
+          const value = param.value !== null && param.value !== undefined ? param.value.toFixed(2) : 'N/A';
+          html += `
+            <div style="margin: 6px 0; display: flex; align-items: center; justify-content: space-between;">
+              <span style="display: flex; align-items: center;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${param.color}; margin-right: 8px;"></span>
+                <span style="color: ${darkMode ? '#bdc3c7' : '#666'}; font-size: ${isMobile ? '10px' : '12px'};">${param.seriesName}:</span>
+              </span>
+              <span style="font-weight: 600; margin-left: 12px; color: ${darkMode ? '#ecf0f1' : '#333'};">${value} ${compareData?.unit || ''}</span>
+            </div>
+          `;
+        });
+        
+        return html;
+      }
+    },
 
-      grid: {
-        left: isMobile ? '12%' : '8%',
-        right: isMobile ? '10%' : '15%', // Extra space for end labels
-        top: isMobile ? 85 : 90,
-        bottom: isMobile ? 60 : 70,
-        containLabel: false,
+    legend: {
+      data: series.map(s => s.name),
+      top: isMobile ? 45 : 45,
+      left: 'center',
+      itemGap: isMobile ? 12 : 20,
+      itemWidth: isMobile ? 15 : 20,
+      itemHeight: isMobile ? 8 : 12,
+      textStyle: {
+        fontSize: isMobile ? 11 : 13,
+        color: darkMode ? '#bdc3c7' : '#555'
       },
+      type: 'scroll',
+    },
 
-       xAxis: {
-        type: 'category',
-        data: dates,
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: darkMode ? '#444' : '#ddd' } },
-        axisLabel: {
-          color: darkMode ? '#bdc3c7' : '#666',
-          fontSize: isMobile ? 10 : 11,
-          rotate: isMobile ? 45 : 0,
-          interval: 'auto',
-        },
-        splitLine: { show: false },
+    grid: {
+      left: isMobile ? 45 : 60,
+      right: isMobile ? 45 : 60,
+      top: isMobile ? 110 : 100,
+      bottom: isMobile ? 90 : 100,
+      containLabel: false,
+    },
+
+    dataZoom: [
+      {
+        type: 'inside',
+        start: 0,
+        end: 100
       },
+      {
+        type: 'slider',
+        start: 0,
+        end: 100,
+        height: 35,
+        bottom: 10,
+        borderColor: darkMode ? '#34495e' : '#e0e0e0',
+        fillerColor: 'rgba(102, 126, 234, 0.15)',
+        handleStyle: {
+          color: '#667eea'
+        }
+      }
+    ],
 
-      yAxis: {
-        type: 'value',
-        name: compareData?.unit || '',
-        max: getYAxisMax(),
-        nameTextStyle: {
-          color: darkMode ? '#bdc3c7' : '#666',
-          fontSize: isMobile ? 11 : 12,
-          padding: [0, 0, 0, isMobile ? 0 : 40],
-        },
-        axisLine: { lineStyle: { color: darkMode ? '#444' : '#ddd' } },
-        axisLabel: {
-          color: darkMode ? '#bdc3c7' : '#666',
-          fontSize: isMobile ? 10 : 11,
-          formatter: (value: number) => value.toFixed(1),
-        },
-        splitLine: {
-          lineStyle: {
-            color: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-            type: 'dashed',
-          },
-        },
-      },
-
-      series: series.map((s, index) => ({
-        name: s.name,
-        type: 'line',
-        data: s.data,
-        smooth: false,
-        symbol: 'none',
+    xAxis: {
+      type: 'category',
+      data: dates,
+      boundaryGap: false,
+      axisLine: {
         lineStyle: {
-          width: 3,
-          color: s.color,
-        },
-        itemStyle: {
-          color: s.color,
-        },
-        areastyle: undefined,
+          color: darkMode ? '#34495e' : '#e0e0e0'
+        }
+      },
+      axisLabel: {
+        color: darkMode ? '#95a5a6' : '#666',
+        fontSize: isMobile ? 11 : 12,
+        rotate: 45,
+      },
+      splitLine: {
+        show: false
+      }
+    },
 
-        emphasis: {
-          focus: 'series',
-          lineStyle: { width: 4 },
-        },
-            endLabel: {
-            show: showEndLabels, // Controlled by state
-            formatter: () => {
-                // Get the very last value from the FULL dataset, not just the slice
-                const lastValue = s.data[s.data.length - 1] || 0;
-                return `${s.name}\n${lastValue.toFixed(2)} ${compareData?.unit}`;
-            },
-            color: s.color,
-            fontSize: 11,
-            fontWeight: 600,
-            distance: 10,
-            },
+    yAxis: {
+      type: 'value',
+      name: isMobile ? compareData?.unit : `Cumulative (${compareData?.unit})`,
+      nameTextStyle: {
+        color: darkMode ? '#95a5a6' : '#666',
+        fontSize: isMobile ? 12 : 13,
+        fontWeight: 600
+      },
+      max: getYAxisMax(),
+      axisLine: {
+        show: true,
+        lineStyle: {
+          color: darkMode ? '#34495e' : '#e0e0e0'
+        }
+      },
+      axisLabel: {
+        color: darkMode ? '#95a5a6' : '#666',
+        fontSize: isMobile ? 11 : 12,
+        formatter: (value: number) => value.toFixed(1),
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: darkMode ? '#2c3e50' : '#f0f0f0'
+        }
+      }
+    },
 
-
-        // Mark the final point
-        markpoint: undefined,
-        z: 10 - index, // Layer ordering
-      })),
-
-      animation: false,
-    };
-
-    return option;
+series: series.map((s, index) => {
+  // Define colors as [r, g, b] for flexibility
+  const lineColors = [
+    { hex: 'rgba(40, 131, 180, 0.63)', rgb: '40, 131, 180' },    // Orange
+    { hex: 'rgba(223, 189, 37, 1)', rgb: '223, 189, 37' },    // Tomato red  
+    { hex: 'rgba(226, 114, 4, 1)', rgb: '226, 114, 4' },   // Dodger blue
+    { hex: 'rgba(20, 174, 130, 1)', rgb: '20, 174, 130' },    // Lime green
+    { hex: 'rgba(137, 60, 199, 1)', rgb: '137, 60, 199' },  // Medium purple
+  ];
+  const colorObj = lineColors[index % lineColors.length];
+  
+  
+  return {
+    name: s.name,
+    type: 'line' as const,
+    data: s.data,
+    smooth: true,
+    symbol: 'none',
+      itemStyle: {
+      color: `rgba(${colorObj.rgb}, 0.9)`,
+      borderColor: darkMode ? '#1a1a2e' : '#fff',
+      borderWidth: 0.5
+    },
+    lineStyle: {
+      width: 3,
+      color: colorObj.hex,
+      shadowBlur: 8,
+      shadowColor: `rgba(${colorObj.rgb}, 0.25)`,
+    },
+    areaStyle: {
+      color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: `rgba(${colorObj.rgb}, 0.2)` },
+        { offset: 0.5, color: `rgba(${colorObj.rgb}, 0.1)` },
+        { offset: 1, color: `rgba(${colorObj.rgb}, 0.02)` }
+      ])
+    },
+    emphasis: {
+      focus: 'series' as const,
+      lineStyle: { width: 4 },
+    },
+    markPoint: {
+      data: [
+        {
+          name: s.name,
+          coord: [s.data.length - 1, s.data[s.data.length - 1]],
+          label: {
+            show: true,
+            formatter: () => `${s.data[s.data.length - 1]?.toFixed(2) || '0.00'}`,
+            position: 'right' as const,
+            offset: [0, -1],
+            fontSize: isMobile ? 10 : 12,
+            fontWeight: 'bold' as const,
+            color: '#ffffffff',
+            backgroundColor: colorObj.hex,
+            padding: [3, 5],
+            borderRadius: 3
+          },
+          symbolSize: 0
+        }
+      ]
+    },
+    z: 10 - index,
   };
+}),
+
+    animation: true,
+    animationDuration: 1000,
+    animationEasing: 'cubicOut'
+  };
+
+  return option;
+};
 
   return (
     <div className={`station-compare ${darkMode ? 'dark' : ''}`}>
       {/* Header - only show close button if onClose provided */}
       <div className="compare-header">
-        <h2>📊 Station Comparison Race</h2>
+        <h2><SatelliteDish size={20} /> Station Comparison</h2>
         {onClose && (
           <button className="close-button" onClick={onClose} title="Close">
             <X size={24} />
@@ -555,21 +582,16 @@ const getYAxisMax = () => {
               >
                 <span className="station-number">{index + 1}</span>
                 <span className="station-name">{station.display_name}</span>
-                {station.station_id !== currentStationId && (
-                  <button
-                    className="remove-station"
-                    onClick={() => handleRemoveStation(station.station_id)}
-                    title="Remove station"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-                {station.station_id === currentStationId && (
-                  <span className="primary-badge">Primary</span>
-                )}
-              </div>
-            ))}
-          </div>
+                <button
+                  className="remove-station"
+                  onClick={() => handleRemoveStation(station.station_id)}
+                  title="Remove station"
+                >
+                  <X size={14} />
+                </button>
+                              </div>
+                            ))}
+                </div>
 
           {/* Search to add stations */}
           {selectedStations.length < 5 && (
@@ -676,77 +698,64 @@ const getYAxisMax = () => {
         </div>
       </div>
       )}
-      {controlsCollapsed && (
-        <button
-            className="edit-inputs-button"
-            onClick={() => setControlsCollapsed(false)}
-        >
-            ✏️ Edit Inputs
-        </button>
-        )}
-
-      {/* Error */}
-      {error && <div className="compare-error">⚠️ {error}</div>}
-      
-
-      {/* Chart */}
-      {chartReady && compareData && compareData.data.length > 0 && (
-        <div className="compare-chart-container">
-          {/* Animation Controls */}
-          <div className="animation-controls">
-            {!isPlaying ? (
-              <button className="animation-button" onClick={startAnimation} title="Play animation">
-                <Play size={18} />
-              </button>
-            ) : (
-              <button className="animation-button" onClick={pauseAnimation} title="Pause animation">
-                <Pause size={18} />
-              </button>
-            )}
-            <button
-              className="animation-button"
-              onClick={resetAnimation}
-              title="Reset"
-              disabled={animationIndex === null}
-            >
-              <RotateCcw size={18} />
-            </button>
-
-            <div className="animation-year">
-            <label>Year</label>
-            <select
-                value={year}
-                onChange={(e) => {
-                setYear(parseInt(e.target.value));
-                setCompareData(null);
-                setControlsCollapsed(false);
-                }}
-            >
-                {yearOptions.map((y) => (
-                <option key={y} value={y}>{y}</option>
-                ))}
-            </select>
-            </div>
-
-
-            {animationIndex !== null && compareData.data[animationIndex] && (
-              <span className="animation-date">
-                {formatChartDate(compareData.data[animationIndex].date as string)}
-              </span>
-            )}
-          </div>
-
+{controlsCollapsed && (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '15px',
+    marginBottom: '15px',
+    flexWrap: 'wrap'
+  }}>
+    <button
+      className="edit-inputs-button"
+      onClick={() => setControlsCollapsed(false)}
+    >
+      ✏️ Edit Inputs
+    </button>
+    
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    }}>
+      <label style={{ 
+        color: darkMode ? '#bdc3c7' : '#666', 
+        fontSize: '14px',
+        fontWeight: 500
+      }}>
+        Year:
+      </label>
+      <select
+        value={year}
+        onChange={(e) => setYear(parseInt(e.target.value))}
+        style={{
+          padding: '8px 12px',
+          borderRadius: '6px',
+          border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+          background: darkMode ? '#2a2a4a' : '#fff',
+          color: darkMode ? '#eee' : '#333',
+          fontSize: '14px',
+          cursor: 'pointer'
+        }}
+      >
+        {yearOptions.map((y) => (
+          <option key={y} value={y}>{y}</option>
+        ))}
+      </select>
+    </div>
           {/* The ECharts Chart */}
-          <div 
-            className="chart-wrapper"
-            style={{
-              width: '100%',
-              height: isMobile ? '380px' : '450px',
-              background: darkMode ? '#1a1a2e' : '#ffffff',
-              borderRadius: isMobile ? '6px' : '12px',
-              padding: isMobile ? '5px' : '15px',
-            }}
-          >
+            <div 
+              className="chart-wrapper"
+              style={{
+                width: '100%',
+                height: isMobile ? '540px' : '510px',  // Match PrecipitationChart
+                background: darkMode ? '#1a1a2e' : '#ffffff',
+                borderRadius: isMobile ? '6px' : '12px',
+                padding: isMobile ? '5px' : '20px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+              }}
+            >
             <ReactECharts
               ref={chartRef}
               option={getChartOption()}
@@ -763,12 +772,12 @@ const getYAxisMax = () => {
               <div
                 key={station.station_id}
                 className={`value-card ${index === 0 ? 'leader' : ''}`}
-                style={{ borderLeftColor: station.color }}
+                style={{ borderLeftColor:  station.color }}
               >
                 <span className="value-rank">#{index + 1}</span>
                 <span className="value-name">{station.display_name}</span>
                 <span className="value-amount" style={{ color: station.color }}>
-                  {station.value.toFixed(2)} {compareData.unit}
+                  {station.value.toFixed(2)} {compareData?.unit || ''}
                 </span>
               </div>
             ))}
