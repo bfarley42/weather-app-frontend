@@ -4,6 +4,7 @@ import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { API_URL } from '../config';
 import './PrecipitationChart.css';
+import {CalendarDays} from 'lucide-react';
 
 interface DailyWeather {
   obs_date: string;
@@ -55,6 +56,10 @@ export default function PrecipitationChart({
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768); 
   const [activeRange, setActiveRange] = useState<string>('14D');
 
+  const [compareLY, setCompareLY] = useState(false);
+  const [lastYearData, setLastYearData] = useState<DailyWeather[]>([]);
+  const [isLoadingLY, setIsLoadingLY] = useState(false);
+
 // Detect mobile device
 useEffect(() => {
   const checkMobile = () => {
@@ -81,30 +86,6 @@ useEffect(() => {
         setIsLoadingNormals(false);
       }
     };
-
-    // Set initial active range based on current date range (runs once on mount)
-// useEffect(() => {
-//   const start = new Date(startDate);
-//   const end = new Date(endDate);
-//   const diffDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  
-//   // Month to date
-//   if (start.getDate() === 1 && start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
-//     setActiveRange('MTD');
-//   }
-//   // Year to date
-//   else if (start.getMonth() === 0 && start.getDate() === 1 && start.getFullYear() === end.getFullYear()) {
-//     setActiveRange('YTD');
-//   }
-//   // Based on day difference
-//   else if (diffDays >= 6 && diffDays <= 8) setActiveRange('7D');
-//   else if (diffDays >= 13 && diffDays <= 15) setActiveRange('14D');
-//   else if (diffDays >= 28 && diffDays <= 32) setActiveRange('1M');
-//   else if (diffDays >= 85 && diffDays <= 95) setActiveRange('3M');
-//   else if (diffDays >= 175 && diffDays <= 185) setActiveRange('6M');
-//   else if (diffDays >= 360 && diffDays <= 370) setActiveRange('1Y');
-//   else setActiveRange('Custom');
-// }, []); // Empty array = only run once on mount
 
     if (stationId) {
       fetchNormals();
@@ -133,6 +114,45 @@ useEffect(() => {
 
   // Get daily values
   const dailyValues = data.map(d => showSnow ? (d.snow_in || 0) : (d.prcp_in || 0));
+
+  // Fetch last year's data when compareLY is enabled
+useEffect(() => {
+  const fetchLastYearData = async () => {
+    if (!compareLY || !stationId) return;
+    
+    setIsLoadingLY(true);
+    try {
+      // Calculate last year's date range
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const lyStart = new Date(start);
+      const lyEnd = new Date(end);
+      lyStart.setFullYear(lyStart.getFullYear() - 1);
+      lyEnd.setFullYear(lyEnd.getFullYear() - 1);
+      
+      const lyStartStr = lyStart.toISOString().split('T')[0];
+      const lyEndStr = lyEnd.toISOString().split('T')[0];
+      
+      const response = await fetch(
+        `${API_URL}/api/weather/daily?station=${stationId}&start=${lyStartStr}&end=${lyEndStr}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setLastYearData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching last year data:', error);
+    } finally {
+      setIsLoadingLY(false);
+    }
+  };
+  
+  if (compareLY) {
+    fetchLastYearData();
+  } else {
+    setLastYearData([]);
+  }
+}, [compareLY, stationId, startDate, endDate]);
 
   // Calculate cumulative observed
   const cumulativeObserved: number[] = [];
@@ -172,6 +192,24 @@ useEffect(() => {
       year: 'numeric'
     });
   };
+
+  // Calculate last year's daily and cumulative values
+const lastYearDaily: number[] = [];
+const lastYearCumulative: number[] = [];
+
+if (compareLY && lastYearData.length > 0) {
+  let lyCumSum = 0;
+  // Match by index (same position in date range)
+  dates.forEach((_, idx) => {
+    const lyRecord = lastYearData[idx];
+    const lyValue = lyRecord 
+      ? (showSnow ? (lyRecord.snow_in || 0) : (lyRecord.prcp_in || 0))
+      : 0;
+    lastYearDaily.push(lyValue);
+    lyCumSum += lyValue;
+    lastYearCumulative.push(lyCumSum);
+  });
+}
 
   const shortenStationName = (name: string): string => {
     if (!name) return '';
@@ -277,21 +315,22 @@ const titleSettings = {
     },
     
     legend: {
-    data: [
-      `Daily ${dataType}`,
-      `Cumulative ${dataType}`,
-      ...(showNormalsCumulative ? [`Normal Cumulative`] : [])
-    ],
-    top: isMobile ? 45 : 45,  // Closer to top like EnhancedWeatherChart
-    left: 'center',
-    itemGap: isMobile ? 12 : 20,  // Responsive spacing
-    itemWidth: isMobile ? 15 : 20,  // Add item width
-    itemHeight: isMobile ? 8 : 12,  // Add item height
-    textStyle: {
-      fontSize: isMobile ? 11 : 13,  // Responsive font size
-      color: darkMode ? '#bdc3c7' : '#555'
-    }
-  },
+      data: [
+        `Daily ${dataType}`,
+        `Cumulative ${dataType}`,
+        ...(compareLY ? [`LY Daily`, `LY Cumulative`] : []),
+        ...(showNormalsCumulative && !compareLY ? [`Normal Cumulative`] : [])
+      ],
+      top: isMobile ? 45 : 45,
+      left: 'center',
+      itemGap: isMobile ? 12 : 20,
+      itemWidth: isMobile ? 15 : 20,
+      itemHeight: isMobile ? 8 : 12,
+      textStyle: {
+        fontSize: isMobile ? 11 : 13,
+        color: darkMode ? '#bdc3c7' : '#555'
+      }
+    },
     
     grid: isMobile ? {
       left: 45,
@@ -462,7 +501,7 @@ lineStyle: {
   color: showSnow
     ? new echarts.graphic.LinearGradient(0, 0, 1, 0, [
         { offset: 0, color: darkMode ? 'rgba(160, 210, 255, 1)' : '#2882b4ff' },
-        { offset: 1, color: darkMode ? 'rgba(90, 140, 190, 1)' : 'rgba(109, 164, 217, 1)' }
+        { offset: 1, color: darkMode ? 'rgba(90, 140, 190, 1)' : '#6da4d9ff' }
       ])
     : new echarts.graphic.LinearGradient(0, 0, 1, 0, [
         { offset: 0, color: darkMode ? 'rgba(120, 200, 255, 1)' : 'rgba(20,141,174,.7)' },
@@ -494,11 +533,106 @@ areaStyle: {
         shadowColor: showSnow ? '#12aee5' : '#12e3e3'
         }
     },
+    markPoint: {
+  data: [
+    {
+      coord: [cumulativeObserved.length - 1, cumulativeObserved[cumulativeObserved.length - 1]],
+      value: cumulativeObserved[cumulativeObserved.length - 1],
+      label: {
+        show: true,
+        formatter: (params: any) => `${params.value.toFixed(2)}"`,
+        position: 'top',
+        offset: [0, -1],
+        fontSize: isMobile ? 11 : 13,
+        fontWeight: 'bold',
+        color: '#3f3f3fff',
+        backgroundColor: showSnow
+          ? 'rgba(160, 210, 255, 0.85)' // Ice blue for snow
+          : 'rgba(50, 153, 182, 0.85)', // Water blue for rain
+        padding: [3, 7],
+        borderRadius: 3
+      },
+      symbolSize: 0
+    }
+  ]
+},
     yAxisIndex: 1,
     z: 2
     },
+
+    // Last year daily bars (if Compare LY enabled)
+...(compareLY && lastYearData.length > 0 ? [{
+  name: 'LY Daily',
+  type: 'bar',
+  data: lastYearDaily,
+  barWidth: '65%',
+  barGap: '-100%',  // Overlap with current year bars
+  itemStyle: {
+    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: darkMode ? 'rgba(255, 180, 100, 0.7)' : '#ead266cc' },
+      { offset: 1, color: darkMode ? 'rgba(200, 120, 50, 0.5)' : '#ead266c4' }
+    ]),
+    borderRadius: [2, 2, 0, 0]
+  },
+  yAxisIndex: 0,
+  z: 0  // Behind current year
+}] : []),
+
+// Last year cumulative line (if Compare LY enabled)
+// Last year cumulative line (if Compare LY enabled)
+...(compareLY && lastYearData.length > 0 ? [{
+  name: 'LY Cumulative',
+  type: 'line',
+  data: lastYearCumulative,
+  smooth: true,
+  symbol: 'none',
+  itemStyle: {
+  color: '#dfbd25ff',
+    // ? (darkMode ? 'rgba(160,210,255,1)' : '#2883b4a1')
+    // : (darkMode ? 'rgba(120,200,255,1)' : 'rgba(50, 153, 182, 0.79)'),
+  borderColor: darkMode ? '#1a1a2e' : '#fff',
+  borderWidth: 0.5
+},
+  lineStyle: {
+    width: 2,
+    type: 'dashed',
+    color: darkMode ? 'rgba(255, 180, 100, 0.9)' : '#d6b007ff'
+  },
+  areaStyle: {
+    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: darkMode ? 'rgba(255, 180, 100, 0.15)' : 'rgba(230, 160, 80, 0.1)' },
+      { offset: 1, color: darkMode ? 'rgba(200, 120, 50, 0.05)' : 'rgba(180, 100, 40, 0.02)' }
+    ])
+  },
+  markPoint: {
+    data: [
+      {
+        coord: [lastYearCumulative.length - 1, lastYearCumulative[lastYearCumulative.length - 1]],
+        label: {
+          show: true,
+          formatter: () => `${lastYearCumulative[lastYearCumulative.length - 1]?.toFixed(2) || '0.00'}"`,
+          position: 'top',
+          offset: [0, -3],
+          fontSize: isMobile ? 11 : 13,
+          fontWeight: 'bold',
+          color: '#3f3f3fff',
+          backgroundColor: '#e7cb4eff',
+          padding: [3, 7],
+          borderRadius: 3
+        },
+        symbolSize: 0
+      }
+    ]
+  },
+  
+  yAxisIndex: 1,
+  z: 0
+}] : []),
+
+
       // Cumulative normals line (if enabled)
-    ...(showNormalsCumulative ? [{
+    ...(showNormalsCumulative && !compareLY ? [{
+    // ...(showNormalsCumulative ? [{  
     name: 'Normal Cumulative',
     type: 'line',
     data: cumulativeNormals,
@@ -528,6 +662,7 @@ markPoint: {
         formatter: (params: any) => `${params.value.toFixed(2)}"`,
         position: 'top',
         offset: [0, -1],
+        color: '#3f3f3fff',
         fontSize: isMobile ? 11 : 13,
         fontWeight: 'bold',
         backgroundColor: showSnow
@@ -537,7 +672,6 @@ markPoint: {
         borderRadius: 3
       },
       symbolSize: 0
-
     }
   ]
 },
@@ -628,15 +762,19 @@ markPoint: {
           lazyUpdate={true}
         />
       </div>
-      {/* Snow/Rain Toggle - Below chart, above checkboxes */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginTop: '15px',
-        marginBottom: '10px'
-      }}>
-        <button
-          onClick={() => setShowSnow(!showSnow)}
+        {/* Snow/Rain Toggle and Compare LY - Below chart */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          gap: '10px',
+          marginTop: '15px',
+          marginBottom: '10px',
+          flexWrap: 'wrap'
+        }}>
+          {/* Existing Snow/Rain button */}
+          <button
+            onClick={() => setShowSnow(!showSnow)}
           style={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             border: 'none',
@@ -678,6 +816,32 @@ markPoint: {
           )}
           <span>{showSnow ? 'Show Rain' : 'Show Snow'}</span>
         </button>
+{/* Compare Last Year Toggle */}
+<button
+  onClick={() => setCompareLY(!compareLY)}
+  disabled={isLoadingLY}
+  style={{
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    border:  'none',
+    borderRadius: '8px',
+    padding: '10px 20px',
+    cursor: isLoadingLY ? 'wait' : 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: isMobile ? '13px' : '14px',
+    fontWeight: 600,
+    color: 'white',
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+    marginLeft: '10px'
+  }}
+  title={compareLY ? 'Hide Last Year' : 'Compare to Last Year'}
+>
+  <span>{isLoadingLY ? '⏳' : <CalendarDays size={20} />}</span>
+  <span>{isLoadingLY ? 'Loading...' : (compareLY ? 'Hide LY' : 'Compare LY')}</span>
+</button>
+
       </div>
       {/* Chart controls - Show Normals checkbox */}
       <div className="chart-controls">

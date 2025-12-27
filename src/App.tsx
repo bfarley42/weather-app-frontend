@@ -606,40 +606,6 @@ const handleDateRangeChange = (range: string) => {
                   </button>
                 </div>
 
-                {/* <div className="chart-view-selector">
-                  <button
-                    className={chartView === 'temperature' ? 'active' : ''}
-                    onClick={() => handleChartViewChange('temperature')}
-                  >
-                    🌡️ Temperature
-                  </button>
-                  <button
-                    className={chartView === 'precipitation' ? 'active' : ''}
-                    onClick={() => handleChartViewChange('precipitation')}
-                  >
-                    🌧️ Precip & Snow
-                  </button>
-                  <button
-                    className={chartView === 'hourly' ? 'active' : ''}
-                    onClick={() => handleChartViewChange('hourly')}
-                  >
-                    ⏰ Hourly
-                  </button>
-                  <button
-                    className={chartView === 'top10' ? 'active' : ''}
-                    onClick={() => setChartView('top10')}
-                  >
-                    🏆 Top 10
-                  </button>
-                  <button
-                    className={chartView === 'map' ? 'active' : ''}
-                    onClick={() => handleChartViewChange('map')}
-                  >
-                    🗺️ Map
-                  </button>
-                </div> */}
-
-
               </>
             )}
           </>
