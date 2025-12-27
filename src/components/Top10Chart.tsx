@@ -242,7 +242,8 @@ export default function Top10Chart({
         <option value={1}>Last 1 Year</option>
         <option value={5}>Last 5 Years</option>
         <option value={10}>Last 10 Years</option>
-        <option value={20}>All Time</option>
+        <option value={20}>Last 20 Years</option>
+        <option value={50}>All Time</option>
         </select>
 
         {/* Period Selector */}

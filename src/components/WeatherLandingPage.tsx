@@ -221,12 +221,32 @@ const WeatherLandingPage: React.FC<WeatherLandingPageProps> = ({
               >
                 <div className="result-text">
                   {result.result_type === 'city' || result.result_type === 'zipcode' ? (
-                    <>
-                      <span className="result-name">{result.display_name}</span>
-                      <span className="result-secondary">
-                        Pop. {result.population?.toLocaleString() || 'N/A'}
-                      </span>
-                    </>
+                    // <>
+                    //   <span className="result-name">{result.display_name}</span>
+                    //   <span className="result-secondary">
+                    //     Pop. {result.population?.toLocaleString() || 'N/A'}
+                    //   </span>
+                    // </>
+            <>
+              <div className="result-name">
+                {result.result_type === 'city' 
+                  ? `${result.display_name.split(',')[0]}, ${result.state} `
+                  : `${result.display_name.split('—')[0].trim()}`
+                }
+                    {result.population ? (
+                <span className="result-secondary result-pop-inline">
+                  {` • Pop. ${result.population.toLocaleString()}`}
+                </span>
+              ) : null}
+              </div>
+              <div className="result-secondary">
+                {result.station_name || result.station_id} ({result.station_id})
+                {result.distance_mi ? ` • ${result.distance_mi.toFixed(1)} mi` : ''}
+                {/* {result.population ? ` • Pop. ${result.population.toLocaleString()}` : ''} */}
+              </div>
+            </>
+
+
                   ) : (
                     <>
                       <span className="result-name">

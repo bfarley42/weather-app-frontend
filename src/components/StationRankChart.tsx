@@ -18,7 +18,7 @@ interface StationRankChartProps {
 }
 
 export default function StationRankChart({ data: propData, darkMode = false }: StationRankChartProps) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [_isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [metric, setMetric] = useState<'temp' | 'precip'>('temp');
 
   // --- Mock Data Generator (Remove this when connecting to real API) ---
