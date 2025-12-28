@@ -130,7 +130,7 @@ export default function StationScatterChart({ darkMode = false }: StationScatter
   
   // Filters
   const [selectedRegion, setSelectedRegion] = useState('all');
-  const [elevationRange, setElevationRange] = useState<[number, number]>([0, 15000]);
+  const [elevationRange, _setElevationRange] = useState<[number, number]>([0, 15000]);
   const [minYearsData, setMinYearsData] = useState(15);
   
   // UI state
