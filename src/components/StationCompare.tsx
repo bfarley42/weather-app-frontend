@@ -90,14 +90,14 @@ export default function StationCompare({
   const [year, setYear] = useState(new Date().getFullYear());
   const [compareData, setCompareData] = useState<CompareData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [controlsCollapsed, setControlsCollapsed] = useState(false);
-  const [chartReady, setChartReady] = useState(false);
+  const [_chartReady, setChartReady] = useState(false);
 //   const [zoomEnd, setZoomEnd] = useState(0);
 
   const searchRef = useRef<HTMLDivElement>(null);
