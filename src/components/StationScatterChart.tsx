@@ -165,7 +165,7 @@ export default function StationScatterChart({ darkMode = false }: StationScatter
   const [selectedStation, setSelectedStation] = useState<StationMetrics | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [showFilters, setShowFilters] = useState(true);
-  const chartRef = useRef<ReactECharts>(null);
+  const chartRef = useRef<ReactECharts | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -314,6 +314,12 @@ const handleChartClick = useCallback((params: any) => {
       },
 tooltip: {
   trigger: 'item',
+    position: function (_point: number[], _params: any, _dom: HTMLElement, _rect: any, size: { contentSize: number[], viewSize: number[] }) {
+    // Center horizontally, position vertically near top third of chart
+    const x = (size.viewSize[0] - size.contentSize[0]) / 2;
+    const y = size.viewSize[1] * 0.15;
+    return [x, y];
+    },
   backgroundColor: darkMode ? '#2a2a4a' : '#fff',
   borderColor: darkMode ? '#444' : '#ddd',
   textStyle: { color: darkMode ? '#eee' : '#333', fontSize: 12 },

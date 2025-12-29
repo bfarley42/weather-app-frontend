@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef} from 'react';
 import ReactECharts from 'echarts-for-react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { API_URL } from '../config';
@@ -93,6 +93,7 @@ export default function StationRankChart({ darkMode = false }: StationRankChartP
   // UI state
   const [selectedStation, setSelectedStation] = useState<StationMetrics | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const chartRef = useRef<ReactECharts | null>(null);
 
   // Fetch data
   useEffect(() => {
@@ -313,6 +314,12 @@ const option = useMemo(() => {
     },
     tooltip: {
       trigger: 'item',
+        position: function (_point: number[], _params: any, _dom: HTMLElement, _rect: any, size: { contentSize: number[], viewSize: number[] }) {
+        // Center horizontally, position vertically near top third of chart
+        const x = (size.viewSize[0] - size.contentSize[0]) / 2;
+        const y = size.viewSize[1] * 0.15;
+        return [x, y];
+      },
       backgroundColor: darkMode ? '#2a2a4a' : '#fff',
       borderColor: darkMode ? '#444' : '#ddd',
       textStyle: { color: darkMode ? '#eee' : '#333', fontSize: 12 },
@@ -562,6 +569,7 @@ const option = useMemo(() => {
       <div style={{ height: isMobile ? '350px' : '450px', width: '100%', position: 'relative' }}>
         <ReactECharts
           option={option}
+          ref={chartRef}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
           onEvents={{ click: handleChartClick }}
