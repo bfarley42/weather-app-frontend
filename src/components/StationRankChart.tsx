@@ -320,6 +320,7 @@ const option = useMemo(() => {
         const y = size.viewSize[1] * 0.15;
         return [x, y];
       },
+      confine: true,
       backgroundColor: darkMode ? '#2a2a4a' : '#fff',
       borderColor: darkMode ? '#444' : '#ddd',
       textStyle: { color: darkMode ? '#eee' : '#333', fontSize: 12 },
@@ -348,7 +349,7 @@ const option = useMemo(() => {
             </span>
           </div>
           <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${darkMode ? '#444' : '#eee'}; font-size:11px; color:#888">
-            ${station.station_type || 'Unknown'} • ${station.elevation.toLocaleString()} ft • ${station.years_of_data} yrs
+            ${station.station_type || 'Unknown'} • ${Math.round(station.elevation).toLocaleString()} ft • ${station.years_of_data} yrs
             ${station.is_major_airport ? ' • <span style="color:#3498db">Major Airport</span>' : ''}
           </div>
         `;
@@ -674,7 +675,7 @@ const option = useMemo(() => {
               fontSize: '12px', 
               color: darkMode ? '#888' : '#888' 
             }}>
-              {s.station_type || 'Unknown'} • {s.elevation.toLocaleString()} ft • {s.years_of_data} yrs
+              {s.station_type || 'Unknown'} • {Math.round(s.elevation).toLocaleString()} ft • {s.years_of_data} yrs
               {s.is_major_airport && <span style={{ color: '#3498db' }}> • Major Airport</span>}
             </div>
           </div>

@@ -320,6 +320,7 @@ tooltip: {
     const y = size.viewSize[1] * 0.15;
     return [x, y];
     },
+    confine: true,
   backgroundColor: darkMode ? '#2a2a4a' : '#fff',
   borderColor: darkMode ? '#444' : '#ddd',
   textStyle: { color: darkMode ? '#eee' : '#333', fontSize: 12 },
@@ -340,7 +341,7 @@ tooltip: {
         <b>${yAxisInfo.label}:</b> ${typeof yVal === 'number' ? yVal.toFixed(2) : yVal} ${yAxisInfo.unit}
       </div>
       <div style="margin-top:6px; padding-top:6px; border-top:1px solid ${darkMode ? '#444' : '#eee'}; font-size:11px; color:#888">
-        ${s.station_type || 'Unknown'} • ${s.elevation.toLocaleString()} ft • ${s.years_of_data} yrs
+        ${s.station_type || 'Unknown'} • ${Math.round(s.elevation).toLocaleString()} ft • ${s.years_of_data} yrs
         ${s.is_major_airport ? ' • <span style="color:#3498db">Major Airport</span>' : ''}
       </div>
     `;
@@ -530,7 +531,7 @@ tooltip: {
                     {selectedStation.station_id}
                   </div>
                   <div style={{ fontSize: '10px', color: darkMode ? '#777' : '#888', marginTop: '4px' }}>
-                    {selectedStation.station_type || 'Unknown'} • {selectedStation.elevation.toLocaleString()} ft
+                    {selectedStation.station_type || 'Unknown'} • {Math.round(selectedStation.elevation).toLocaleString()} ft
                     {selectedStation.is_major_airport && <span style={{ color: '#3498db' }}> • Major Airport</span>}
                   </div>
                 </div>
