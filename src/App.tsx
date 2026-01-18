@@ -14,6 +14,8 @@ import { Thermometer, CloudRain, Clock, Trophy, Map, Moon, GitCompare, Snowflake
 import StationCompare from './components/StationCompare';
 import StationScatterChart from './components/StationScatterChart';
 import StationRankChart from './components/StationRankChart';
+import WeatherChatbot from './components/WeatherChatbot';
+import { MessageCircle } from 'lucide-react';  // Add MessageCircle to your lucide imports
 
 interface Station {
   station_id: string;
@@ -57,7 +59,7 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank'>('temperature');
+  const [chartView, setChartView] = useState<'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank' | 'chat'>('temperature');
   const [darkMode, setDarkMode] = useState(false);
   const [currentView, setCurrentView] = useState<'landing' | 'search' | 'chart'>('landing');
   // const [showCompare, setShowCompare] = useState(false);
@@ -183,7 +185,7 @@ function App() {
     }
   };
 
-  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank') => {
+  const handleChartViewChange = (view: 'temperature' | 'precipitation' | 'snow' | 'hourly' | 'map' | 'top10' | 'compare' | 'scatter' | 'rank' | 'chat') => {
     setChartView(view);
     setError(null);
     
@@ -463,7 +465,15 @@ const handleDateRangeChange = (range: string) => {
                   <BarChart3 size={24} />
                 </button>
                 {/* ----------------------- */}
-
+                {/* --- ADD THIS BUTTON --- */}
+                <button
+                  className={`icon-button ${chartView === 'chat' ? 'active' : ''}`}
+                  onClick={() => handleChartViewChange('chat')}
+                  title="Weather Assistant"
+                >
+                  <MessageCircle size={24} />
+                </button>
+                {/* ----------------------- */}
 
                 {/* <button
                   className={`icon-button ${chartView === 'map' ? 'active' : ''}`}
@@ -571,6 +581,11 @@ const handleDateRangeChange = (range: string) => {
                       // eventually you will pass real data here: data={stationChangeData}
                     />
                   // ----------------------
+                  ) : chartView === 'chat' ? (
+                  <WeatherChatbot 
+                    darkMode={darkMode}
+                    apiBaseUrl={API_URL}
+                  />
                   ) : (
                     <InteractiveStationMap
                       startDate={startDate}
