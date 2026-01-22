@@ -16,6 +16,7 @@ import StationScatterChart from './components/StationScatterChart';
 import StationRankChart from './components/StationRankChart';
 import WeatherChatbot from './components/WeatherChatbot';
 import { MessageCircle } from 'lucide-react';  // Add MessageCircle to your lucide imports
+import StationSummaryCard from './components/StationSummaryCard';
 
 interface Station {
   station_id: string;
@@ -508,7 +509,12 @@ const handleDateRangeChange = (range: string) => {
 
             {!isLoading && !error && weatherData.length > 0 && selectedStation && (
               <>
-
+              {/* ADD THIS - temporary preview */}
+              <StationSummaryCard
+                stationId={selectedStation.station_id}
+                stationName={selectedStation.name}
+                darkMode={darkMode}
+              />
 
                 <div className={chartView === 'precipitation' ? 'chart-section-precip' : 'chart-section'}>
                   {chartView === 'temperature' ? (

@@ -14,7 +14,7 @@ import {
   TrendingDown,
   Minus,
   CloudRain,
-  CloudSnow,
+//   CloudSnow,
   Cloud,
   Sun,
   CloudFog,
@@ -80,7 +80,7 @@ interface StationSummaryCardProps {
 // Weather Icon Selector
 // ============================================================================
 
-function getWeatherIcon(condition: string | null, skyCode: string | null, wxCode: string | null) {
+function getWeatherIcon(_condition: string | null, skyCode: string | null, wxCode: string | null) {
   const iconProps = { size: 48, strokeWidth: 1.5 };
   
   // Check weather code first (precipitation takes priority)
