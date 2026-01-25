@@ -62,7 +62,7 @@
    ============================================================================ */
 
 .current-card {
-  width: auto;
+  width: 100%;
   max-width: 400px;
 }
 
@@ -101,6 +101,8 @@
   background: rgba(0, 0, 0, 0.04);
   padding: 4px 10px;
   border-radius: 10px;
+  margin-top: 10px;    /* ADD THIS - space above */
+  margin-left: -2px
 }
 
 .dark .observed-time {
@@ -232,7 +234,7 @@
 
 .history-card {
   width: 100%;
-  max-width: 600px;
+  max-width: 400px;
 }
 
 .section-label {
@@ -345,15 +347,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  text-align: center;
+  gap: 3px;
   min-width: 50px;
 }
 
 .stat-value {
-  font-size: 1rem;
+  font-size: 1.0rem;
   font-weight: 600;
   color: #1e293b;
   font-feature-settings: "tnum" 1;
+  min-height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dark .stat-value {
@@ -362,6 +369,10 @@
 
 .stat-icon {
   color: #64748b;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dark .stat-icon {
@@ -380,10 +391,27 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #94a3b8;
+  text-align: center;
+  width: 100%;
+  min-height: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* white-space: nowrap; */
+  max-width: 50px;          /* ← ADD THIS - forces wrap */
+  line-height: 1.2;         /* ← ADD THIS - tighter line spacing for 2 lines */
+
 }
 
 .dark .stat-label {
   color: #64748b;
+}
+
+.condition-stat-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 20px;
 }
 
 /* ============================================================================
@@ -487,6 +515,7 @@
   /* Card 1: Current */
   .current-card {
     max-width: 100%;
+    max-width: 300px;
     width: 100%;
   }
   
@@ -533,7 +562,8 @@
   
   /* Card 2: History */
   .history-card {
-    max-width: 100%;
+    /* max-width: 100%; */
+    max-width: 300px;
   }
   
   .section-label {
@@ -546,7 +576,7 @@
   }
   
   .temp-band-container {
-    width: 75%;
+    width: 50%;
   }
   
   .temp-band {
@@ -560,21 +590,21 @@
   }
   
   .temp-band-labels {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
   
   /* 5 Stats - tighter on mobile */
   .stats-row-5 {
-    gap: 12px;
+    gap: 20px;
   }
   
   .stat-item-vertical {
     min-width: 40px;
-    gap: 3px;
+    gap: 1px;
   }
   
   .stat-value {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
   
   .stat-icon {
@@ -583,7 +613,8 @@
   }
   
   .stat-label {
-    font-size: 0.5rem;
+    font-size: 0.55rem;
+    padding: 0px 6px;
   }
 }
 

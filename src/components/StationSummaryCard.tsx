@@ -7,6 +7,16 @@
  * Card 2: Last 24 hours (temp band + 5 stats)
  */
 
+
+// src/components/StationSummaryCard.tsx
+/**
+ * Apple Weather-inspired summary cards showing current conditions
+ * and 24-hour historical overview for a weather station.
+ * 
+ * Card 1: Current conditions (temp + icon)
+ * Card 2: Last 24 hours (temp band + 5 stats)
+ */
+
 import { useState, useEffect } from 'react';
 import { 
   Droplets, 
@@ -22,8 +32,15 @@ import {
   CloudDrizzle,
   Cloudy,
   Waves,
-  Eye
 } from 'lucide-react';
+import { 
+  FaThermometerEmpty, 
+  FaThermometerQuarter, 
+  FaThermometerHalf, 
+  FaThermometerThreeQuarters, 
+  FaThermometerFull,
+  FaArrowUp
+} from 'react-icons/fa';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 
@@ -47,12 +64,13 @@ interface CurrentConditions {
 interface Last24hStats {
   high_f: number | null;
   low_f: number | null;
+  avg_temp_f: number | null;
   precip_in: number | null;
-  snow_in: number | null;
   avg_humidity_pct: number | null;
   avg_wind_mph: number | null;
   max_gust_mph: number | null;
   dominant_condition: string | null;
+  condition_hours: number | null;
   observation_count: number;
 }
 
@@ -113,18 +131,92 @@ function getWeatherIcon(_condition: string | null, skyCode: string | null, wxCod
   return <Cloud {...iconProps} className="weather-icon icon-default" />;
 }
 
+
+function getConditionIcon(condition: string | null, size: number = 24) {
+  if (!condition) return <Cloud size={size} className="stat-icon" />;
+  
+  const cond = condition.toLowerCase();
+  const iconProps = { size, strokeWidth: 1.5, className: "stat-icon" };
+  
+  if (cond.includes('rain') || cond.includes('shower')) return <CloudRain {...iconProps} className="stat-icon precip-icon" />;
+  if (cond.includes('snow')) return <Snowflake {...iconProps} className="stat-icon snow-icon" />;
+  if (cond.includes('storm')) return <CloudLightning {...iconProps} className="stat-icon condition-icon" />;
+  if (cond.includes('fog') || cond.includes('haz') || cond.includes('mist')) return <CloudFog {...iconProps} className="stat-icon" />;
+  if (cond.includes('cloud') || cond.includes('cldy')) return <Cloud {...iconProps} className="stat-icon" />;
+  if (cond.includes('clear')) return <Sun {...iconProps} className="stat-icon icon-clear" />;
+  
+  return <Cloud {...iconProps} className="stat-icon" />;
+}
+
 // ============================================================================
 // Wind Description Helper
 // ============================================================================
 
 function getWindDescription(avgWindMph: number | null): string {
   if (avgWindMph === null) return '--';
-  if (avgWindMph < 1) return 'Calm';
-  if (avgWindMph < 8) return 'Light';
-  if (avgWindMph < 15) return 'Breezy';
-  if (avgWindMph < 25) return 'Windy';
-  if (avgWindMph < 35) return 'Very Windy';
+  if (avgWindMph < 2) return 'Calm';
+  if (avgWindMph <= 5) return 'Light Wind';
+  if (avgWindMph <= 10) return 'Breezy';
+  if (avgWindMph <= 15) return 'Windy';
+  if (avgWindMph <= 20) return 'Very Windy';
   return 'High Wind';
+}
+
+// ============================================================================
+// Thermometer Icon Helper (for avg temp vs normal comparison)
+// ============================================================================
+
+interface ThermometerResult {
+  icon: React.ReactNode;
+  color: string;
+}
+
+function getThermometerIcon(tempDiff: number | null, size: number = 18): ThermometerResult {
+  // Default (no data)
+  if (tempDiff === null) {
+    return { 
+      icon: <FaThermometerHalf size={size} />, 
+      color: '#86E068' 
+    };
+  }
+  
+  // Much Colder: <= -10°
+  if (tempDiff <= -10) {
+    return { 
+      icon: <FaThermometerEmpty size={size} />, 
+      color: '#5452f5ff' 
+    };
+  }
+  
+  // Colder: -10° to -5°
+  if (tempDiff <= -5) {
+    return { 
+      icon: <FaThermometerQuarter size={size} />, 
+      color: '#3f8ebeff' 
+    };
+  }
+  
+  // Normal: -5° to +5°
+  if (tempDiff <= 5) {
+    return { 
+      icon: <FaThermometerHalf size={size} />, 
+      color: '#8d8d8dff' 
+    };
+  }
+  
+  // Warmer: +5° to +10°
+  if (tempDiff <= 10) {
+    return { 
+      icon: <FaThermometerThreeQuarters size={size} />, 
+      color: '#f3a71b' 
+    };
+  }
+  
+  // Much Warmer: > +10°
+  return { 
+    icon: <FaThermometerFull size={size} />, 
+    color: '#d61e0d' 
+  };
 }
 
 // ============================================================================
@@ -152,26 +244,56 @@ function TemperatureBand({ low, high, current }: TempBandProps) {
     markerPosition = Math.max(5, Math.min(95, markerPosition));
   }
   
-  // Determine gradient colors based on temperature range
-  const getGradientColors = () => {
-    const avgTemp = (low + high) / 2;
+
+const getGradientColors = () => {
+ 
+  const getTempColor = (temp: number): string => {
+    // Clamp temp between 10 and 90
+    const t = Math.max(0, Math.min(100, temp));
+    // Convert to 0-1 scale (10° = 0, 90° = 1)
+    const pct = (t - 10) / 90;
     
-    if (high <= 32) {
-      return 'linear-gradient(90deg, #60a5fa 0%, #93c5fd 100%)';
-    } else if (low >= 85) {
-      return 'linear-gradient(90deg, #f97316 0%, #ef4444 100%)';
-    } else if (avgTemp <= 32) {
-      return 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%)';
-    } else if (avgTemp <= 50) {
-      return 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #22d3d8 100%)';
-    } else if (avgTemp <= 70) {
-      return 'linear-gradient(90deg, #06b6d4 0%, #22c55e 50%, #84cc16 100%)';
-    } else if (avgTemp <= 85) {
-      return 'linear-gradient(90deg, #84cc16 0%, #eab308 50%, #f97316 100%)';
-    } else {
-      return 'linear-gradient(90deg, #f97316 0%, #ef4444 50%, #dc2626 100%)';
+
+        const colors = [
+      { pct: 0.00, r: 49,  g: 34,  b: 221 },  // #2C0658 purple (10°F)
+      { pct: 0.13, r: 59,  g: 130, b: 246 },  // #442698ff blue
+      { pct: 0.26, r: 6,   g: 182, b: 212 },  // #1883C4 cyan
+      { pct: 0.39, r: 34,  g: 197, b: 94  },  // #16CFD8 green (50°F)
+      { pct: 0.52, r: 234, g: 179, b: 8   },  // #86E068 yellow
+      { pct: 0.65, r: 234, g: 179, b: 8   },  // #d8e068ff yellow
+      { pct: 0.78, r: 249, g: 115, b: 22  },  // #f3a71bff orange
+      { pct: 1.00, r: 214, g: 41,  b: 42  },  // #d61e0dff red (90°F)
+    ];
+
+    // Find the two color stops we're between
+    let lower = colors[0];
+    let upper = colors[colors.length - 1];
+    
+    for (let i = 0; i < colors.length - 1; i++) {
+      if (pct >= colors[i].pct && pct <= colors[i + 1].pct) {
+        lower = colors[i];
+        upper = colors[i + 1];
+        break;
+      }
     }
+    
+    // Interpolate between the two colors
+    const range = upper.pct - lower.pct;
+    const rangePct = range === 0 ? 0 : (pct - lower.pct) / range;
+    
+    const r = Math.round(lower.r + (upper.r - lower.r) * rangePct);
+    const g = Math.round(lower.g + (upper.g - lower.g) * rangePct);
+    const b = Math.round(lower.b + (upper.b - lower.b) * rangePct);
+    
+    return `rgb(${r}, ${g}, ${b})`;
   };
+  
+  // Get colors for actual low and high temps
+  const lowColor = getTempColor(low);
+  const highColor = getTempColor(high);
+  
+  return `linear-gradient(90deg, ${lowColor} 0%, ${highColor} 100%)`;
+};
   
   return (
     <div className="temp-band-container">
@@ -290,7 +412,7 @@ export default function StationSummaryCard({
     );
   }
   
-  const { current, last_24h } = summary;
+  const { current, last_24h, vs_normal } = summary;
   const displayName = stationName || summary.station_name || stationId;
   
   // ----------------------------------------------------------------
@@ -306,23 +428,29 @@ export default function StationSummaryCard({
         {/* Header: Station name + time */}
         <div className="summary-header">
           <h2 className="station-name">{displayName}</h2>
-          <div className="observed-time">
+          {/* <div className="observed-time">
             <Clock size={12} />
             <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
-          </div>
+          </div> */}
         </div>
         
         {/* Current conditions: Temp + Icon side by side */}
         <div className="current-content">
           {/* Left: Temp + Feels like */}
-          <div className="current-left">
-            <div className="current-temp">
-              {current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
-            </div>
-            <div className="feels-like">
-              Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
-            </div>
-          </div>
+        <div className="current-left">
+        <div className="current-temp">
+            {current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
+                {/* (last_24h.high_f !== null ? `${Math.round(last_24h.high_f)}°` : '--')} */}
+        </div>
+        <div className="feels-like">
+            Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
+        </div>
+        {/* ADD THIS HERE */}
+        <div className="observed-time">
+            <Clock size={12} />
+            <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
+        </div>
+        </div>
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
@@ -353,6 +481,8 @@ export default function StationSummaryCard({
           <TemperatureBand 
             low={last_24h.low_f} 
             high={last_24h.high_f} 
+            // low={50} 
+            // high={70} 
             current={current.temp_f}
           />
         </div>
@@ -361,47 +491,66 @@ export default function StationSummaryCard({
         <div className="stats-row-5">
           {/* 1. Precip */}
           <div className="stat-item-vertical">
+            <Droplets size={18} className="stat-icon precip-icon" />
             <span className="stat-value">
               {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
             </span>
-            <Droplets size={18} className="stat-icon precip-icon" />
-            <span className="stat-label">PRECIP</span>
+            
+            <span className="stat-label">TOTAL PRECIP</span>
           </div>
           
           {/* 2. Wind (avg) */}
           <div className="stat-item-vertical">
-            <span className="stat-value">
-              {last_24h.avg_wind_mph !== null ? `${Math.round(last_24h.avg_wind_mph)}` : '--'}
-            </span>
             <Wind size={18} className="stat-icon wind-stat-icon" />
+            <span className="stat-value">
+              {last_24h.avg_wind_mph !== null ? `${Math.round(last_24h.avg_wind_mph)} mph` : '--'}
+            </span>
+            
             <span className="stat-label">{getWindDescription(last_24h.avg_wind_mph)}</span>
           </div>
           
-          {/* 3. Conditions (dominant) */}
-          <div className="stat-item-vertical">
-            <span className="stat-value">
-              {last_24h.dominant_condition || '--'}
-            </span>
-            <Eye size={18} className="stat-icon condition-icon" />
-            <span className="stat-label">COND</span>
-          </div>
+        {/* 3. Conditions (dominant) - show icon */}
+        <div className="stat-item-vertical">
+        <div className="condition-stat-icon">
+            {getConditionIcon(last_24h.dominant_condition, 24)}
+        </div>
+        <span className="stat-value">
+            {last_24h.condition_hours ? `${last_24h.condition_hours} hrs` : '--'}
+        </span>
+        <span className="stat-label">{last_24h.dominant_condition || 'N/A'}</span>
+        </div>
           
-          {/* 4. Snow */}
+          {/* 4. Avg Temp vs Normal */}
           <div className="stat-item-vertical">
+            <div className="stat-icon" style={{ color: getThermometerIcon(vs_normal?.temp_diff_f ?? null).color }}>
+              {getThermometerIcon(vs_normal?.temp_diff_f ?? null, 18).icon}
+            </div>
+
             <span className="stat-value">
-              {last_24h.snow_in !== null ? `${last_24h.snow_in.toFixed(1)}"` : '--'}
+              {last_24h.avg_temp_f !== null ? `${Math.round(last_24h.avg_temp_f)}°` : '--'}
             </span>
-            <Snowflake size={18} className="stat-icon snow-icon" />
-            <span className="stat-label">SNOW</span>
+
+            <span className="stat-label">
+              {vs_normal?.temp_diff_f !== null && vs_normal?.temp_diff_f !== undefined ? (
+                <>
+                  {`${vs_normal.temp_diff_f >= 0 ? '+' : ''}${Math.round(vs_normal.temp_diff_f)}°`}
+                  <br />
+                  v AVG
+                </>
+              ) : (
+                'v AVG'
+              )}
+            </span>
           </div>
           
           {/* 5. Humidity (avg) */}
           <div className="stat-item-vertical">
+            <Waves size={18} className="stat-icon humidity-icon" />
             <span className="stat-value">
               {last_24h.avg_humidity_pct !== null ? `${Math.round(last_24h.avg_humidity_pct)}%` : '--'}
             </span>
-            <Waves size={18} className="stat-icon humidity-icon" />
-            <span className="stat-label">HUMID</span>
+            
+            <span className="stat-label">AVG HUMID</span>
           </div>
         </div>
       </div>
