@@ -7,17 +7,7 @@
  * Card 2: Last 24 hours (temp band + 5 stats)
  */
 
-
-// src/components/StationSummaryCard.tsx
-/**
- * Apple Weather-inspired summary cards showing current conditions
- * and 24-hour historical overview for a weather station.
- * 
- * Card 1: Current conditions (temp + icon)
- * Card 2: Last 24 hours (temp band + 5 stats)
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef  } from 'react';
 import { 
   Droplets, 
   Wind, 
@@ -39,8 +29,10 @@ import {
   FaThermometerHalf, 
   FaThermometerThreeQuarters, 
   FaThermometerFull,
-  FaArrowUp
+  FaArrowUp,
+  FaArrowDown
 } from 'react-icons/fa';
+import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 
@@ -59,6 +51,8 @@ interface CurrentConditions {
   wx_code: string | null;
   observed_at: string | null;
   hours_ago: number | null;
+  pressure_in?: number | null;      // <-- ADD THIS
+  pressure_trend?: string | null;   // <-- ADD THIS (e.g. "Rising", "Falling")
 }
 
 interface Last24hStats {
@@ -72,6 +66,15 @@ interface Last24hStats {
   dominant_condition: string | null;
   condition_hours: number | null;
   observation_count: number;
+  avg_dewpoint_f: number | null;
+
+}
+
+interface HourlyDataPoint {
+  hour: string;
+  temp_f: number | null;
+  sky_code: string | null;
+  wx_code: string | null;
 }
 
 interface Comparison {
@@ -86,6 +89,7 @@ interface StationSummary {
   timezone: string | null;
   current: CurrentConditions;
   last_24h: Last24hStats;
+  hourly_history: HourlyDataPoint[];  // <-- ADD THIS
   vs_yesterday: Comparison | null;
   vs_normal: Comparison | null;
   data_freshness_minutes: number | null;
@@ -148,19 +152,47 @@ function getConditionIcon(condition: string | null, size: number = 24) {
   return <Cloud {...iconProps} className="stat-icon" />;
 }
 
+function getHourlyIcon(skyCode: string | null, wxCode: string | null, size: number = 24) {
+  const iconProps = { size, strokeWidth: 1.5 };
+  
+  // Check weather code first
+  if (wxCode) {
+    const wx = wxCode.toUpperCase();
+    if (wx.includes('TS')) return <CloudLightning {...iconProps} className="hourly-icon icon-lightning" />;
+    if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className="hourly-icon icon-snow" />;
+    if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className="hourly-icon icon-freezing" />;
+    if (wx.includes('RA')) return <CloudRain {...iconProps} className="hourly-icon icon-rain" />;
+    if (wx.includes('DZ')) return <CloudDrizzle {...iconProps} className="hourly-icon icon-drizzle" />;
+    if (wx.includes('FG')) return <CloudFog {...iconProps} className="hourly-icon icon-fog" />;
+    if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className="hourly-icon icon-mist" />;
+  }
+  
+  // Fall back to sky condition
+  if (skyCode) {
+    const sky = skyCode.toUpperCase();
+    if (sky === 'CLR' || sky === 'SKC') return <Sun {...iconProps} className="hourly-icon icon-clear" />;
+    if (sky === 'FEW') return <Sun {...iconProps} className="hourly-icon icon-mostly-clear" />;
+    if (sky === 'SCT') return <Cloud {...iconProps} className="hourly-icon icon-partly-cloudy" />;
+    if (sky === 'BKN') return <Cloudy {...iconProps} className="hourly-icon icon-mostly-cloudy" />;
+    if (sky === 'OVC') return <Cloud {...iconProps} className="hourly-icon icon-overcast" />;
+  }
+  
+  return <Cloud {...iconProps} className="hourly-icon" />;
+}
+
 // ============================================================================
 // Wind Description Helper
 // ============================================================================
 
-function getWindDescription(avgWindMph: number | null): string {
-  if (avgWindMph === null) return '--';
-  if (avgWindMph < 2) return 'Calm';
-  if (avgWindMph <= 5) return 'Light Wind';
-  if (avgWindMph <= 10) return 'Breezy';
-  if (avgWindMph <= 15) return 'Windy';
-  if (avgWindMph <= 20) return 'Very Windy';
-  return 'High Wind';
-}
+// function getWindDescription(avgWindMph: number | null): string {
+//   if (avgWindMph === null) return '--';
+//   if (avgWindMph < 2) return 'Calm';
+//   if (avgWindMph <= 5) return 'Light Wind';
+//   if (avgWindMph <= 10) return 'Breezy';
+//   if (avgWindMph <= 15) return 'Windy';
+//   if (avgWindMph <= 20) return 'Very Windy';
+//   return 'High Wind';
+// }
 
 // ============================================================================
 // Thermometer Icon Helper (for avg temp vs normal comparison)
@@ -321,29 +353,37 @@ const getGradientColors = () => {
 // ============================================================================
 
 function formatObservedTime(isoString: string | null, hoursAgo: number | null): string {
-  if (!isoString) return 'Unknown';
-  
-  try {
-    const date = new Date(isoString);
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
-    
-    if (hoursAgo !== null && hoursAgo < 2) {
-      const mins = Math.round(hoursAgo * 60);
-      if (mins < 60) {
-        return `${timeStr} (${mins}m ago)`;
+  // Try to parse the ISO string for actual time
+  if (hoursAgo !== null) {hoursAgo -= 53/60}  //most temps are recorded at 53 after hour
+  if (isoString) {
+    try {
+      const date = new Date(isoString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        });
       }
+    } catch {
+      // Fall through
     }
-    
-    return timeStr;
-  } catch {
-    return 'Unknown';
   }
+  
+  // Fallback to hours ago if no valid timestamp
+  if (hoursAgo !== null) {
+    if (hoursAgo < 1) {
+      const mins = Math.round(hoursAgo * 60);
+      return mins <= 1 ? 'just now' : `${mins} min ago`;
+    } else if (hoursAgo < 24) {
+      const hrs = Math.round(hoursAgo);
+      const hrs2 = Math.round(hoursAgo*2)/2; //round to .5
+      return hrs === 1 ? '1 hr ago' : `${hrs2} hrs ago`;
+    }
+  }
+  
+  return 'recently';
 }
-
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -356,6 +396,14 @@ export default function StationSummaryCard({
   const [summary, setSummary] = useState<StationSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hourlyScrollRef = useRef<HTMLDivElement>(null);
+
+  // After the data loads, scroll to the right
+useEffect(() => {
+  if (hourlyScrollRef.current && summary?.hourly_history.length) {
+    hourlyScrollRef.current.scrollLeft = hourlyScrollRef.current.scrollWidth;
+  }
+}, [summary?.hourly_history]);
   
   useEffect(() => {
     async function fetchSummary() {
@@ -428,14 +476,11 @@ export default function StationSummaryCard({
         {/* Header: Station name + time */}
         <div className="summary-header">
           <h2 className="station-name">{displayName}</h2>
-          {/* <div className="observed-time">
-            <Clock size={12} />
-            <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
-          </div> */}
         </div>
         
         {/* Current conditions: Temp + Icon side by side */}
         <div className="current-content">
+          
           {/* Left: Temp + Feels like */}
         <div className="current-left">
         <div className="current-temp">
@@ -445,12 +490,22 @@ export default function StationSummaryCard({
         <div className="feels-like">
             Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
         </div>
-        {/* ADD THIS HERE */}
-        <div className="observed-time">
-            <Clock size={12} />
-            <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
+
+        {/* Barometric Pressure */}
+        {current.pressure_in !== null && current.pressure_in !== undefined && (
+          <div className="pressure-display" aria-label="Barometric pressure">
+            {/* <span className="pressure-label">Pressure</span> */}
+            <IoSpeedometerOutline size={14} style={{ marginRight: '2px' }} />
+            <span className="pressure-val">{current.pressure_in.toFixed(2)}" Hg</span>
+
+            {current.pressure_trend === 'Rising' && <FaArrowUp size={10} className="trend-up" />}
+            {current.pressure_trend === 'Falling' && <FaArrowDown size={10} className="trend-down" />}
+            {current.pressure_trend === 'Steady' && <span className="trend-steady">—</span>}
+          </div>
+        )}       
+
         </div>
-        </div>
+
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
@@ -467,6 +522,13 @@ export default function StationSummaryCard({
               </span>
             </div>
           </div>
+                  {/* Centered timestamp */}
+        
+        </div>
+        
+        <div className="observed-time">
+          <Clock size={12} />
+          <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
         </div>
       </div>
       
@@ -486,81 +548,131 @@ export default function StationSummaryCard({
             current={current.temp_f}
           />
         </div>
+            {/* Apple-style scroll indicator */}
+        <div className="scroll-indicator"></div>    
+{/* 1x7 Horizontal Scroll Stats */}
+<div className="stats-scroll-container">
+  <div className="stats-row-horizontal">
+
+    {/* 1. Precip */}
+    <div className="stat-item-vertical">
+      <Droplets size={18} className="stat-icon precip-icon" />
+      <span className="stat-value">
+        {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
+      </span>
+      <span className="stat-label">PRECIP</span>
+    </div>
+
+
+    {/* 2. Dominant condition */}
+    <div className="stat-item-vertical">
+      <div className="condition-stat-icon">
+        {getConditionIcon(last_24h.dominant_condition, 18)}
+      </div>
+      <span className="stat-value">
+        {last_24h.condition_hours ? `${last_24h.condition_hours} hrs` : '--'}
+      </span>
+      <span className="stat-label">{last_24h.dominant_condition || 'COND'}</span>
+    </div>
+
+    {/* 3. Avg Temp vs Normal */}
+    <div className="stat-item-vertical">
+      <div className="stat-icon" style={{ color: getThermometerIcon(vs_normal?.temp_diff_f ?? null).color }}>
+        {getThermometerIcon(vs_normal?.temp_diff_f ?? null, 18).icon}
+      </div>
+      <span className="stat-value">
+        {last_24h.avg_temp_f !== null ? `${Math.round(last_24h.avg_temp_f)}° avg` : '--'}
+      </span>
+      <span className="stat-label">
+        {vs_normal?.temp_diff_f !== null && vs_normal?.temp_diff_f !== undefined
+          ? `${vs_normal.temp_diff_f >= 0 ? '+' : ''}${Math.round(vs_normal.temp_diff_f)}° NORMAL`
+          : 'NORMAL'}
+      </span>
+    </div>
+
+    {/* 4. Avg Wind */}
+    <div className="stat-item-vertical">
+      <Wind size={18} className="stat-icon" style={{ color: '#94a3b8' }} />
+      <span className="stat-value">
+        {last_24h.avg_wind_mph !== null 
+          ? <>{Math.round(last_24h.avg_wind_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
+          : '--'}
+      </span>
+      <span className="stat-label">WINDS</span>
+    </div>
+
+    {/* 5. Max Gust */}
+    <div className="stat-item-vertical">
+      <Wind size={18} className="stat-icon wind-stat-icon" />
+      <span className="stat-value">
+        {last_24h.max_gust_mph !== null 
+          ? <>{Math.round(last_24h.max_gust_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
+          : '--'}
+      </span>
+      <span className="stat-label">MAX GUST</span>
+    </div>
+
+
+
+
+    {/* 6. Humidity (avg) */}
+    <div className="stat-item-vertical">
+      <Waves size={18} className="stat-icon humidity-icon" />
+      <span className="stat-value">
+        {last_24h.avg_humidity_pct !== null ? `${Math.round(last_24h.avg_humidity_pct)}%` : '--'}
+      </span>
+      <span className="stat-label">HUMIDITY</span>
+    </div>
+
+    {/* 7. Dew Point (avg) */}
+    <div className="stat-item-vertical">
+      <FaThermometerHalf size={18} className="stat-icon dewpoint-icon" />
+      <span className="stat-value">
+        {last_24h.avg_dewpoint_f !== null ? `${Math.round(last_24h.avg_dewpoint_f)}°` : '--'}
+      </span>
+      <span className="stat-label">DEW PT</span>
+    </div>
+
+  </div>
+</div>
+
+      
+      {/* Data freshness warning (if stale) */}
+      
+      {current.hours_ago !== null && (current.hours_ago -53/60)  > 2 && (
+        <div className="freshness-warning">
+          ⚠️ Data is {Math.round(current.hours_ago -53/60)} hours old
+        </div>
+      )}
+      
+    </div>
+      {/* ============================================================
+          CARD 3: Hourly History
+          ============================================================ */}
+      <div className={`summary-card hourly-card ${darkMode ? 'dark' : ''}`}>
+        <div className="section-label">24-HOUR HISTORY</div>
         
-        {/* 5 Stats Row */}
-        <div className="stats-row-5">
-          {/* 1. Precip */}
-          <div className="stat-item-vertical">
-            <Droplets size={18} className="stat-icon precip-icon" />
-            <span className="stat-value">
-              {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
-            </span>
-            
-            <span className="stat-label">TOTAL PRECIP</span>
-          </div>
-          
-          {/* 2. Wind (avg) */}
-          <div className="stat-item-vertical">
-            <Wind size={18} className="stat-icon wind-stat-icon" />
-            <span className="stat-value">
-              {last_24h.avg_wind_mph !== null ? `${Math.round(last_24h.avg_wind_mph)} mph` : '--'}
-            </span>
-            
-            <span className="stat-label">{getWindDescription(last_24h.avg_wind_mph)}</span>
-          </div>
-          
-        {/* 3. Conditions (dominant) - show icon */}
-        <div className="stat-item-vertical">
-        <div className="condition-stat-icon">
-            {getConditionIcon(last_24h.dominant_condition, 24)}
-        </div>
-        <span className="stat-value">
-            {last_24h.condition_hours ? `${last_24h.condition_hours} hrs` : '--'}
-        </span>
-        <span className="stat-label">{last_24h.dominant_condition || 'N/A'}</span>
-        </div>
-          
-          {/* 4. Avg Temp vs Normal */}
-          <div className="stat-item-vertical">
-            <div className="stat-icon" style={{ color: getThermometerIcon(vs_normal?.temp_diff_f ?? null).color }}>
-              {getThermometerIcon(vs_normal?.temp_diff_f ?? null, 18).icon}
-            </div>
-
-            <span className="stat-value">
-              {last_24h.avg_temp_f !== null ? `${Math.round(last_24h.avg_temp_f)}°` : '--'}
-            </span>
-
-            <span className="stat-label">
-              {vs_normal?.temp_diff_f !== null && vs_normal?.temp_diff_f !== undefined ? (
-                <>
-                  {`${vs_normal.temp_diff_f >= 0 ? '+' : ''}${Math.round(vs_normal.temp_diff_f)}°`}
-                  <br />
-                  v AVG
-                </>
-              ) : (
-                'v AVG'
-              )}
-            </span>
-          </div>
-          
-          {/* 5. Humidity (avg) */}
-          <div className="stat-item-vertical">
-            <Waves size={18} className="stat-icon humidity-icon" />
-            <span className="stat-value">
-              {last_24h.avg_humidity_pct !== null ? `${Math.round(last_24h.avg_humidity_pct)}%` : '--'}
-            </span>
-            
-            <span className="stat-label">AVG HUMID</span>
+        {/* Apple-style scroll indicator */}
+        <div className="scroll-indicator"></div>
+        
+        <div className="hourly-scroll-container" ref={hourlyScrollRef}>
+          <div className="hourly-scroll-row">
+            {summary.hourly_history.map((hour, index) => (
+              <div key={index} className="hourly-item">
+                <span className="hourly-time">{hour.hour}</span>
+                <div className="hourly-icon-wrapper">
+                  {getHourlyIcon(hour.sky_code, hour.wx_code, 22)}
+                </div>
+                <span className="hourly-temp">
+                  {hour.temp_f !== null ? `${Math.round(hour.temp_f)}°` : '--'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-      
-      {/* Data freshness warning (if stale) */}
-      {summary.data_freshness_minutes !== null && summary.data_freshness_minutes > 120 && (
-        <div className="freshness-warning">
-          ⚠️ Data is {Math.round(summary.data_freshness_minutes / 60)} hours old
-        </div>
-      )}
+    
     </div>
+    
   );
 }

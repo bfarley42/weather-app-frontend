@@ -95,14 +95,15 @@
 .observed-time {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #64748b;
   background: rgba(0, 0, 0, 0.04);
   padding: 4px 10px;
   border-radius: 10px;
-  margin-top: 10px;    /* ADD THIS - space above */
-  margin-left: -2px
+  margin-top: 12px;
+  width: 100%;
 }
 
 .dark .observed-time {
@@ -123,6 +124,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 2px
+  
 }
 
 .current-temp {
@@ -134,6 +137,26 @@
   font-feature-settings: "tnum" 1;
 }
 
+/* Aligned info row for pressure and wind */
+.current-info-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.current-info-row .info-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dark .current-info-row {
+  color: #94a3b8;
+}
+
 .dark .current-temp {
   color: #ffffff;
 }
@@ -141,7 +164,7 @@
 .feels-like {
   font-size: 0.85rem;
   color: #64748b;
-  margin-top: 8px;
+  margin-top: 4px;
   font-weight: 500;
 }
 
@@ -171,6 +194,27 @@
 
 .dark .weather-icon {
   color: #94a3b8;
+}
+
+/* Apple-style scroll indicator */
+.scroll-indicator {
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(0, 0, 0, 0.08) 8%, 
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  margin: 12px 0 8px 0;
+  margin-left: 8px;  /* Indented on left */
+  margin-right: -16px;    /* Flush on right */
+}
+
+.dark .scroll-indicator {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.1) 8%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
 }
 
 /* Weather icon color variants */
@@ -228,6 +272,38 @@
   font-feature-settings: "tnum" 1;
 }
 
+.pressure-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+  font-feature-settings: "tnum" 1;
+}
+.pressure-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.pressure-val {
+  font-feature-settings: "tnum" 1;
+}
+.dark .pressure-display { color: #94a3b8; }
+
+.trend-up { color: #3b82f6; transform: rotate(0deg); }    /* Blue Up Arrow */
+.trend-down { color: #ef4444; transform: rotate(0deg); } /* Red Down Arrow */
+.trend-steady {
+  color: #94a3b8;
+  margin-left: 2px;
+  font-weight: 600;
+}
+/* Add to CSS */
+.rotate-up { transform: rotate(-45deg); color: #ef4444; }   /* Rising usually associated with High Pressure? Actually falling pressure = storm. */
+/* Standard Meteo: Rising = Good (Green/Blue), Falling = Bad (Red) */
+
 /* ============================================================================
    Card 2: History Card (Last 24 Hours)
    ============================================================================ */
@@ -250,7 +326,120 @@
 .dark .section-label {
   color: #64748b;
 }
+/* ============================================================================
+   Card 3: Hourly History (Apple Weather style)
+   ============================================================================ */
 
+.hourly-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.hourly-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hourly-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.hourly-scroll-row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  padding: 8px 4px;
+  min-width: min-content;
+}
+
+.hourly-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 50px;
+  padding: 8px 6px;
+  flex-shrink: 0;
+}
+
+.hourly-time {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.dark .hourly-time {
+  color: #94a3b8;
+}
+
+.hourly-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+}
+
+.hourly-icon {
+  color: #64748b;
+}
+
+.dark .hourly-icon {
+  color: #94a3b8;
+}
+
+/* Reuse icon color classes */
+.hourly-icon.icon-clear { color: #f59e0b !important; }
+.hourly-icon.icon-mostly-clear { color: #fbbf24 !important; }
+.hourly-icon.icon-partly-cloudy { color: #94a3b8 !important; }
+.hourly-icon.icon-mostly-cloudy { color: #64748b !important; }
+.hourly-icon.icon-overcast { color: #6b7280 !important; }
+.hourly-icon.icon-rain { color: #3b82f6 !important; }
+.hourly-icon.icon-drizzle { color: #60a5fa !important; }
+.hourly-icon.icon-snow { color: #60a5fa !important; }
+.hourly-icon.icon-freezing { color: #06b6d4 !important; }
+.hourly-icon.icon-fog { color: #9ca3af !important; }
+.hourly-icon.icon-mist { color: #9ca3af !important; }
+.hourly-icon.icon-lightning { color: #a855f7 !important; }
+
+.hourly-temp {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  font-feature-settings: "tnum" 1;
+}
+
+.dark .hourly-temp {
+  color: #f1f5f9;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .hourly-card {
+    max-width: 300px;
+  }
+  
+  .hourly-item {
+    min-width: 44px;
+    padding: 6px 4px;
+    gap: 4px;
+  }
+  
+  .hourly-time {
+    font-size: 0.6rem;
+  }
+  
+  .hourly-temp {
+    font-size: 0.85rem;
+  }
+}
 /* ============================================================================
    Temperature Band
    ============================================================================ */
@@ -334,13 +523,31 @@
 }
 
 /* ============================================================================
-   5 Stats Row
+   1x6 Horizontal Scroll Stats (iPhone-style)
    ============================================================================ */
 
-.stats-row-5 {
+.stats-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+  scroll-behavior: smooth;
+  
+  /* Hide scrollbar - all browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.stats-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.stats-row-horizontal {
   display: flex;
-  justify-content: center;
-  gap: 24px;
+  flex-direction: row;
+  gap: 20px;
+  padding: 4px 8px;
+  min-width: min-content; /* Allow content to overflow */
 }
 
 .stat-item-vertical {
@@ -348,8 +555,9 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 3px;
-  min-width: 50px;
+  gap: 2px;
+  min-width: 52px;
+  flex-shrink: 0; /* Prevent items from shrinking */
 }
 
 .stat-value {
@@ -384,23 +592,17 @@
 .condition-icon { color: #8b5cf6 !important; }
 .snow-icon { color: #60a5fa !important; }
 .humidity-icon { color: #22c55e !important; }
+.dewpoint-icon { color: #14b8a6 !important; }
 
 .stat-label {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   color: #94a3b8;
   text-align: center;
-  width: 100%;
-  min-height: 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* white-space: nowrap; */
-  max-width: 50px;          /* ← ADD THIS - forces wrap */
-  line-height: 1.2;         /* ← ADD THIS - tighter line spacing for 2 lines */
-
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .dark .stat-label {
@@ -529,8 +731,9 @@
   }
   
   .observed-time {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     padding: 3px 6px;
+    
   }
   
   .current-content {
@@ -542,7 +745,7 @@
   }
   
   .feels-like {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     margin-top: 6px;
   }
   
@@ -552,11 +755,11 @@
   }
   
   .condition-label {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
   
   .wind-display {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     padding: 3px 8px;
   }
   
@@ -567,7 +770,7 @@
   }
   
   .section-label {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     margin-bottom: 10px;
   }
   
@@ -593,28 +796,28 @@
     font-size: 0.8rem;
   }
   
-  /* 5 Stats - tighter on mobile */
-  .stats-row-5 {
-    gap: 20px;
+  /* Horizontal scroll stats - mobile adjustments */
+  .stats-row-horizontal {
+    gap: 16px;
+    padding: 4px 4px;
   }
   
   .stat-item-vertical {
-    min-width: 40px;
+    min-width: 48px;
     gap: 1px;
   }
   
   .stat-value {
-    font-size: 0.8rem;
+    font-size: .9rem;
   }
   
   .stat-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
   
   .stat-label {
-    font-size: 0.55rem;
-    padding: 0px 6px;
+    font-size: 0.6rem;
   }
 }
 
@@ -637,16 +840,16 @@
     height: 36px !important;
   }
   
-  .stats-row-5 {
-    gap: 8px;
+  .stats-row-horizontal {
+    gap: 12px;
   }
   
   .stat-item-vertical {
-    min-width: 36px;
+    min-width: 42px;
   }
   
   .stat-value {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
   
   .stat-icon {
