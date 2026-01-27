@@ -22,6 +22,7 @@ import {
   CloudDrizzle,
   Cloudy,
   Waves,
+  // Moon,
 } from 'lucide-react';
 import { 
   FaThermometerEmpty, 
@@ -35,6 +36,15 @@ import {
 import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
+
+
+console.log('Base URL:', import.meta.env.BASE_URL);
+console.log('Moon path:', `${import.meta.env.BASE_URL}moon.svg`);
+// import { BsCloudMoon } from 'react-icons/bs';
+// // Custom moon icons
+// import { ReactComponent as MoonIcon } from '../assets/weather/moon.svg?react';
+// import { ReactComponent as MoonCloudIcon } from '../assets/weather/moon_cloud.svg?react';
+
 
 // ============================================================================
 // Types
@@ -94,6 +104,7 @@ interface StationSummary {
   vs_normal: Comparison | null;
   data_freshness_minutes: number | null;
   generated_at: string;
+  sun_times: SunTimes | null;
 }
 
 interface StationSummaryCardProps {
@@ -102,37 +113,81 @@ interface StationSummaryCardProps {
   darkMode?: boolean;
 }
 
+interface SunTimes {
+  sunrise: string | null;
+  sunset: string | null;
+  is_day: boolean;
+}
 // ============================================================================
-// Weather Icon Selector
+// Unified Weather Icon Function
 // ============================================================================
 
-function getWeatherIcon(_condition: string | null, skyCode: string | null, wxCode: string | null, size: number = 52) {
+function getWeatherIcon(
+  skyCode: string | null, 
+  wxCode: string | null, 
+  size: number = 52, 
+  isDay: boolean = true,
+  className: string = "weather-icon"
+) {
   const iconProps = { size, strokeWidth: 1.5 };
   
-  // Check weather code first (precipitation takes priority)
+  // Check weather code first (precipitation - same day/night)
   if (wxCode) {
     const wx = wxCode.toUpperCase();
-    if (wx.includes('TS')) return <CloudLightning {...iconProps} className="weather-icon icon-lightning" />;
-    if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className="weather-icon icon-snow" />;
-    if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className="weather-icon icon-freezing" />;
-    if (wx.includes('RA')) return <CloudRain {...iconProps} className="weather-icon icon-rain" />;
-    if (wx.includes('DZ')) return <CloudDrizzle {...iconProps} className="weather-icon icon-drizzle" />;
-    if (wx.includes('FG')) return <CloudFog {...iconProps} className="weather-icon icon-fog" />;
-    if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className="weather-icon icon-mist" />;
+    if (wx.includes('TS')) return <CloudLightning {...iconProps} className={`${className} icon-lightning`} />;
+    if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className={`${className} icon-snow`} />;
+    if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className={`${className} icon-freezing`} />;
+    if (wx.includes('RA')) return <CloudRain {...iconProps} className={`${className} icon-rain`} />;
+    if (wx.includes('DZ')) return <CloudDrizzle {...iconProps} className={`${className} icon-drizzle`} />;
+    if (wx.includes('FG')) return <CloudFog {...iconProps} className={`${className} icon-fog`} />;
+    if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className={`${className} icon-mist`} />;
   }
   
-  // Fall back to sky condition
+  // Sky condition - use moon SVGs at night
   if (skyCode) {
     const sky = skyCode.toUpperCase();
-    if (sky === 'CLR' || sky === 'SKC') return <Sun {...iconProps} className="weather-icon icon-clear" />;
-    if (sky === 'FEW') return <Sun {...iconProps} className="weather-icon icon-mostly-clear" />;
-    if (sky === 'SCT') return <Cloud {...iconProps} className="weather-icon icon-partly-cloudy" />;
-    if (sky === 'BKN') return <Cloudy {...iconProps} className="weather-icon icon-mostly-cloudy" />;
-    if (sky === 'OVC') return <Cloud {...iconProps} className="weather-icon icon-overcast" />;
+    
+    // Clear
+    if (sky === 'CLR' || sky === 'SKC' || sky === 'FEW') {
+      if (isDay) {
+        return <Sun {...iconProps} className={`${className} icon-clear`} />;
+      } else {
+        return (
+        <img 
+          src="/weather/moon.svg"
+          width={size}
+          height={size}
+          className={`${className} icon-clear-night`}
+          alt="Clear night"
+        />
+        );
+      }
+    }
+    
+    // Partly cloudy
+    if (sky === 'SCT' || sky === 'BKN') {
+      if (isDay) {
+        return <Cloud {...iconProps} className={`${className} icon-partly-cloudy`} />;
+      } else {
+        return (
+        <img 
+          src="/weather/moon_cloud.svg"
+          width={size}
+          height={size}
+          className={`${className} icon-cloudy-night`}
+          alt="Partly cloudy night"
+        />
+        );
+      }
+    }
+    
+    // Overcast - same day/night
+    if (sky === 'OVC') {
+      return <Cloud {...iconProps} className={`${className} icon-overcast`} />;
+    }
   }
   
-  // Default - just show cloud
-  return <Cloud {...iconProps} className="weather-icon icon-default" />;
+  return <Cloud {...iconProps} className={`${className} icon-default`} />;
 }
 
 
@@ -152,51 +207,6 @@ function getConditionIcon(condition: string | null, size: number = 24) {
   return <Cloud {...iconProps} className="stat-icon" />;
 }
 
-function getHourlyIcon(skyCode: string | null, wxCode: string | null, size: number = 24) {
-  const iconProps = { size, strokeWidth: 1.5 };
-  
-  // Check weather code first
-  if (wxCode) {
-    const wx = wxCode.toUpperCase();
-    if (wx.includes('TS')) return <CloudLightning {...iconProps} className="hourly-icon icon-lightning" />;
-    if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className="hourly-icon icon-snow" />;
-    if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className="hourly-icon icon-freezing" />;
-    if (wx.includes('RA')) return <CloudRain {...iconProps} className="hourly-icon icon-rain" />;
-    if (wx.includes('DZ')) return <CloudDrizzle {...iconProps} className="hourly-icon icon-drizzle" />;
-    if (wx.includes('FG')) return <CloudFog {...iconProps} className="hourly-icon icon-fog" />;
-    if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className="hourly-icon icon-mist" />;
-  }
-  
-  // Fall back to sky condition
-  if (skyCode) {
-    const sky = skyCode.toUpperCase();
-    if (sky === 'CLR' || sky === 'SKC') return <Sun {...iconProps} className="hourly-icon icon-clear" />;
-    if (sky === 'FEW') return <Sun {...iconProps} className="hourly-icon icon-mostly-clear" />;
-    if (sky === 'SCT') return <Cloud {...iconProps} className="hourly-icon icon-partly-cloudy" />;
-    if (sky === 'BKN') return <Cloudy {...iconProps} className="hourly-icon icon-mostly-cloudy" />;
-    if (sky === 'OVC') return <Cloud {...iconProps} className="hourly-icon icon-overcast" />;
-  }
-  
-  return <Cloud {...iconProps} className="hourly-icon" />;
-}
-
-// ============================================================================
-// Wind Description Helper
-// ============================================================================
-
-// function getWindDescription(avgWindMph: number | null): string {
-//   if (avgWindMph === null) return '--';
-//   if (avgWindMph < 2) return 'Calm';
-//   if (avgWindMph <= 5) return 'Light Wind';
-//   if (avgWindMph <= 10) return 'Breezy';
-//   if (avgWindMph <= 15) return 'Windy';
-//   if (avgWindMph <= 20) return 'Very Windy';
-//   return 'High Wind';
-// }
-
-// ============================================================================
-// Thermometer Icon Helper (for avg temp vs normal comparison)
-// ============================================================================
 
 interface ThermometerResult {
   icon: React.ReactNode;
@@ -384,6 +394,29 @@ function formatObservedTime(isoString: string | null, hoursAgo: number | null): 
   
   return 'recently';
 }
+
+function isHourDaytime(hourStr: string, sunrise: string | null, sunset: string | null): boolean {
+  if (!sunrise || !sunset) return true; // Default to day if no sun data
+  
+  // Parse time string to hour (handles both "10 PM" and "7:23 AM")
+  const parseHour = (str: string): number => {
+    // Match formats: "10 PM", "7:23 AM", "12:00 PM"
+    const match = str.match(/(\d+)(?::\d+)?\s*(AM|PM)/i);
+    if (!match) return 12;
+    let hour = parseInt(match[1]);
+    const isPM = match[2].toUpperCase() === 'PM';
+    if (isPM && hour !== 12) hour += 12;
+    if (!isPM && hour === 12) hour = 0;
+    return hour;
+  };
+  
+  const hour = parseHour(hourStr);
+  const sunriseHour = parseHour(sunrise);
+  const sunsetHour = parseHour(sunset);
+  
+  return hour >= sunriseHour && hour < sunsetHour;
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -510,7 +543,7 @@ useEffect(() => {
           {/* Right: Icon + Wind */}
           <div className="current-right">
             <div className="weather-icon-container">
-              {getWeatherIcon(current.condition, current.sky_code, current.wx_code, 56)}
+              {getWeatherIcon(current.sky_code, current.wx_code, 56, summary.sun_times?.is_day ?? true, "weather-icon")}
               {current.condition && (
                 <span className="condition-label">{current.condition}</span>
               )}
@@ -657,17 +690,25 @@ useEffect(() => {
         
         <div className="hourly-scroll-container" ref={hourlyScrollRef}>
           <div className="hourly-scroll-row">
-            {summary.hourly_history.map((hour, index) => (
+          {summary.hourly_history.map((hour, index) => {
+            const isDay = isHourDaytime(
+              hour.hour, 
+              summary.sun_times?.sunrise ?? null, 
+              summary.sun_times?.sunset ?? null
+            );
+            
+            return (
               <div key={index} className="hourly-item">
                 <span className="hourly-time">{hour.hour}</span>
                 <div className="hourly-icon-wrapper">
-                  {getHourlyIcon(hour.sky_code, hour.wx_code, 22)}
+                  {getWeatherIcon(hour.sky_code, hour.wx_code, 22, isDay, "hourly-icon")}
                 </div>
                 <span className="hourly-temp">
                   {hour.temp_f !== null ? `${Math.round(hour.temp_f)}°` : '--'}
                 </span>
               </div>
-            ))}
+            );
+          })}
           </div>
         </div>
       </div>
