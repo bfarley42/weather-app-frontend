@@ -408,8 +408,8 @@
 .hourly-icon.icon-fog { color: #9ca3af !important; }
 .hourly-icon.icon-mist { color: #9ca3af !important; }
 .hourly-icon.icon-lightning { color: #a855f7 !important; }
-.icon-clear-night { color: #6366f1 !important; }  /* Indigo for moon */
-.icon-cloudy-night { color: #818cf8 !important; } /* Lighter indigo */
+.icon-clear-night { color: #272727 !important; }  /* Indigo for moon */
+.icon-cloudy-night { color: #272727 !important; } /* Lighter indigo */
 
 .hourly-temp {
   font-size: 0.95rem;

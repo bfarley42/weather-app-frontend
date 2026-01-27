@@ -38,8 +38,14 @@ import { API_URL } from '../config';
 import './StationSummaryCard.css';
 
 
-console.log('Base URL:', import.meta.env.BASE_URL);
-console.log('Moon path:', `${import.meta.env.BASE_URL}moon.svg`);
+// REMOVE the ?url imports
+// import moonUrl from '../assets/weather/moon.svg?url';
+// import moonCloudUrl from '../assets/weather/moon_cloud.svg?url';
+
+// ADD these component imports
+import MoonIcon from '../assets/weather/moon.svg?react';
+import MoonCloudIcon from '../assets/weather/moon_cloud.svg?react';
+
 // import { BsCloudMoon } from 'react-icons/bs';
 // // Custom moon icons
 // import { ReactComponent as MoonIcon } from '../assets/weather/moon.svg?react';
@@ -147,19 +153,21 @@ function getWeatherIcon(
   if (skyCode) {
     const sky = skyCode.toUpperCase();
     
+// ... inside getWeatherIcon function ...
+
     // Clear
     if (sky === 'CLR' || sky === 'SKC' || sky === 'FEW') {
       if (isDay) {
         return <Sun {...iconProps} className={`${className} icon-clear`} />;
       } else {
+        // REPLACE THE <img> TAG WITH THIS:
         return (
-        <img 
-          src="/weather/moon.svg"
-          width={size}
-          height={size}
-          className={`${className} icon-clear-night`}
-          alt="Clear night"
-        />
+          <MoonIcon 
+            width={size} 
+            height={size} 
+            className={`${className} icon-clear-night`} 
+            // SVG will now inherit color from CSS (fill="currentColor" or stroke="currentColor")
+          />
         );
       }
     }
@@ -169,14 +177,13 @@ function getWeatherIcon(
       if (isDay) {
         return <Cloud {...iconProps} className={`${className} icon-partly-cloudy`} />;
       } else {
+        // REPLACE THE <img> TAG WITH THIS:
         return (
-        <img 
-          src="/weather/moon_cloud.svg"
-          width={size}
-          height={size}
-          className={`${className} icon-cloudy-night`}
-          alt="Partly cloudy night"
-        />
+          <MoonCloudIcon 
+            width={size} 
+            height={size} 
+            className={`${className} icon-cloudy-night`} 
+          />
         );
       }
     }
