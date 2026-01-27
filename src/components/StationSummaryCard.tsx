@@ -20,7 +20,7 @@ import {
   CloudLightning,
   Snowflake,
   CloudDrizzle,
-  Cloudy,
+  // Cloudy,
   Waves,
   // Moon,
 } from 'lucide-react';
