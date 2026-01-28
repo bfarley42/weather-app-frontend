@@ -41,14 +41,20 @@ import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
+import { LuMoon, LuMoonStar, LuCloudMoon } from "react-icons/lu";
+import { BsCloudMoon } from "react-icons/bs";
+import { PiCloudMoon } from "react-icons/pi";
+import { PiMoonStarsFill, PiCloudMoonLight } from "react-icons/pi";
+import { CiCloudMoon } from "react-icons/ci";
+import { LiaCloudMoonSolid } from "react-icons/lia";
 
 // REMOVE the ?url imports
 // import moonUrl from '../assets/weather/moon.svg?url';
-// import moonCloudUrl from '../assets/weather/moon_cloud.svg?url';
+// import moonCloudUrl from '../assets/weather/MoonCloud.svg?url';
 
 // ADD these component imports
-import MoonIcon from '../assets/weather/moon.svg?react';
-import MoonCloudIcon from '../assets/weather/moon_cloud.svg?react';
+// import MoonIcon from '../assets/weather/moon.svg?react';
+import MoonCloudIcon from '../assets/weather/MoonCloud.svg?react';
 
 // import { BsCloudMoon } from 'react-icons/bs';
 // // Custom moon icons
@@ -293,9 +299,10 @@ function getWeatherIcon(
       } else {
         // REPLACE THE <img> TAG WITH THIS:
         return (
-          <MoonIcon 
-            width={size} 
-            height={size} 
+          <LuMoon
+            size = {size}
+            // width={size} 
+            // height={size} 
             className={`${className} icon-clear-night`} 
             // SVG will now inherit color from CSS (fill="currentColor" or stroke="currentColor")
           />
@@ -310,9 +317,9 @@ function getWeatherIcon(
       } else {
         // REPLACE THE <img> TAG WITH THIS:
         return (
-          <MoonCloudIcon 
-            width={size} 
-            height={size} 
+          <CiCloudMoon 
+            size={size*1.1} 
+            // height={size} 
             className={`${className} icon-cloudy-night`} 
           />
         );
@@ -839,7 +846,7 @@ useEffect(() => {
               <div key={index} className="hourly-item">
                 <span className="hourly-time">{hour.hour}</span>
                 <div className="hourly-icon-wrapper">
-                  {getWeatherIcon(hour.sky_code, hour.wx_code, 22, isDay, "hourly-icon")}
+                  {getWeatherIcon(hour.sky_code, hour.wx_code, 24, isDay, "hourly-icon")}
                 </div>
                 <span className="hourly-temp">
                   {hour.temp_f !== null ? `${Math.round(hour.temp_f)}°` : '--'}
@@ -889,7 +896,7 @@ useEffect(() => {
                         return <Snowflake size={20} className="daily-icon icon-snow" />;
                       }
                       // Show rain icon if it rained (but didn't snow)
-                      if (day.precip_in !== null && day.precip_in >= 0.01) {
+                      if (day.precip_in !== null && day.precip_in >= 0.05) {
                         return <CloudRain size={20} className="daily-icon icon-rain" />;
                       }
                       // Otherwise show sky condition
@@ -898,7 +905,7 @@ useEffect(() => {
                     {/* Show snow total if snowed */}
                     {day.snow_in !== null && day.snow_in >= 0.1 ? (
                       <span className="daily-precip daily-snow">{day.snow_in.toFixed(1)}"</span>
-                    ) : day.precip_in !== null && day.precip_in >= 0.01 ? (
+                    ) : day.precip_in !== null && day.precip_in >= 0.05 ? (
                       <span className="daily-precip">{day.precip_in.toFixed(2)}"</span>
                     ) : null}
                   </div>

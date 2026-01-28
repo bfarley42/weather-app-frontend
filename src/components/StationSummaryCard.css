@@ -398,18 +398,18 @@
 /* Reuse icon color classes */
 .hourly-icon.icon-clear { color: #f59e0b !important; }
 .hourly-icon.icon-mostly-clear { color: #fbbf24 !important; }
-.hourly-icon.icon-partly-cloudy { color: #94a3b8 !important; }
+.hourly-icon.icon-partly-cloudy { color: #6b7280 !important; }
 .hourly-icon.icon-mostly-cloudy { color: #64748b !important; }
 .hourly-icon.icon-overcast { color: #6b7280 !important; }
-.hourly-icon.icon-rain { color: #3b82f6 !important; }
-.hourly-icon.icon-drizzle { color: #60a5fa !important; }
-.hourly-icon.icon-snow { color: #60a5fa !important; }
-.hourly-icon.icon-freezing { color: #06b6d4 !important; }
-.hourly-icon.icon-fog { color: #9ca3af !important; }
-.hourly-icon.icon-mist { color: #9ca3af !important; }
+.hourly-icon.icon-rain { color: #667eea !important; }
+.hourly-icon.icon-drizzle { color: #667eea !important; }
+.hourly-icon.icon-snow { color: rgb(83, 152, 216) !important; }
+.hourly-icon.icon-freezing { color: rgb(83, 152, 216) !important; }
+.hourly-icon.icon-fog { color: #6b7280 !important; }
+.hourly-icon.icon-mist { color: #6b7280 !important; }
 .hourly-icon.icon-lightning { color: #a855f7 !important; }
-.icon-clear-night { color: #272727 !important; }  /* Indigo for moon */
-.icon-cloudy-night { color: #272727 !important; } /* Lighter indigo */
+.icon-clear-night { color: #6163cc; stroke-width: 1.5px; position: relative; top: -2px   !important; }  /* Indigo for moon */
+.icon-cloudy-night { color: #6b7280; stroke-width: .3px; position: relative; top: -2px !important; } /* Lighter indigo */
 
 .hourly-temp {
   font-size: 0.95rem;
@@ -482,11 +482,11 @@
 
 .daily-precip {
   font-size: 0.6rem;
-  color: #06b6d4;
+  color: #818181;
   font-weight: 500;
 }
 .daily-snow {
-  color: #60a5fa !important;  /* Blue for snow */
+  color: #818181 !important;  /* Blue for snow */
 }
 /* Temperature bar container */
 .daily-temp-bar-container {
