@@ -421,7 +421,200 @@
 .dark .hourly-temp {
   color: #f1f5f9;
 }
+/* ============================================================================
+   Card 4: Daily History (7-day)
+   ============================================================================ */
 
+.daily-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.daily-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.daily-row {
+  display: grid;
+  grid-template-columns: 70px 50px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.daily-row:last-child {
+  border-bottom: none;
+}
+
+.dark .daily-row {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Day label */
+.daily-day-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.dark .daily-day-label {
+  color: #f1f5f9;
+}
+
+/* Condition column */
+.daily-condition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.daily-icon {
+  color: #64748b;
+}
+
+.dark .daily-icon {
+  color: #94a3b8;
+}
+
+.daily-precip {
+  font-size: 0.6rem;
+  color: #06b6d4;
+  font-weight: 500;
+}
+.daily-snow {
+  color: #60a5fa !important;  /* Blue for snow */
+}
+/* Temperature bar container */
+.daily-temp-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.daily-temp-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-feature-settings: "tnum" 1;
+  min-width: 28px;
+  text-align: center;
+}
+
+.daily-temp-low {
+  color: #64748b;
+}
+
+.daily-temp-high {
+  color: #1e293b;
+}
+
+.dark .daily-temp-low {
+  color: #94a3b8;
+}
+
+.dark .daily-temp-high {
+  color: #f1f5f9;
+}
+
+/* The bar track */
+.daily-temp-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+}
+
+.dark .daily-temp-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Actual temp bar */
+.daily-temp-bar-actual {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  min-width: 4px;
+}
+
+/* Normal whisker marks */
+.normal-whisker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+.dark .normal-whisker {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Current temp marker */
+.current-temp-marker {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border: 2px solid #374151;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.dark .current-temp-marker {
+  background: #1e293b;
+  border-color: #9ca3af;
+}
+
+/* Deviation badge */
+.daily-diff {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.daily-diff.warmer {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.daily-diff.colder {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.daily-diff.neutral {
+  color: #606061;
+  background: rgba(65, 65, 65, 0.1);
+}
+
+.dark .daily-diff.warmer {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.dark .daily-diff.colder {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.temp-bar-empty {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  text-align: center;
+}
 /* Mobile adjustments */
 @media (max-width: 640px) {
   .hourly-card {
@@ -440,6 +633,29 @@
   
   .hourly-temp {
     font-size: 0.85rem;
+  }
+  .daily-card {
+    max-width: 300px;
+  }
+  
+  .daily-row {
+    grid-template-columns: 55px 40px 1fr 32px;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  
+  .daily-day-label {
+    font-size: 0.8rem;
+  }
+  
+  .daily-temp-label {
+    font-size: 0.7rem;
+    min-width: 22px;
+  }
+  
+  .daily-diff {
+    font-size: 0.6rem;
+    padding: 1px 4px;
   }
 }
 /* ============================================================================

@@ -25,18 +25,22 @@ import {
   // Moon,
 } from 'lucide-react';
 import { 
-  FaThermometerEmpty, 
-  FaThermometerQuarter, 
+  // FaThermometerEmpty, 
+  // FaThermometerQuarter, 
   FaThermometerHalf, 
-  FaThermometerThreeQuarters, 
-  FaThermometerFull,
+  // FaThermometerThreeQuarters, 
+  // FaThermometerFull,
   FaArrowUp,
   FaArrowDown
 } from 'react-icons/fa';
+// import { 
+//   // BsThermometerSnow,
+//   // BsThermometerSun ,
+//  } from "react-icons/bs";
 import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
-
+import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
 
 // REMOVE the ?url imports
 // import moonUrl from '../assets/weather/moon.svg?url';
@@ -111,6 +115,7 @@ interface StationSummary {
   data_freshness_minutes: number | null;
   generated_at: string;
   sun_times: SunTimes | null;
+  daily_history?: DailyHistoryPoint[];  // Optional with ?
 }
 
 interface StationSummaryCardProps {
@@ -123,6 +128,132 @@ interface SunTimes {
   sunrise: string | null;
   sunset: string | null;
   is_day: boolean;
+}
+
+interface DailyHistoryPoint {
+  date: string;
+  day_label: string;
+  high_f: number | null;
+  low_f: number | null;
+  normal_high_f: number | null;
+  normal_low_f: number | null;
+  avg_temp_f: number | null;
+  temp_diff_f: number | null;
+  dominant_condition: string | null;
+  precip_in: number | null;
+  snow_in: number | null;  // <-- ADD THIS
+  sky_code: string | null;
+}
+
+// ============================================================================
+// Daily Temperature Bar Component (Ghost Bar with Normal comparison)
+// ============================================================================
+
+interface TempBarProps {
+  low: number | null;
+  high: number | null;
+  normalLow: number | null;
+  normalHigh: number | null;
+  currentTemp: number | null | undefined;  // Only for "Today" row
+  globalMin: number;
+  globalMax: number;
+}
+
+function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin, globalMax }: TempBarProps) {
+  if (low === null || high === null) {
+    return <div className="temp-bar-empty">--</div>;
+  }
+  
+  const totalRange = globalMax - globalMin;
+  
+  // Calculate positions as percentages
+  const getPosition = (temp: number) => ((temp - globalMin) / totalRange) * 100;
+  
+  const actualLeft = getPosition(low);
+  const actualWidth = getPosition(high) - actualLeft;
+  
+  // Normal range (for whisker marks)
+  const normalLowPos = normalLow !== null ? getPosition(normalLow) : null;
+  const normalHighPos = normalHigh !== null ? getPosition(normalHigh) : null;
+  
+  // Current temp marker position
+  const currentPos = (currentTemp !== null && currentTemp !== undefined) ? getPosition(currentTemp) : null;
+  
+  // Gradient color based on temps
+  const getGradientColors = () => {
+    const getTempColor = (temp: number): string => {
+      const t = Math.max(0, Math.min(100, temp));
+      const pct = (t - 10) / 80;
+      
+      const colors = [
+        { pct: 0.00, r: 49,  g: 34,  b: 221 },
+        { pct: 0.25, r: 59,  g: 130, b: 246 },
+        { pct: 0.40, r: 6,   g: 182, b: 212 },
+        { pct: 0.50, r: 34,  g: 197, b: 94  },
+        { pct: 0.65, r: 234, g: 179, b: 8   },
+        { pct: 0.80, r: 249, g: 115, b: 22  },
+        { pct: 1.00, r: 214, g: 41,  b: 42  },
+      ];
+      
+      let lower = colors[0];
+      let upper = colors[colors.length - 1];
+      
+      for (let i = 0; i < colors.length - 1; i++) {
+        if (pct >= colors[i].pct && pct <= colors[i + 1].pct) {
+          lower = colors[i];
+          upper = colors[i + 1];
+          break;
+        }
+      }
+      
+      const range = upper.pct - lower.pct;
+      const rangePct = range === 0 ? 0 : (pct - lower.pct) / range;
+      
+      const r = Math.round(lower.r + (upper.r - lower.r) * rangePct);
+      const g = Math.round(lower.g + (upper.g - lower.g) * rangePct);
+      const b = Math.round(lower.b + (upper.b - lower.b) * rangePct);
+      
+      return `rgb(${r}, ${g}, ${b})`;
+    };
+    
+    return `linear-gradient(90deg, ${getTempColor(low)} 0%, ${getTempColor(high)} 100%)`;
+  };
+  
+  return (
+    <div className="daily-temp-bar-container">
+      {/* Low temp label */}
+      <span className="daily-temp-label daily-temp-low">{Math.round(low)}°</span>
+      
+      {/* Bar track */}
+      <div className="daily-temp-track">
+        {/* Normal range whiskers */}
+        {normalLowPos !== null && (
+          <div className="normal-whisker normal-whisker-low" style={{ left: `${normalLowPos}%` }} />
+        )}
+        {normalHighPos !== null && (
+          <div className="normal-whisker normal-whisker-high" style={{ left: `${normalHighPos}%` }} />
+        )}
+        
+        {/* Actual temperature bar */}
+        <div 
+          className="daily-temp-bar-actual"
+          style={{
+            left: `${actualLeft}%`,
+            width: `${actualWidth}%`,
+            background: getGradientColors()
+          }}
+        />
+        
+        {/* Current temp marker (only for Today) */}
+        {currentPos !== null && (
+          <div className="current-temp-marker" style={{ left: `${currentPos}%` }} />
+        )}
+      </div>
+      
+      {/* High temp label */}
+      <span className="daily-temp-label daily-temp-high">{Math.round(high)}°</span>
+    </div>
+  );
 }
 // ============================================================================
 // Unified Weather Icon Function
@@ -224,31 +355,31 @@ function getThermometerIcon(tempDiff: number | null, size: number = 18): Thermom
   // Default (no data)
   if (tempDiff === null) {
     return { 
-      icon: <FaThermometerHalf size={size} />, 
-      color: '#86E068' 
+      icon: <PiThermometerFill  size={size} />, 
+      color: '#8d8d8dff' 
     };
   }
   
   // Much Colder: <= -10°
   if (tempDiff <= -10) {
     return { 
-      icon: <FaThermometerEmpty size={size} />, 
-      color: '#5452f5ff' 
+      icon: <PiThermometerColdFill  size={size} />, 
+      color: '#3ea8e6ff' 
     };
   }
   
   // Colder: -10° to -5°
   if (tempDiff <= -5) {
     return { 
-      icon: <FaThermometerQuarter size={size} />, 
-      color: '#3f8ebeff' 
+      icon: <PiThermometerFill  size={size} />, 
+      color: '#8d8d8dff' 
     };
   }
   
   // Normal: -5° to +5°
   if (tempDiff <= 5) {
     return { 
-      icon: <FaThermometerHalf size={size} />, 
+      icon: <PiThermometerFill  size={size} />, 
       color: '#8d8d8dff' 
     };
   }
@@ -256,14 +387,14 @@ function getThermometerIcon(tempDiff: number | null, size: number = 18): Thermom
   // Warmer: +5° to +10°
   if (tempDiff <= 10) {
     return { 
-      icon: <FaThermometerThreeQuarters size={size} />, 
-      color: '#f3a71b' 
+      icon: <FaThermometerHalf size={size} />, 
+      color: '#8d8d8dff' 
     };
   }
   
   // Much Warmer: > +10°
   return { 
-    icon: <FaThermometerFull size={size} />, 
+    icon: <PiThermometerHotFill   size={size} />, 
     color: '#d61e0d' 
   };
 }
@@ -621,7 +752,7 @@ useEffect(() => {
         {getThermometerIcon(vs_normal?.temp_diff_f ?? null, 18).icon}
       </div>
       <span className="stat-value">
-        {last_24h.avg_temp_f !== null ? `${Math.round(last_24h.avg_temp_f)}° avg` : '--'}
+        {last_24h.high_f !== null && last_24h.low_f !== null  ? `${Math.round(last_24h.low_f)}°/${Math.round(last_24h.high_f)}°` : '--'}
       </span>
       <span className="stat-label">
         {vs_normal?.temp_diff_f !== null && vs_normal?.temp_diff_f !== undefined
@@ -718,9 +849,86 @@ useEffect(() => {
           })}
           </div>
         </div>
-      </div>
+        
+      </div>     
     
+{/* ============================================================
+          CARD 4: Daily History (7-day)
+          ============================================================ */}
+    {summary.daily_history && summary.daily_history.length > 0 && (() => {
+  // Filter to only days with temperature data
+  const daysWithData = summary.daily_history.filter(day => day.high_f !== null && day.low_f !== null);
+  
+  if (daysWithData.length === 0) return null;
+  
+  // Calculate global min/max from days WITH data
+  const allTemps = daysWithData.flatMap(d => [
+    d.low_f, d.high_f, d.normal_low_f, d.normal_high_f
+  ]).filter((t): t is number => t !== null);
+  
+  const globalMin = Math.min(...allTemps) - 2;
+  const globalMax = Math.max(...allTemps) + 2;
+  
+  return (
+    <div className={`summary-card daily-card ${darkMode ? 'dark' : ''}`}>
+      <div className="section-label">7-DAY HISTORY</div>
+      
+      <div className="daily-history-list">
+        {daysWithData.map((day, index) => (
+                <div key={day.date} className="daily-row">
+                  {/* Column 1: Day label */}
+                  <div className="daily-day-label">
+                    {day.day_label}
+                  </div>
+                  
+                  {/* Column 2: Condition + Precip */}
+                  <div className="daily-condition">
+                    {(() => {
+                      // Show snow icon if it snowed
+                      if (day.snow_in !== null && day.snow_in >= 0.1) {
+                        return <Snowflake size={20} className="daily-icon icon-snow" />;
+                      }
+                      // Show rain icon if it rained (but didn't snow)
+                      if (day.precip_in !== null && day.precip_in >= 0.01) {
+                        return <CloudRain size={20} className="daily-icon icon-rain" />;
+                      }
+                      // Otherwise show sky condition
+                      return getWeatherIcon(day.sky_code, null, 20, true, "daily-icon");
+                    })()}
+                    {/* Show snow total if snowed */}
+                    {day.snow_in !== null && day.snow_in >= 0.1 ? (
+                      <span className="daily-precip daily-snow">{day.snow_in.toFixed(1)}"</span>
+                    ) : day.precip_in !== null && day.precip_in >= 0.01 ? (
+                      <span className="daily-precip">{day.precip_in.toFixed(2)}"</span>
+                    ) : null}
+                  </div>
+                  
+                  {/* Column 3: Temperature bar */}
+                  <DailyTempBar
+                    low={day.low_f}
+                    high={day.high_f}
+                    normalLow={day.normal_low_f}
+                    normalHigh={day.normal_high_f}
+                    currentTemp={index === 0 ? current.temp_f : null}
+                    globalMin={globalMin}
+                    globalMax={globalMax}
+                  />
+                  
+                  {/* Optional: Deviation badge */}
+                  {day.temp_diff_f !== null && (
+                    <span className={`daily-diff ${day.temp_diff_f > 0 ? 'warmer' : day.temp_diff_f < 0 ? 'colder' : 'neutral'}`}>
+                      {day.temp_diff_f > 0 ? '+' : ''}{Math.round(day.temp_diff_f)}°
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}    
+
     </div>
     
   );
+  
 }
