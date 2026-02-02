@@ -46,6 +46,11 @@ export default function HourlyChartSimple({
   const isUnmounting = useRef(false);
   const [showFeelsLike, setShowFeelsLike] = useState(false);  // ADD THIS
 
+  // Sync activeRange with initialRange prop when it changes
+  useEffect(() => {
+    setActiveRange(initialRange);
+  }, [initialRange]);
+
   // Detect mobile
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -53,11 +58,18 @@ export default function HourlyChartSimple({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Mark component as unmounting to prevent echarts errors
+  // Mark component as unmounting and dispose chart to prevent echarts errors
   useEffect(() => {
     isUnmounting.current = false;
     return () => {
       isUnmounting.current = true;
+      // Dispose the chart instance to prevent "disconnect" errors
+      if (chartRef.current) {
+        const echartsInstance = chartRef.current.getEchartsInstance();
+        if (echartsInstance && !echartsInstance.isDisposed()) {
+          echartsInstance.dispose();
+        }
+      }
     };
   }, []);
 
@@ -83,7 +95,6 @@ export default function HourlyChartSimple({
   // Prepare data - keep as strings for echarts
   const timestamps = data.map(d => d.ts_local);
   const temps = data.map(d => d.tmpf);
-  const precip = data.map(d => d.precip_in || 0);
   const feelsLike = data.map(d => d.feelslike_f);
 
   // Format timestamp for tooltip
@@ -101,31 +112,39 @@ export default function HourlyChartSimple({
   const formatAxisLabel = (dateStr: string) => {
     const date = new Date(dateStr);
     const hour = date.getHours();
-    
-    if (hour === 0) {
-      const month = date.toLocaleDateString('en-US', { month: 'short' });
-      const day = date.getDate();
-      return `{date|${month} ${day}}`;
-    }
-    
+    const day = date.getDate();
+
     const formatHour = (h: number) => {
       const ampm = h >= 12 ? 'pm' : 'am';
       const displayHour = h % 12 || 12;
       return `${displayHour}${ampm}`;
     };
-    
+
+    // 7D: show every other day at midnight only
     if (activeRange === '7D') {
+      if (hour === 0 && day % 2 === 1) {  // Odd days only
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        return `{date|${month} ${day}}`;
+      }
+      return '';
+    }
+
+    // Show date at midnight for other ranges
+    if (hour === 0) {
+      const month = date.toLocaleDateString('en-US', { month: 'short' });
+      return `{date|${month} ${day}}`;
+    }
+
+    // 3D: only 12pm (every 12 hours)
+    if (activeRange === '3D') {
       return hour === 12 ? `{small|${formatHour(hour)}}` : '';
     }
-    
-    if (activeRange === '3D') {
+
+    // 1D: every 6 hours (6am, 12pm, 6pm)
+    if (activeRange === '1D') {
       return [6, 12, 18].includes(hour) ? `{small|${formatHour(hour)}}` : '';
     }
-    
-    if (activeRange === '1D') {
-      return hour % 3 === 0 && hour !== 0 ? `{small|${formatHour(hour)}}` : '';
-    }
-    
+
     return '';
   };
 
@@ -154,13 +173,10 @@ export default function HourlyChartSimple({
 
   // Calculate temp range for y-axis
   const validTemps = temps.filter((t): t is number => t !== null);
-  const tempMin = validTemps.length > 0 ? Math.floor(Math.min(...validTemps) / 5) * 5 - 5 : 0;
-  const tempMax = validTemps.length > 0 ? Math.ceil(Math.max(...validTemps) / 5) * 5 + 5 : 100;
-
-  // Calculate precip max
-  const maxPrecip = Math.max(...precip, 0.1);
-  const precipMax = Math.ceil(maxPrecip * 10) / 10 + 0.05;
- 
+  const validFeelsLike = feelsLike.filter((t): t is number => t !== null);
+  const allTemps = showFeelsLike ? [...validTemps, ...validFeelsLike] : validTemps;
+  const tempMin = allTemps.length > 0 ? Math.floor(Math.min(...allTemps) / 5) * 5 - 5 : 0;
+  const tempMax = allTemps.length > 0 ? Math.ceil(Math.max(...allTemps) / 5) * 5 + 5 : 100; 
 
   // Find last valid temp for endpoint label
   const findLastValidIndex = (arr: (number | null)[]): { index: number; value: number } | null => {
@@ -216,22 +232,16 @@ export default function HourlyChartSimple({
         const dateIdx = params[0].dataIndex;
         const timestamp = formatTimestamp(timestamps[dateIdx]);
         let html = `<div style="font-weight: 600; margin-bottom: 8px; font-size: 14px;">${timestamp}</div>`;
-        
+
         params.forEach((param: any) => {
           const value = param.value;
           if (value === null || value === undefined) return;
-          
-          let displayValue: string;
-          let unit: string;
-          
-          if (param.seriesName === 'Temperature') {
-            displayValue = Math.round(value).toString();
-            unit = '°F';
-          } else {
-            displayValue = value.toFixed(2);
-            unit = '"';
-          }
-          
+          // Skip the banded background series (no name)
+          if (!param.seriesName) return;
+
+          const displayValue = Math.round(value).toString();
+          const unit = '°F';
+
           html += `
             <div style="margin: 6px 0; display: flex; align-items: center; justify-content: space-between;">
               <span style="display: flex; align-items: center;">
@@ -242,13 +252,13 @@ export default function HourlyChartSimple({
             </div>
           `;
         });
-        
+
         return html;
       }
     },
     
     legend: {
-      data: ['Temperature', 'Precipitation'],
+      data: ['Temperature', ...(showFeelsLike ? ['Feels Like'] : [])],
       top: isMobile ? 50 : 55,
       left: 'center',
       itemGap: isMobile ? 12 : 20,
@@ -262,7 +272,7 @@ export default function HourlyChartSimple({
     
     grid: {
       left: isMobile ? 50 : 60,
-      right: isMobile ? 50 : 60,
+      right: isMobile ? 55 : 65,  // Room for "last temp" label
       top: isMobile ? 90 : 100,
       bottom: isMobile ? 50 : 60
     },
@@ -282,7 +292,31 @@ export default function HourlyChartSimple({
         lineStyle: { color: darkMode ? '#34495e' : '#bdc3c7' }
       },
       axisTick: {
-        lineStyle: { color: darkMode ? '#34495e' : '#bdc3c7' }
+        show: true,
+        alignWithLabel: true,
+        lineStyle: { color: darkMode ? '#34495e' : '#bdc3c7' },
+        // Only show ticks where labels are shown
+        interval: (index: number) => {
+          const date = new Date(timestamps[index]);
+          const hour = date.getHours();
+          const day = date.getDate();
+
+          // 7D: only odd days at midnight
+          if (activeRange === '7D') {
+            return hour === 0 && day % 2 === 1;
+          }
+          // Midnight (date labels) always get a tick
+          if (hour === 0) return true;
+          // 3D: 12pm only
+          if (activeRange === '3D') {
+            return hour === 12;
+          }
+          // 1D: 6am, 12pm, 6pm
+          if (activeRange === '1D') {
+            return [6, 12, 18].includes(hour);
+          }
+          return false;
+        }
       },
       axisLabel: {
         formatter: (value: string) => formatAxisLabel(value),
@@ -303,62 +337,88 @@ export default function HourlyChartSimple({
       }
     },
     
-    yAxis: [
-      // Temperature axis (left) - orange/red theme
-      {
-        type: 'value',
-        name: '°F',
-        nameLocation: 'end',
-        nameTextStyle: {
-          fontSize: 11,
-          color: darkMode ? '#e74c3c' : '#e74c3c',
-          padding: [0, 0, 0, -20]
-        },
-        min: tempMin,
-        max: tempMax,
-        splitLine: {
-          lineStyle: {
-            color: darkMode ? 'rgba(52, 73, 94, 0.5)' : 'rgba(189, 195, 199, 0.5)',
-            type: 'dashed'
-          }
-        },
-        axisLine: {
-          show: true,
-          lineStyle: { color: darkMode ? '#e74c3c' : '#e74c3c' }
-        },
-        axisLabel: {
-          formatter: '{value}°',
-          fontSize: isMobile ? 10 : 11,
-          color: darkMode ? '#e74c3c' : '#c0392b'
+    yAxis: {
+      // Temperature axis - dark gray theme
+      type: 'value',
+      name: '°F',
+      nameLocation: 'end',
+      nameTextStyle: {
+        fontSize: 11,
+        color: darkMode ? '#95a5a6' : '#666',
+        padding: [0, 0, 0, -20]
+      },
+      min: tempMin,
+      max: tempMax,
+      splitLine: {
+        lineStyle: {
+          color: darkMode ? 'rgba(52, 73, 94, 0.5)' : 'rgba(189, 195, 199, 0.5)',
+          type: 'dashed'
         }
       },
-      // Precipitation axis (right) - blue theme
-      {
-        type: 'value',
-        name: 'in',
-        nameLocation: 'end',
-        nameTextStyle: {
-          fontSize: 11,
-          color: darkMode ? '#3498db' : '#2980b9',
-          padding: [0, -20, 0, 0]
-        },
-        min: 0,
-        max: precipMax,
-        splitLine: { show: false },
-        axisLine: {
-          show: true,
-          lineStyle: { color: darkMode ? '#3498db' : '#2980b9' }
-        },
-        axisLabel: {
-          formatter: (val: number) => val.toFixed(2),
-          fontSize: isMobile ? 10 : 11,
-          color: darkMode ? '#3498db' : '#2980b9'
-        }
+      axisLine: {
+        show: true,
+        lineStyle: { color: darkMode ? '#34495e' : '#bdc3c7' }
+      },
+      axisLabel: {
+        formatter: '{value}°',
+        fontSize: isMobile ? 10 : 11,
+        color: darkMode ? '#95a5a6' : '#666'
       }
-    ],
+    },
     
     series: [
-      // Temperature line with gradient - ORIGINAL COLOR SCHEME
+      // Banded background for alternating days
+      {
+        type: 'line',
+        markArea: {
+          silent: true,
+          data: (() => {
+            const areas: any[] = [];
+            let currentDay = new Date(timestamps[0]).setHours(0, 0, 0, 0);
+            let dayStart = 0;
+            let isAlternate = false;
+
+            timestamps.forEach((dateStr, index) => {
+              const dateAtMidnight = new Date(dateStr).setHours(0, 0, 0, 0);
+
+              if (dateAtMidnight !== currentDay) {
+                areas.push([
+                  {
+                    xAxis: dayStart,
+                    itemStyle: {
+                      color: isAlternate
+                        ? (darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
+                        : 'transparent'
+                    }
+                  },
+                  { xAxis: index }
+                ]);
+
+                dayStart = index;
+                currentDay = dateAtMidnight;
+                isAlternate = !isAlternate;
+              }
+            });
+
+            // Add final day
+            areas.push([
+              {
+                xAxis: dayStart,
+                itemStyle: {
+                  color: isAlternate
+                    ? (darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)')
+                    : 'transparent'
+                }
+              },
+              { xAxis: timestamps.length - 1 }
+            ]);
+
+            return areas;
+          })()
+        }
+      },
+
+      // Temperature line with gradient
     {
       name: 'Temperature',
       type: 'line',
@@ -445,7 +505,6 @@ markPoint: showFeelsLike ? undefined : (lastTemp ? {
           shadowColor: darkMode ? 'rgba(255, 150, 150, 0.5)' : 'rgba(255, 107, 107, 0.5)'
         }
       },
-      yAxisIndex: 0,
       z: showFeelsLike ? 1 : 2  // Lower z-index when feels like active
     },
 ...(showFeelsLike ? [{
@@ -519,26 +578,8 @@ markPoint: lastFeelsLike ? {
       width: 3
     }
   },
-  yAxisIndex: 0,
   z: 2
-}] : []),  
-
-      // Precipitation bars - ORIGINAL COLOR SCHEME
-      {
-        name: 'Precipitation',
-        type: 'bar',
-        data: precip,
-        barWidth: isMobile ? '40%' : '50%',
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: darkMode ? '#3498db' : '#3498db' },
-            { offset: 1, color: darkMode ? '#2980b9' : '#1a5276' }
-          ]),
-          borderRadius: [3, 3, 0, 0]
-        },
-        yAxisIndex: 1,
-        z: 1
-      }
+}] : [])
     ],
     
     animation: true,
@@ -646,7 +687,7 @@ markPoint: lastFeelsLike ? {
           option={option}
           style={{ height: '100%', width: '100%' }}
           opts={{ renderer: 'canvas' }}
-          notMerge={false}
+          notMerge={true}
           lazyUpdate={true}
         />
       </div>

@@ -42,14 +42,16 @@ import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
-import { LuMoon, LuMoonStar, LuCloudMoon } from "react-icons/lu";
-import { BsCloudMoon } from "react-icons/bs";
-import { PiCloudMoon } from "react-icons/pi";
-import { PiMoonStarsFill, PiCloudMoonLight } from "react-icons/pi";
+import { LuMoon} from "react-icons/lu";
+// import { LuMoonStar, LuCloudMoon } from "react-icons/lu";
+// import { BsCloudMoon } from "react-icons/bs";
+// import { PiCloudMoon } from "react-icons/pi";
+// import { PiMoonStarsFill, PiCloudMoonLight } from "react-icons/pi";
 import { CiCloudMoon } from "react-icons/ci";
-import { LiaCloudMoonSolid } from "react-icons/lia";
+// import { LiaCloudMoonSolid } from "react-icons/lia";
 import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
-import { WiThermometer, WiSnow, WiRaindrop } from 'react-icons/wi';
+// import { WiThermometer, WiSnow, WiRaindrop } from 'react-icons/wi';
+import { WiThermometer, WiRaindrop } from 'react-icons/wi';
 
 // REMOVE the ?url imports
 // import moonUrl from '../assets/weather/moon.svg?url';
@@ -57,14 +59,14 @@ import { WiThermometer, WiSnow, WiRaindrop } from 'react-icons/wi';
 
 // ADD these component imports
 // import MoonIcon from '../assets/weather/moon.svg?react';
-import MoonCloudIcon from '../assets/weather/MoonCloud.svg?react';
+// import MoonCloudIcon from '../assets/weather/MoonCloud.svg?react';
 
 // import { BsCloudMoon } from 'react-icons/bs';
 // // Custom moon icons
 // import { ReactComponent as MoonIcon } from '../assets/weather/moon.svg?react';
 // import { ReactComponent as MoonCloudIcon } from '../assets/weather/moon_cloud.svg?react';
 
-import HourlyWeatherChart from './HourlyWeatherChart';
+// import HourlyWeatherChart from './HourlyWeatherChart';
 // ============================================================================
 // Types
 // ============================================================================

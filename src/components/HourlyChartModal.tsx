@@ -96,9 +96,12 @@ export default function HourlyChartModal({
     fetchHourlyData();
   }, [isOpen, stationId, startDate, endDate]);
 
-  // Reset states when modal closes
+  // Reset states when modal opens/closes
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      // Always reset to 1D when modal opens
+      setDateRange('1D');
+    } else {
       setChartReady(false);
     }
   }, [isOpen]);
