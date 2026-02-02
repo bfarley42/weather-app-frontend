@@ -523,7 +523,7 @@ areaStyle: {
     : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
         { offset: 0, color: darkMode ? 'rgba(30, 55, 75, 0.30)' : 'rgba(224,243,255,0.35)' },
         { offset: 0.7, color: darkMode ? 'rgba(0, 110, 160, 0.50)' : 'rgba(140,202,247,0.50)' },
-        { offset: 1, color: darkMode ? 'rgba(0, 60, 110, 0.85)' : 'rgba(0,94,156,0.85)' }
+        { offset: 1, color: darkMode ? 'rgba(0, 60, 110, 0.85)' : '#005e9cd9' }
       ])
 },
     emphasis: {

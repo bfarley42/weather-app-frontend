@@ -1,0 +1,7 @@
+/* src/components/HourlyChartSimple.css */
+/* Minimal CSS - most styling is inline in the component */
+
+.hourly-chart-simple-container {
+  width: 100%;
+  max-width: 100%;
+}

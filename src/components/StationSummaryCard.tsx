@@ -6,7 +6,7 @@
  * Card 1: Current conditions (temp + icon)
  * Card 2: Last 24 hours (temp band + 5 stats)
  */
-
+import HourlyChartModal from './HourlyChartModal';
 import { useState, useEffect, useRef  } from 'react';
 import { 
   Droplets, 
@@ -24,6 +24,7 @@ import {
   Waves,
   // Moon,
 } from 'lucide-react';
+
 import { 
   // FaThermometerEmpty, 
   // FaThermometerQuarter, 
@@ -47,6 +48,8 @@ import { PiCloudMoon } from "react-icons/pi";
 import { PiMoonStarsFill, PiCloudMoonLight } from "react-icons/pi";
 import { CiCloudMoon } from "react-icons/ci";
 import { LiaCloudMoonSolid } from "react-icons/lia";
+import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
+import { WiThermometer, WiSnow, WiRaindrop } from 'react-icons/wi';
 
 // REMOVE the ?url imports
 // import moonUrl from '../assets/weather/moon.svg?url';
@@ -61,7 +64,7 @@ import MoonCloudIcon from '../assets/weather/MoonCloud.svg?react';
 // import { ReactComponent as MoonIcon } from '../assets/weather/moon.svg?react';
 // import { ReactComponent as MoonCloudIcon } from '../assets/weather/moon_cloud.svg?react';
 
-
+import HourlyWeatherChart from './HourlyWeatherChart';
 // ============================================================================
 // Types
 // ============================================================================
@@ -79,6 +82,7 @@ interface CurrentConditions {
   hours_ago: number | null;
   pressure_in?: number | null;      // <-- ADD THIS
   pressure_trend?: string | null;   // <-- ADD THIS (e.g. "Rising", "Falling")
+  wind_direction_deg?: number | null;
 }
 
 interface Last24hStats {
@@ -122,6 +126,7 @@ interface StationSummary {
   generated_at: string;
   sun_times: SunTimes | null;
   daily_history?: DailyHistoryPoint[];  // Optional with ?
+  normal_snow_7day?: number | null;
 }
 
 interface StationSummaryCardProps {
@@ -165,6 +170,41 @@ interface TempBarProps {
   globalMax: number;
 }
 
+interface DailyRecords {
+  record_high_f: number | null;
+  record_high_year: number | null;
+  record_low_f: number | null;
+  record_low_year: number | null;
+  record_precip_in: number | null;
+  record_precip_year: number | null;
+  record_snow_in: number | null;
+  record_snow_year: number | null;
+}
+
+interface MonthlyRecords {
+  record_high_f: number | null;
+  record_high_year: number | null;
+  record_low_f: number | null;
+  record_low_year: number | null;
+  record_precip_in: number | null;
+  record_precip_year: number | null;
+  record_snow_in: number | null;
+  record_snow_year: number | null;
+  record_monthly_total_prcp_in: number | null;
+  record_monthly_total_prcp_year: number | null;
+  record_monthly_total_snow_in: number | null;
+  record_monthly_total_snow_year: number | null;
+}
+
+interface StationRecords {
+  station_id: string;
+  date_label: string;
+  month_label: string;
+  daily: DailyRecords;
+  monthly: MonthlyRecords;
+}
+
+
 function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin, globalMax }: TempBarProps) {
   if (low === null || high === null) {
     return <div className="temp-bar-empty">--</div>;
@@ -192,13 +232,14 @@ function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin
       const pct = (t - 10) / 80;
       
       const colors = [
-        { pct: 0.00, r: 49,  g: 34,  b: 221 },
-        { pct: 0.25, r: 59,  g: 130, b: 246 },
-        { pct: 0.40, r: 6,   g: 182, b: 212 },
-        { pct: 0.50, r: 34,  g: 197, b: 94  },
-        { pct: 0.65, r: 234, g: 179, b: 8   },
-        { pct: 0.80, r: 249, g: 115, b: 22  },
-        { pct: 1.00, r: 214, g: 41,  b: 42  },
+        // { pct: 0.00, r: 49,  g: 34,  b: 221 },
+        // { pct: 0.25, r: 59,  g: 130, b: 246 },
+        { pct: 0.2, r: 6,   g: 164, b: 212 },
+        { pct: .8, r: 6,   g: 212, b: 150 },
+        // { pct: 0.50, r: 34,  g: 197, b: 94  },
+        // { pct: 0.65, r: 234, g: 179, b: 8   },
+        // { pct: 0.80, r: 249, g: 115, b: 22  },
+        // { pct: 1.00, r: 214, g: 41,  b: 42  },
       ];
       
       let lower = colors[0];
@@ -218,7 +259,7 @@ function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin
       const r = Math.round(lower.r + (upper.r - lower.r) * rangePct);
       const g = Math.round(lower.g + (upper.g - lower.g) * rangePct);
       const b = Math.round(lower.b + (upper.b - lower.b) * rangePct);
-      
+      // return 'rgba(6, 164, 212, 0.75)' ;
       return `rgb(${r}, ${g}, ${b})`;
     };
     
@@ -352,6 +393,12 @@ function getConditionIcon(condition: string | null, size: number = 24) {
   return <Cloud {...iconProps} className="stat-icon" />;
 }
 
+function getWindDirection(degrees: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
+                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
+}
 
 interface ThermometerResult {
   icon: React.ReactNode;
@@ -574,7 +621,10 @@ export default function StationSummaryCard({
   const [summary, setSummary] = useState<StationSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [records, setRecords] = useState<StationRecords | null>(null);
+  const [showSnowRecords, setShowSnowRecords] = useState(false);
   const hourlyScrollRef = useRef<HTMLDivElement>(null);
+  const [showHourlyChart, setShowHourlyChart] = useState(false);
 
   // After the data loads, scroll to the right
 useEffect(() => {
@@ -583,35 +633,52 @@ useEffect(() => {
   }
 }, [summary?.hourly_history]);
   
-  useEffect(() => {
-    async function fetchSummary() {
-      if (!stationId) return;
-      
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const response = await fetch(`${API_URL}/api/stations/${stationId}/current-summary`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch summary: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setSummary(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load summary');
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  async function fetchSummary() {
+    if (!stationId) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/stations/${stationId}/current-summary`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch summary: ${response.status}`);
       }
+
+      const data = await response.json();
+      setSummary(data);
+
+      // Fetch records data (non-fatal if it fails)
+      try {
+        const recRes = await fetch(`${API_URL}/api/stations/${stationId}/records`);
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          setRecords(recData);
+        } else {
+          setRecords(null);
+          console.error('Failed to load records:', recRes.status);
+        }
+      } catch (err) {
+        setRecords(null);
+        console.error('Failed to load records:', err);
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load summary');
+    } finally {
+      setLoading(false);
     }
-    
-    fetchSummary();
-    
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchSummary, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [stationId]);
+  }
+
+  fetchSummary();
+
+  // Refresh every 5 minutes
+  const interval = setInterval(fetchSummary, 5 * 60 * 1000);
+  return () => clearInterval(interval);
+}, [stationId]);
+
   
   // ----------------------------------------------------------------
   // Loading state
@@ -661,10 +728,16 @@ useEffect(() => {
           
           {/* Left: Temp + Feels like */}
         <div className="current-left">
-        <div className="current-temp">
-            {current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
-                {/* (last_24h.high_f !== null ? `${Math.round(last_24h.high_f)}°` : '--')} */}
-        </div>
+<div 
+  className="current-temp clickable"
+  onClick={() => {
+    setShowHourlyChart(true);
+  }}
+  style={{ cursor: 'pointer' }}
+  title="View hourly forecast"
+>
+  {current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
+</div>
         <div className="feels-like">
             Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
         </div>
@@ -717,15 +790,17 @@ useEffect(() => {
         <div className="section-label">LAST 24 HOURS</div>
         
         {/* Temperature band - centered */}
-        <div className="temp-band-wrapper">
-          <TemperatureBand 
-            low={last_24h.low_f} 
-            high={last_24h.high_f} 
-            // low={50} 
-            // high={70} 
-            current={current.temp_f}
-          />
-        </div>
+<div 
+  className="temp-band-wrapper clickable"
+  onClick={() => setShowHourlyChart(true)}
+  title="View hourly chart"
+>
+  <TemperatureBand 
+    low={last_24h.low_f} 
+    high={last_24h.high_f} 
+    current={current.temp_f}
+  />
+</div>
             {/* Apple-style scroll indicator */}
         <div className="scroll-indicator"></div>    
 {/* 1x7 Horizontal Scroll Stats */}
@@ -922,17 +997,428 @@ useEffect(() => {
                   />
                   
                   {/* Optional: Deviation badge */}
-                  {day.temp_diff_f !== null && (
+                  {/* {day.temp_diff_f !== null && (
                     <span className={`daily-diff ${day.temp_diff_f > 0 ? 'warmer' : day.temp_diff_f < 0 ? 'colder' : 'neutral'}`}>
                       {day.temp_diff_f > 0 ? '+' : ''}{Math.round(day.temp_diff_f)}°
                     </span>
-                  )}
+                  )} */}
                 </div>
               ))}
             </div>
           </div>
         );
       })()}    
+
+{/* ============================================================
+    CARD 5 & 6: Half-width cards - Averages & Records
+    NOTE: Add to imports at top of file: 
+    import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
+    ============================================================ */}
+
+{/* Half-width cards container */}
+<div className="half-cards-row">
+  
+  {/* CARD 5: Averages (vs Normal) */}
+  <div className={`summary-card half-card averages-card ${darkMode ? 'dark' : ''}`}>
+    
+    {(() => {
+      const today = summary.daily_history?.find(d => d.day_label === "Today");
+      
+      if (!today || today.normal_high_f === null || today.normal_low_f === null) {
+        return <div className="no-data">Normal data unavailable</div>;
+      }
+      
+      const actualAvg = today.avg_temp_f ?? 
+        (today.high_f !== null && today.low_f !== null 
+          ? (today.high_f + today.low_f) / 2 
+          : null);
+      const normalAvg = (today.normal_high_f + today.normal_low_f) / 2;
+      const deviation = actualAvg !== null ? Math.round(actualAvg - normalAvg) : null;
+      const isWarmer = deviation !== null && deviation > 0;
+      const isColder = deviation !== null && deviation < 0;
+      
+      // Format today's date as "Jan 28"
+      const todayDate = new Date();
+      const dateStr = todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      return (
+        <div className="averages-content">
+          {/* Line 1: Icon + AVERAGES title */}
+          <div className="averages-title-row">
+            {isWarmer ? (
+              <LuTrendingUp className="averages-title-icon warmer" />
+            ) : isColder ? (
+              <LuTrendingDown className="averages-title-icon colder" />
+            ) : (
+              <LuTrendingUp className="averages-title-icon neutral" />
+            )}
+            <span className="averages-title">AVERAGES</span>
+          </div>
+          
+          {/* Line 2: Deviation value */}
+          <div className={`averages-deviation ${isWarmer ? 'warmer' : isColder ? 'colder' : 'neutral'}`}>
+            {deviation !== null 
+              ? `${deviation > 0 ? '+' : ''}${deviation}°` 
+              : '--'}
+          </div>
+          
+          {/* Line 3: above/below average */}
+          <div className="averages-label">
+            {deviation === null ? 'average' : 
+             deviation > 0 ? 'above average' : 
+             deviation < 0 ? 'below average' : 
+             'on average'}
+          </div>
+          
+          {/* Line 4: Date + Normals */}
+          <div className="averages-date">
+            {dateStr} Normals
+          </div>
+          
+          {/* Line 5: H and L temps */}
+        <div className="averages-temps">
+          <span className="avg-temp-item avg-temp-high">H:{Math.round(today.normal_high_f)}°</span>
+          <span className="avg-temp-item avg-temp-low">L:{Math.round(today.normal_low_f)}°</span>
+        </div>
+        </div>
+      );
+    })()}
+  </div>
+
+{/* CARD 6: Precipitation */}
+  <div className={`summary-card half-card precip-card ${darkMode ? 'dark' : ''}`}>
+    
+    {(() => {
+      const today = summary.daily_history?.find(d => d.day_label === "Today");
+      const todayPrecip = today?.precip_in ?? 0;
+      
+      // Sum precip for all days in daily_history (past 7 days)
+      const sevenDayPrecip = summary.daily_history?.reduce((sum, day) => {
+        return sum + (day.precip_in ?? 0);
+      }, 0) ?? 0;
+      
+      const hasPrecipToday = todayPrecip >= 0.01;
+      
+      return (
+        <div className="precip-content">
+          {/* Line 1: Icon + PRECIPITATION title */}
+          <div className="precip-title-row">
+            <Droplets className={`precip-title-icon ${hasPrecipToday ? 'active' : ''}`} size={14} />
+            <span className="precip-title">PRECIPITATION</span>
+          </div>
+          
+          {/* Line 2: Today's precip value */}
+          <div className={`precip-value ${hasPrecipToday ? 'active' : ''}`}>
+            {todayPrecip.toFixed(2)}"
+          </div>
+          
+          {/* Line 3: "today" label */}
+          <div className="precip-label">
+            today
+          </div>
+          
+          {/* Line 4: 7-day label */}
+          <div className="precip-date">
+            Past 7 Days
+          </div>
+          
+          {/* Line 5: 7-day total */}
+          <div className="precip-total">
+            {sevenDayPrecip.toFixed(2)}"
+          </div>
+        </div>
+      );
+    })()}
+  </div>
+
+</div>
+{/* ============================================================
+    CARDS 7 & 8: Snowfall (conditional) + Wind - Side by Side
+    ============================================================ */}
+
+{(() => {
+  // Calculate snow card visibility once for both cards
+  const hasRecentSnow = summary.daily_history?.some(d => d.snow_in !== null && d.snow_in > 0) ?? false;
+  const normalSnowExpected = (summary.normal_snow_7day ?? 0) > 0;
+  const showSnowCard = normalSnowExpected || hasRecentSnow;
+  
+  // Snow card data (only if showing)
+  const yesterday = summary.daily_history?.find(d => d.day_label === "Yesterday");
+  const yesterdaySnow = yesterday?.snow_in ?? 0;
+  const hasSnowYesterday = yesterdaySnow >= 0.1;
+  const sevenDaySnow = summary.daily_history?.reduce((sum, day) => sum + (day.snow_in ?? 0), 0) ?? 0;
+  
+  return (
+    <div className="half-cards-row">
+      
+      {/* Snow Card - conditional */}
+      {showSnowCard && (
+        <div className={`summary-card half-card snow-card ${darkMode ? 'dark' : ''}`}>
+          <div className="snow-content">
+            <div className="snow-title-row">
+              <Snowflake className={`snow-title-icon ${hasSnowYesterday ? 'active' : ''}`} size={14} />
+              <span className="snow-title">SNOWFALL</span>
+            </div>
+            
+            <div className={`snow-value ${hasSnowYesterday ? 'active' : ''}`}>
+              {yesterdaySnow.toFixed(1)}"
+            </div>
+            
+            <div className="snow-label">
+              yesterday
+            </div>
+            
+            <div className="snow-date">
+              Past 7 Days
+            </div>
+            
+            <div className="snow-total">
+              {sevenDaySnow.toFixed(1)}"
+            </div>
+          </div>
+        </div>
+      )}
+
+{/* Wind Card */}
+<div className={`summary-card half-card wind-card ${!showSnowCard ? 'wind-card-expanded' : ''} ${darkMode ? 'dark' : ''}`}>
+  
+  {/* Top section: speed + compass side by side */}
+  <div className="wind-content">
+    <div className="wind-info">
+      <div className="wind-title-row">
+        <Wind className="wind-title-icon" size={14} />
+        <span className="wind-title">WIND</span>
+      </div>
+      
+      <div className="wind-speed-main">
+        {current.wind_mph !== null ? (
+          <>
+            {Math.round(current.wind_mph)}
+            <span className="wind-unit">mph</span>
+          </>
+        ) : '--'}
+      </div>
+    </div>
+    
+    <div className="wind-compass-container">
+      <div className="wind-compass">
+        <div className="compass-ring">
+          <span className="compass-dir compass-n">N</span>
+          <span className="compass-dir compass-e">E</span>
+          <span className="compass-dir compass-s">S</span>
+          <span className="compass-dir compass-w">W</span>
+          
+          <div className="compass-ticks">
+            {[...Array(12)].map((_, i) => (
+              <div 
+                key={i} 
+                className="compass-tick"
+                style={{ transform: `rotate(${i * 30}deg)` }}
+              />
+            ))}
+          </div>
+          
+          {current.wind_direction_deg !== null && current.wind_direction_deg !== undefined ? (
+            <div 
+              className="compass-pointer"
+              style={{ transform: `rotate(${current.wind_direction_deg}deg)` }}
+            >
+              <div className="pointer-arrow" />
+            </div>
+          ) : (
+            <div className="compass-center-dot" />
+          )}
+        </div>
+      </div>
+      
+      <div className="wind-direction-label">
+        {current.wind_direction_deg !== null && current.wind_direction_deg !== undefined
+          ? getWindDirection(current.wind_direction_deg)
+          : '--'}
+      </div>
+    </div>
+  </div>
+  
+  {/* Bottom section: gusts summary */}
+  <div className="wind-gusts-summary">
+    <div className="wind-gusts">
+      gusts {current.wind_gust_mph !== null && current.wind_gust_mph > 0 
+        ? `${Math.round(current.wind_gust_mph)} mph` 
+        : '--'}
+    </div>
+    <div className="wind-max-gusts">
+      max gusts {last_24h.max_gust_mph !== null && last_24h.max_gust_mph > 0 
+        ? `${Math.round(last_24h.max_gust_mph)} mph` 
+        : '--'}
+    </div>
+  </div>
+  
+</div>
+      
+    </div>
+  );
+})()}
+
+{/* ============================================================================
+   CARDS 9 & 10: Records - Temperature & Precipitation/Snow
+   Add after the Snow/Wind cards row
+   ============================================================================ */}
+
+{/* Records Cards Row */}
+{records && (
+  <div className="half-cards-row">
+    
+    {/* CARD: Temperature Records */}
+    <div className={`summary-card half-card records-card records-temp-card ${darkMode ? 'dark' : ''}`}>
+      <div className="records-header">
+        <WiThermometer className="records-icon temp" />
+        <span className="records-label">RECORDS</span>
+      </div>
+      
+      <div className="records-body">
+        {/* Daily Record Row */}
+        <div className="records-row">
+          <div className="records-row-label">{records.date_label}</div>
+          <div className="records-values">
+            <div className="record-item high">
+              <span className="record-value">
+                {records.daily.record_high_f !== null ? `${Math.round(records.daily.record_high_f)}°` : '--'}
+              </span>
+              {records.daily.record_high_year && (
+                <span className="record-year">{records.daily.record_high_year}</span>
+              )}
+            </div>
+            <span className="record-separator">/</span>
+            <div className="record-item low">
+              <span className="record-value">
+                {records.daily.record_low_f !== null ? `${Math.round(records.daily.record_low_f)}°` : '--'}
+              </span>
+              {records.daily.record_low_year && (
+                <span className="record-year">{records.daily.record_low_year}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="records-divider" />
+        
+        {/* Monthly Record Row */}
+        <div className="records-row">
+          <div className="records-row-label">{records.month_label}</div>
+          <div className="records-values">
+            <div className="record-item high">
+              <span className="record-value">
+                {records.monthly.record_high_f !== null ? `${Math.round(records.monthly.record_high_f)}°` : '--'}
+              </span>
+              {records.monthly.record_high_year && (
+                <span className="record-year">{records.monthly.record_high_year}</span>
+              )}
+            </div>
+            <span className="record-separator">/</span>
+            <div className="record-item low">
+              <span className="record-value">
+                {records.monthly.record_low_f !== null ? `${Math.round(records.monthly.record_low_f)}°` : '--'}
+              </span>
+              {records.monthly.record_low_year && (
+                <span className="record-year">{records.monthly.record_low_year}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+{/* CARD: Precipitation/Snow Records */}
+<div className={`summary-card half-card records-card records-precip-card ${darkMode ? 'dark' : ''}`}>
+  <div className="records-header">
+    {showSnowRecords ? (
+      <Snowflake className="records-icon snow" />
+    ) : (
+      <WiRaindrop className="records-icon precip" />
+    )}
+    {/* Two-line label that changes based on toggle */}
+    <div className="records-label-stack">
+      <span className="records-label">{showSnowRecords ? 'SNOW' : 'PRECIP'}</span>
+      <span className="records-label">RECORDS</span>
+    </div>
+    
+    {/* Toggle - removed the icon */}
+    <button 
+      className={`records-toggle ${showSnowRecords ? 'active' : ''}`}
+      onClick={() => setShowSnowRecords(!showSnowRecords)}
+      title={showSnowRecords ? 'Show precipitation' : 'Show snowfall'}
+    >
+      <span className="toggle-track">
+        <span className="toggle-thumb" />
+      </span>
+    </button>
+  </div>
+      
+      <div className="records-body">
+        {/* Daily Record Row - single day max (keeping for context) */}
+        <div className="records-row">
+          <div className="records-row-label">{records.date_label}</div>
+          <div className="records-values single">
+            <div className="record-item">
+              <span className="record-value">
+                {showSnowRecords ? (
+                  records.daily.record_snow_in !== null ? `${records.daily.record_snow_in}"` : '--'
+                ) : (
+                  records.daily.record_precip_in !== null ? `${records.daily.record_precip_in}"` : '--'
+                )}
+              </span>
+              <span className="record-year">
+                {showSnowRecords 
+                  ? records.daily.record_snow_year 
+                  : records.daily.record_precip_year}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="records-divider" />
+        
+        {/* Monthly TOTAL Record Row - THIS IS THE KEY CHANGE */}
+        <div className="records-row">
+          <div className="records-row-label">{records.month_label}</div>
+          <div className="records-values single">
+            <div className="record-item">
+              <span className="record-value">
+                {showSnowRecords ? (
+                  records.monthly.record_monthly_total_snow_in !== null 
+                    ? `${records.monthly.record_monthly_total_snow_in}"` 
+                    : '--'
+                ) : (
+                  records.monthly.record_monthly_total_prcp_in !== null 
+                    ? `${records.monthly.record_monthly_total_prcp_in}"` 
+                    : '--'
+                )}
+              </span>
+              <span className="record-year">
+                {showSnowRecords 
+                  ? records.monthly.record_monthly_total_snow_year 
+                  : records.monthly.record_monthly_total_prcp_year}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+)}
+
+      {/* Hourly Chart Modal */}
+      <HourlyChartModal
+        stationId={stationId}
+        stationName={displayName}
+        darkMode={darkMode}
+        isOpen={showHourlyChart}
+        onClose={() => setShowHourlyChart(false)}
+      />
+
+
 
     </div>
     

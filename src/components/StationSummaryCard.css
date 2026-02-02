@@ -493,7 +493,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  width: 130%;
 }
 
 .daily-temp-label {
@@ -805,7 +805,7 @@
   color: #94a3b8;
 }
 
-.precip-icon { color: #06b6d4 !important; }
+.precip-icon { color: #1a92e2ea !important; }
 .wind-stat-icon { color: #64748b !important; }
 .condition-icon { color: #8b5cf6 !important; }
 .snow-icon { color: #60a5fa !important; }
@@ -1078,4 +1078,1118 @@
   .stat-label {
     font-size: 0.45rem;
   }
+}
+/* ============================================================
+   HALF-WIDTH CARDS: Averages & Records
+   Redesigned layout - all left justified
+   ============================================================ */
+
+/* Container for side-by-side cards */
+.half-cards-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Half-width card base */
+.summary-card.half-card {
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* ============================================================
+   AVERAGES CARD
+   ============================================================ */
+
+.summary-card.half-card.averages-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.summary-card.half-card.averages-card .averages-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0;
+}
+
+/* Line 1: Icon + Title */
+.summary-card.half-card.averages-card .averages-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.summary-card.half-card.averages-card .averages-title-icon {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.summary-card.half-card.averages-card .averages-title-icon.warmer {
+  color: #9c2626;
+}
+
+.summary-card.half-card.averages-card .averages-title-icon.colder {
+  color: #3b82f6;
+}
+
+.summary-card.half-card.averages-card .averages-title-icon.neutral {
+  color: #22c55e;
+}
+
+.summary-card.half-card.averages-card .averages-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+/* Dark mode title */
+.summary-card.dark.half-card.averages-card .averages-title {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.averages-card .averages-title-icon {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.averages-card .averages-title-icon.warmer {
+  color: #a7a7a7;
+}
+
+.summary-card.dark.half-card.averages-card .averages-title-icon.colder {
+  color: #3b82f6;
+}
+
+.summary-card.dark.half-card.averages-card .averages-title-icon.neutral {
+  color: #22c55e;
+}
+
+/* Line 2: Deviation value - same size as title row, gray */
+.summary-card.half-card.averages-card .averages-deviation {
+  font-size: 1.8rem;
+  font-weight: 350;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: #64748b;
+}
+
+.summary-card.half-card.averages-card .averages-deviation.warmer {
+  color: #9c2626;
+}
+
+.summary-card.half-card.averages-card .averages-deviation.colder {
+  color: #167cc0;
+}
+
+.summary-card.half-card.averages-card .averages-deviation.neutral {
+  color: #409c88;
+}
+
+/* Dark mode deviation */
+.summary-card.dark.half-card.averages-card .averages-deviation {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.averages-card .averages-deviation.warmer {
+  color: #f97316;
+}
+
+.summary-card.dark.half-card.averages-card .averages-deviation.colder {
+  color: #3b82f6;
+}
+
+.summary-card.dark.half-card.averages-card .averages-deviation.neutral {
+  color: #22c55e;
+}
+
+/* Line 3: above/below average */
+.summary-card.half-card.averages-card .averages-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.summary-card.dark.half-card.averages-card .averages-label {
+  color: #94a3b8;
+}
+
+/* Line 4: Date + Normals */
+.summary-card.half-card.averages-card .averages-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: -1px;
+  align-self: center;
+
+}
+
+.summary-card.dark.half-card.averages-card .averages-date {
+  color: #64748b;
+}
+
+/* Line 5: H and L temps */
+.summary-card.half-card.averages-card .averages-temps {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+  width: 100%;
+  justify-content: center;
+}
+
+.summary-card.half-card.averages-card .avg-temp-item {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #686868;
+  align-items: center;
+}
+
+.summary-card.dark.half-card.averages-card .avg-temp-item {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================
+   RECORDS CARD (Placeholder)
+   ============================================================ */
+
+.summary-card.half-card.records-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* LIGHT MODE */
+.summary-card.half-card.records-card .records-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 80px;
+  gap: 6px;
+  color: #94a3b8;
+}
+
+/* DARK MODE */
+.summary-card.dark.half-card.records-card .records-placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.summary-card.half-card.records-card .placeholder-icon {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}
+
+.summary-card.half-card.records-card .placeholder-text {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   NO DATA STATE
+   ============================================================ */
+
+/* LIGHT MODE */
+.summary-card.half-card.averages-card .no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 80px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+/* DARK MODE */
+.summary-card.dark.half-card.averages-card .no-data {
+  color: rgba(255, 255, 255, 0.4);
+}
+.summary-card.half-card.averages-card .avg-temp-high {
+  color: #9c2626;  /* orange-red */
+}
+
+.summary-card.half-card.averages-card .avg-temp-low {
+  color: #167cc0;  /* blue */
+}
+.summary-card.half-card.averages-card .averages-label {
+  /* remove border-bottom */
+  padding-bottom: 12px;
+  width: 100%;
+  position: relative;
+}
+
+.summary-card.half-card.averages-card .averages-label::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;  /* adjust width as needed */
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode */
+.summary-card.dark.half-card.averages-card .averages-label::after {
+  background: rgba(255, 255, 255, 0.08);
+}
+/* ============================================================
+   PRECIPITATION CARD
+   ============================================================ */
+
+.summary-card.half-card.precip-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.summary-card.half-card.precip-card .precip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0;
+}
+
+/* Line 1: Icon + Title */
+.summary-card.half-card.precip-card .precip-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.summary-card.half-card.precip-card .precip-title-icon {
+  color: #1a92e2ea;
+}
+
+.summary-card.half-card.precip-card .precip-title-icon.active {
+  color: #3b82f6;
+}
+
+.summary-card.half-card.precip-card .precip-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+/* Dark mode title */
+.summary-card.dark.half-card.precip-card .precip-title {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.precip-card .precip-title-icon {
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.precip-card .precip-title-icon.active {
+  color: #3b82f6;
+}
+
+/* Line 2: Today's precip value */
+.summary-card.half-card.precip-card .precip-value {
+  font-size: 1.8rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: #64748b;
+}
+
+.summary-card.half-card.precip-card .precip-value.active {
+  color: #3b82f6;
+}
+
+.summary-card.dark.half-card.precip-card .precip-value {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.precip-card .precip-value.active {
+  color: #3b82f6;
+}
+
+/* Line 3: "today" label */
+.summary-card.half-card.precip-card .precip-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  padding-bottom: 12px;
+  width: 100%;
+  position: relative;
+}
+
+.summary-card.half-card.precip-card .precip-label::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.summary-card.dark.half-card.precip-card .precip-label {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.precip-card .precip-label::after {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Line 4: 7-day label */
+.summary-card.half-card.precip-card .precip-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  align-self: center;
+}
+
+.summary-card.dark.half-card.precip-card .precip-date {
+  color: #64748b;
+}
+
+/* Line 5: 7-day total */
+.summary-card.half-card.precip-card .precip-total {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #416297;
+  width: 100%;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.summary-card.dark.half-card.precip-card .precip-total {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================
+   NO DATA STATE
+   ============================================================ */
+
+/* LIGHT MODE */
+.summary-card.half-card.averages-card .no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 80px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+/* DARK MODE */
+.summary-card.dark.half-card.averages-card .no-data {
+  color: rgba(255, 255, 255, 0.4);
+}
+/* ============================================================
+   SNOWFALL CARD (conditional)
+   ============================================================ */
+
+
+/* Spacer to keep card at half width */
+.half-card-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-card.half-card.snow-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.summary-card.half-card.snow-card .snow-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0;
+}
+
+/* Line 1: Icon + Title */
+.summary-card.half-card.snow-card .snow-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.summary-card.half-card.snow-card .snow-title-icon {
+  color: #60a5fa;
+}
+
+.summary-card.half-card.snow-card .snow-title-icon.active {
+  color: #60a5fa;
+}
+
+.summary-card.half-card.snow-card .snow-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+/* Dark mode title */
+.summary-card.dark.half-card.snow-card .snow-title {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.snow-card .snow-title-icon {
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.snow-card .snow-title-icon.active {
+  color: #60a5fa;
+}
+
+/* Line 2: Yesterday's snow value */
+.summary-card.half-card.snow-card .snow-value {
+  font-size: 1.8rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: #64748b;
+}
+
+.summary-card.half-card.snow-card .snow-value.active {
+  color: #60a5fa;
+}
+
+.summary-card.dark.half-card.snow-card .snow-value {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.snow-card .snow-value.active {
+  color: #60a5fa;
+}
+
+/* Line 3: "yesterday" label */
+.summary-card.half-card.snow-card .snow-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  padding-bottom: 12px;
+  width: 100%;
+  position: relative;
+}
+
+.summary-card.half-card.snow-card .snow-label::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.summary-card.dark.half-card.snow-card .snow-label {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.snow-card .snow-label::after {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Line 4: 7-day label */
+.summary-card.half-card.snow-card .snow-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+  align-self: center;
+}
+
+.summary-card.dark.half-card.snow-card .snow-date {
+  color: #64748b;
+}
+
+/* Line 5: 7-day total */
+.summary-card.half-card.snow-card .snow-total {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #416297;
+  width: 100%;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.summary-card.dark.half-card.snow-card .snow-total {
+  color: rgba(255, 255, 255, 0.9);
+}
+/* ============================================================
+   WIND CARD
+   ============================================================ */
+
+
+.summary-card.half-card.wind-card {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.summary-card.half-card.wind-card .wind-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0;
+  gap: 8px;
+}
+
+/* Left side: Wind info */
+.summary-card.half-card.wind-card .wind-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* Title row */
+.summary-card.half-card.wind-card .wind-title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.summary-card.half-card.wind-card .wind-title-icon {
+  color: #94a3b8;
+}
+
+.summary-card.half-card.wind-card .wind-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.wind-card .wind-title {
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.wind-card .wind-title-icon {
+  color: #64748b;
+}
+
+/* Main wind speed */
+.summary-card.half-card.wind-card .wind-speed-main {
+  font-size: 1.8rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: #1e293b;
+}
+
+.summary-card.dark.half-card.wind-card .wind-speed-main {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.summary-card.half-card.wind-card .wind-unit {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.summary-card.dark.half-card.wind-card .wind-unit {
+  color: #94a3b8;
+}
+
+/* Gusts label */
+.summary-card.half-card.wind-card .wind-gusts {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 12px;
+}
+
+.summary-card.dark.half-card.wind-card .wind-gusts {
+  color: #94a3b8;
+}
+
+/* Right side: Compass container */
+.summary-card.half-card.wind-card .wind-compass-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Compass */
+.summary-card.half-card.wind-card .wind-compass {
+  width: 60px;
+  height: 60px;
+  position: relative;
+}
+
+.summary-card.half-card.wind-card .compass-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.summary-card.dark.half-card.wind-card .compass-ring {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Cardinal directions */
+.summary-card.half-card.wind-card .compass-dir {
+  position: absolute;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.summary-card.dark.half-card.wind-card .compass-dir {
+  color: #64748b;
+}
+
+.summary-card.half-card.wind-card .compass-n {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.wind-card .compass-n {
+  color: #94a3b8;
+}
+
+.summary-card.half-card.wind-card .compass-e {
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.summary-card.half-card.wind-card .compass-s {
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.summary-card.half-card.wind-card .compass-w {
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Tick marks */
+.summary-card.half-card.wind-card .compass-ticks {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.summary-card.half-card.wind-card .compass-tick {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  transform-origin: 0 27px;
+}
+
+.summary-card.dark.half-card.wind-card .compass-tick {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Wind direction pointer */
+.summary-card.half-card.wind-card .compass-pointer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: center center;
+}
+
+.summary-card.half-card.wind-card .pointer-arrow {
+  position: absolute;
+  top: -22px;
+  left: -4px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 18px solid #3b82f6;
+}
+
+.summary-card.half-card.wind-card .pointer-arrow::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: -2px;
+  width: 4px;
+  height: 10px;
+  background: #94a3b8;
+  border-radius: 0 0 2px 2px;
+}
+
+/* Center dot (when no direction) */
+.summary-card.half-card.wind-card .compass-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+/* Direction label below compass */
+.summary-card.half-card.wind-card .wind-direction-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.summary-card.dark.half-card.wind-card .wind-direction-label {
+  color: #94a3b8;
+}
+/* Gusts section - default stacked layout */
+.summary-card.half-card.wind-card .wind-gusts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.summary-card.half-card.wind-card .wind-gusts,
+.summary-card.half-card.wind-card .wind-max-gusts {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.wind-card .wind-gusts,
+.summary-card.dark.half-card.wind-card .wind-max-gusts {
+  color: #94a3b8;
+}
+
+/* Expanded layout (no snow card) - gusts side by side */
+.summary-card.half-card.wind-card.wind-card-expanded .wind-gusts-section {
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+}
+
+.summary-card.half-card.wind-card.wind-card-expanded .wind-gusts::after {
+  content: '|';
+  margin-left: 12px;
+  color: rgba(0, 0, 0, 0.15);
+}
+
+.summary-card.dark.half-card.wind-card.wind-card-expanded .wind-gusts::after {
+  color: rgba(255, 255, 255, 0.15);
+}
+/* ============================================================================
+   RECORDS CARDS - Cleaned Up Design
+   
+   Key design changes:
+   - Full year (2019) shown underneath value instead of inline '19
+   - RECORDS and PRECIP labels aligned on same horizontal plane
+   - Cleaner vertical stacking of value + year
+   ============================================================================ */
+
+/* === Shared Card Structure === */
+.summary-card.half-card.records-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 0;
+}
+
+/* === Header Row - RECORDS / PRECIP aligned === */
+.summary-card.half-card.records-card .records-header {
+  display: flex;
+  align-items: left;
+  gap: 0px;
+  margin-bottom: 2px;
+  min-height: 24px; /* Ensures alignment even with toggle */
+}
+
+.summary-card.half-card.records-card .records-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.summary-card.half-card.records-card .records-icon.temp {
+  color: #ef4444;
+}
+
+.summary-card.half-card.records-card .records-icon.precip {
+  color: #3b82f6;
+
+}
+
+.summary-card.half-card.records-card .records-icon.snow {
+  color: #60a5fa;
+  width: 16px;
+  height: 16px;
+}
+
+.summary-card.half-card.records-card .records-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.summary-card.dark.half-card.records-card .records-label {
+  color: #94a3b8;
+}
+
+/* === Body Content === */
+.summary-card.half-card.records-card .records-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* === Record Row === */
+.summary-card.half-card.records-card .records-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.summary-card.half-card.records-card .records-row-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-bottom: 0px;
+}
+
+.summary-card.dark.half-card.records-card .records-row-label {
+  color: #64748b;
+}
+
+/* === Values Container === */
+.summary-card.half-card.records-card .records-values {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.summary-card.half-card.records-card .records-values.single {
+  justify-content: flex-start;
+}
+
+/* === Individual Record Item (value + year stacked) === */
+.summary-card.half-card.records-card .record-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 24px;
+}
+
+.summary-card.half-card.records-card .record-item.high .record-value {
+  color: #dc2626;
+}
+
+.summary-card.half-card.records-card .record-item.low .record-value {
+  color: #2563eb;
+}
+
+.summary-card.dark.half-card.records-card .record-item.high .record-value {
+  color: #f87171;
+}
+
+.summary-card.dark.half-card.records-card .record-item.low .record-value {
+  color: #60a5fa;
+}
+
+/* === Value (the main number) === */
+.summary-card.half-card.records-card .record-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* === Year (shown underneath) === */
+.summary-card.half-card.records-card .record-year {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.summary-card.dark.half-card.records-card .record-year {
+  color: #64748b;
+}
+
+/* === Separator between high/low === */
+.summary-card.half-card.records-card .record-separator {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  padding: 0 2px;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.summary-card.dark.half-card.records-card .record-separator {
+  color: #475569;
+}
+
+/* === Divider between daily and monthly === */
+.summary-card.half-card.records-card .records-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e2e8f0 20%, #e2e8f0 80%, transparent);
+  margin: 4px 0;
+}
+
+.summary-card.dark.half-card.records-card .records-divider {
+  background: linear-gradient(90deg, transparent, #334155 20%, #334155 80%, transparent);
+}
+
+/* === Precip Card - Single Value Styling === */
+.summary-card.half-card.records-precip-card .records-values.single .record-item {
+  align-items: flex-start;
+}
+
+
+
+.summary-card.half-card.records-precip-card .record-value {
+  color: #0369a1;
+}
+
+.summary-card.dark.half-card.records-precip-card .record-value {
+  color: #38bdf8;
+}
+
+/* === Snow/Rain Toggle === */
+.summary-card.half-card.records-precip-card .records-toggle {
+  display: flex;
+  align-items: right;
+  gap: 0px;
+  margin-left: auto;
+  padding: 0px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.summary-card.half-card.records-precip-card .records-toggle .toggle-track {
+  width: 36px;
+  height: 16px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.summary-card.dark.half-card.records-precip-card .records-toggle .toggle-track {
+  background: #334155;
+}
+
+.summary-card.half-card.records-precip-card .records-toggle .toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card.half-card.records-precip-card .records-toggle.active .toggle-track {
+  background: #3b82f6;
+}
+
+.summary-card.half-card.records-precip-card .records-toggle.active .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.summary-card.half-card.records-precip-card .records-toggle .toggle-icon {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  transition: color 0.2s ease;
+}
+
+.summary-card.half-card.records-precip-card .records-toggle.active .toggle-icon {
+  color: #3b82f6;
+}
+
+.summary-card.dark.half-card.records-precip-card .records-toggle .toggle-icon {
+  color: #64748b;
+}
+
+.summary-card.dark.half-card.records-precip-card .records-toggle.active .toggle-icon {
+  color: #60a5fa;
+}
+
+/* Hover states */
+.summary-card.half-card.records-precip-card .records-toggle:hover .toggle-track {
+  background: #cbd5e1;
+}
+
+.summary-card.dark.half-card.records-precip-card .records-toggle:hover .toggle-track {
+  background: #475569;
+}
+
+.summary-card.half-card.records-precip-card .records-toggle.active:hover .toggle-track {
+  background: #2563eb;
+}
+/* Two-line label stack (PRECIP/SNOW + RECORDS) */
+.summary-card.half-card.records-card .records-label-stack {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.summary-card.half-card.records-card .records-label-sub {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.summary-card.dark.half-card.records-card .records-label-sub {
+  color: #64748b;
+}
+/* Precip card only - tighten vertical spacing */
+.summary-card.half-card.records-precip-card .records-header {
+  margin-bottom: 0px;
+}
+
+.summary-card.half-card.records-precip-card .records-body {
+  gap: 2px;
+}
+
+.summary-card.half-card.records-precip-card .records-row {
+  gap: 2px;
+}
+
+.summary-card.half-card.records-precip-card .records-divider {
+  margin: 2px 0;
+}
+/* Precip card - reduce space between header and body */
+.summary-card.half-card.records-precip-card .records-body {
+  margin-top: -16px;  /* pull it up */
+  padding-top: 0;
+  gap: 2px;
 }

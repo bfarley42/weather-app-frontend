@@ -1,0 +1,228 @@
+/* ============================================================================
+   HOURLY CHART MODAL - Apple Weather style slide-up panel
+   ============================================================================ */
+
+/* Clickable elements that open the modal */
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.clickable:hover {
+  opacity: 0.75;
+}
+
+.clickable:active {
+  opacity: 0.5;
+}
+
+/* Modal overlay - darkens background */
+.hourly-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: modalFadeIn 0.3s ease;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.hourly-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Modal panel - slides up from bottom */
+.hourly-modal {
+  background: #ffffff;
+  width: 100%;
+  max-width: 100%;
+  height: 85vh;
+  max-height: 85vh;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  animation: modalSlideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
+}
+
+.hourly-modal-overlay.dark .hourly-modal {
+  background: #1e293b;
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Drag handle at top */
+.hourly-modal-handle {
+  width: 36px;
+  height: 5px;
+  background: #d1d5db;
+  border-radius: 3px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+.hourly-modal-overlay.dark .hourly-modal-handle {
+  background: #475569;
+}
+
+/* Close button */
+.hourly-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.hourly-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #334155;
+}
+
+.hourly-modal-close:active {
+  transform: scale(0.95);
+}
+
+.hourly-modal-overlay.dark .hourly-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.hourly-modal-overlay.dark .hourly-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* Content area */
+.hourly-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 8px 8px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Loading state */
+.hourly-modal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.hourly-modal-overlay.dark .hourly-modal-loading {
+  color: #94a3b8;
+}
+
+.hourly-modal-loading .loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.hourly-modal-overlay.dark .hourly-modal-loading .loading-spinner {
+  border-color: #334155;
+  border-top-color: #60a5fa;
+}
+
+/* Error state */
+.hourly-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  color: #dc2626;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.hourly-modal-error button {
+  padding: 8px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.hourly-modal-error button:hover {
+  background: #2563eb;
+}
+
+/* Animations */
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (min-width: 768px) {
+  .hourly-modal {
+    max-width: 800px;
+    height: 80vh;
+    max-height: 700px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hourly-modal {
+    max-width: 900px;
+    max-height: 750px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hourly-modal {
+    height: 90vh;
+  }
+  
+  .hourly-modal-close {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}
