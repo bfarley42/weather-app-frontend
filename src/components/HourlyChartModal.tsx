@@ -180,6 +180,7 @@ export default function HourlyChartModal({
           ) : (
             <HourlyChartSimple
               data={hourlyData}
+              stationId={stationId}
               stationName={stationName}
               darkMode={darkMode}
               startDate={startDate}

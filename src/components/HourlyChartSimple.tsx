@@ -10,6 +10,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { API_URL } from '../config';
+import { WiThermometer } from 'react-icons/wi';
+import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
+
+interface NormalData {
+  mmdd: string;
+  tmax_f: number | null;
+  tmin_f: number | null;
+}
+
+// Colors matching EnhancedWeatherChart
+const normalColors = {
+  high: {
+    light: '#d30000ff',
+    dark: '#d30000ff',
+  },
+  low: {
+    light: '#04addbc9',
+    dark: '#04addbc9',
+  }
+};
 
 interface HourlyWeather {
   ts_local: string;
@@ -23,6 +44,7 @@ interface HourlyWeather {
 
 interface HourlyChartSimpleProps {
   data: HourlyWeather[];
+  stationId: string;
   stationName: string;
   darkMode?: boolean;
   startDate: string;
@@ -33,6 +55,7 @@ interface HourlyChartSimpleProps {
 
 export default function HourlyChartSimple({
   data,
+  stationId,
   stationName,
   darkMode = false,
   startDate,
@@ -44,12 +67,34 @@ export default function HourlyChartSimple({
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const chartRef = useRef<ReactECharts | null>(null);
   const isUnmounting = useRef(false);
-  const [showFeelsLike, setShowFeelsLike] = useState(false);  // ADD THIS
+  const [showFeelsLike, setShowFeelsLike] = useState(false);
+  const [showNormals, setShowNormals] = useState(false);
+  const [showAvgLine, setShowAvgLine] = useState(false);
+  const [normals, setNormals] = useState<NormalData[]>([]);
 
   // Sync activeRange with initialRange prop when it changes
   useEffect(() => {
     setActiveRange(initialRange);
   }, [initialRange]);
+
+  // Fetch normals data
+  useEffect(() => {
+    if (!stationId) return;
+
+    const fetchNormals = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/weather/normals?station=${stationId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setNormals(data);
+        }
+      } catch (error) {
+        console.error('Error fetching normals:', error);
+      }
+    };
+
+    fetchNormals();
+  }, [stationId]);
 
   // Detect mobile
   useEffect(() => {
@@ -96,6 +141,19 @@ export default function HourlyChartSimple({
   const timestamps = data.map(d => d.ts_local);
   const temps = data.map(d => d.tmpf);
   const feelsLike = data.map(d => d.feelslike_f);
+
+  // Map normals to hourly timestamps (same value persists for entire day)
+  const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
+  const normalHighs: (number | null)[] = timestamps.map(ts => {
+    const date = new Date(ts);
+    const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return normalsMap.get(mmdd)?.tmax_f ?? null;
+  });
+  const normalLows: (number | null)[] = timestamps.map(ts => {
+    const date = new Date(ts);
+    const mmdd = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return normalsMap.get(mmdd)?.tmin_f ?? null;
+  });
 
   // Format timestamp for tooltip
   const formatTimestamp = (dateStr: string) => {
@@ -174,7 +232,12 @@ export default function HourlyChartSimple({
   // Calculate temp range for y-axis
   const validTemps = temps.filter((t): t is number => t !== null);
   const validFeelsLike = feelsLike.filter((t): t is number => t !== null);
-  const allTemps = showFeelsLike ? [...validTemps, ...validFeelsLike] : validTemps;
+  const validNormalHighs = normalHighs.filter((t): t is number => t !== null);
+  const validNormalLows = normalLows.filter((t): t is number => t !== null);
+  let allTemps = showFeelsLike ? [...validTemps, ...validFeelsLike] : [...validTemps];
+  if (showNormals) {
+    allTemps = [...allTemps, ...validNormalHighs, ...validNormalLows];
+  }
   const tempMin = allTemps.length > 0 ? Math.floor(Math.min(...allTemps) / 5) * 5 - 5 : 0;
   const tempMax = allTemps.length > 0 ? Math.ceil(Math.max(...allTemps) / 5) * 5 + 5 : 100; 
 
@@ -189,6 +252,55 @@ export default function HourlyChartSimple({
   };
   const lastTemp = findLastValidIndex(temps);
   const lastFeelsLike = findLastValidIndex(feelsLike);
+
+  // Calculate period stats for summary cards
+  const periodStats = (() => {
+    const validTempsForStats = temps.filter((t): t is number => t !== null);
+    const avgTemp = validTempsForStats.length > 0
+      ? validTempsForStats.reduce((a, b) => a + b, 0) / validTempsForStats.length
+      : null;
+    const minTemp = validTempsForStats.length > 0 ? Math.min(...validTempsForStats) : null;
+    const maxTemp = validTempsForStats.length > 0 ? Math.max(...validTempsForStats) : null;
+
+    // Get days count from activeRange
+    const days = activeRange === '1D' ? 1 : activeRange === '3D' ? 3 : 7;
+
+    // Calculate normal averages for the period (average of normal highs and lows)
+    const validNormalHighsForStats = normalHighs.filter((t): t is number => t !== null);
+    const validNormalLowsForStats = normalLows.filter((t): t is number => t !== null);
+
+    // Get unique daily normals (since hourly data repeats same normal for each hour)
+    const uniqueNormalHighs: number[] = [];
+    const uniqueNormalLows: number[] = [];
+    const seenDays = new Set<string>();
+
+    timestamps.forEach((ts, i) => {
+      const date = new Date(ts);
+      const dayKey = `${date.getMonth()}-${date.getDate()}`;
+      if (!seenDays.has(dayKey)) {
+        seenDays.add(dayKey);
+        if (normalHighs[i] !== null) uniqueNormalHighs.push(normalHighs[i] as number);
+        if (normalLows[i] !== null) uniqueNormalLows.push(normalLows[i] as number);
+      }
+    });
+
+    const avgNormalHigh = uniqueNormalHighs.length > 0
+      ? uniqueNormalHighs.reduce((a, b) => a + b, 0) / uniqueNormalHighs.length
+      : null;
+    const avgNormalLow = uniqueNormalLows.length > 0
+      ? uniqueNormalLows.reduce((a, b) => a + b, 0) / uniqueNormalLows.length
+      : null;
+
+    const normalAvg = avgNormalHigh !== null && avgNormalLow !== null
+      ? (avgNormalHigh + avgNormalLow) / 2
+      : null;
+
+    const deviation = avgTemp !== null && normalAvg !== null
+      ? Math.round(avgTemp - normalAvg)
+      : null;
+
+    return { avgTemp, minTemp, maxTemp, days, avgNormalHigh, avgNormalLow, normalAvg, deviation };
+  })();
 
   const option = {
     backgroundColor: darkMode ? '#1a1a2e' : '#ffffff',
@@ -258,7 +370,12 @@ export default function HourlyChartSimple({
     },
     
     legend: {
-      data: ['Temperature', ...(showFeelsLike ? ['Feels Like'] : [])],
+      data: [
+        'Temperature',
+        ...(showFeelsLike ? ['Feels Like'] : []),
+        ...(showNormals ? ['Normal High', 'Normal Low'] : []),
+        ...(showAvgLine ? ['Average'] : [])
+      ],
       top: isMobile ? 50 : 55,
       left: 'center',
       itemGap: isMobile ? 12 : 20,
@@ -271,7 +388,7 @@ export default function HourlyChartSimple({
     },
     
     grid: {
-      left: isMobile ? 50 : 60,
+      left: isMobile ? 55 : 70,  // Room for left-side badges
       right: isMobile ? 55 : 65,  // Room for "last temp" label
       top: isMobile ? 90 : 100,
       bottom: isMobile ? 50 : 60
@@ -334,6 +451,20 @@ export default function HourlyChartSimple({
         },
         interval: 0,
         rotate: 0
+      },
+      axisPointer: {
+        label: {
+          formatter: (params: any) => {
+            const date = new Date(params.value);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            const hour = date.getHours();
+            const ampm = hour >= 12 ? 'pm' : 'am';
+            const displayHour = hour % 12 || 12;
+            return `${month}/${day}/${year} ${displayHour}:00${ampm}`;
+          }
+        }
       }
     },
     
@@ -424,6 +555,7 @@ export default function HourlyChartSimple({
       type: 'line',
       data: temps,
       smooth: true,
+      connectNulls: true,  // Connect across missing data gaps
       symbolSize: 4,
       showSymbol: false,
         itemStyle: {
@@ -512,6 +644,7 @@ markPoint: showFeelsLike ? undefined : (lastTemp ? {
   type: 'line',
   data: feelsLike,
   smooth: true,
+  connectNulls: true,
   symbol: 'none',
   lineStyle: {
     width: 2,  // Make it prominent
@@ -579,7 +712,129 @@ markPoint: lastFeelsLike ? {
     }
   },
   z: 2
-}] : [])
+}] : []),
+
+      // Normal High temperature (dotted line)
+      ...(showNormals ? [{
+        name: 'Normal High',
+        type: 'line',
+        data: normalHighs,
+        smooth: false,
+        connectNulls: true,
+        symbol: 'none',
+        lineStyle: {
+          width: isMobile ? 2 : 2.5,
+          type: 'dotted',
+          opacity: 0.8,
+          color: darkMode ? normalColors.high.dark : normalColors.high.light
+        },
+        itemStyle: {
+          color: darkMode ? normalColors.high.dark : normalColors.high.light,
+          opacity: 0.5,
+        },
+        markPoint: (() => {
+          // Find first valid normal high
+          const firstIdx = normalHighs.findIndex(v => v !== null);
+          if (firstIdx === -1) return undefined;
+          return {
+            data: [{
+              coord: [firstIdx, normalHighs[firstIdx]],
+              label: {
+                show: true,
+                formatter: `${Math.round(normalHighs[firstIdx] as number)}°`,
+                position: 'left',
+                color: '#fff',
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(211, 0, 0, 0.8)' : 'rgba(211, 0, 0, 0.7)',
+                padding: [2, 5],
+                borderRadius: 4
+              },
+              symbolSize: 0
+            }]
+          };
+        })(),
+        z: 0
+      }] : []),
+
+      // Normal Low temperature (dotted line)
+      ...(showNormals ? [{
+        name: 'Normal Low',
+        type: 'line',
+        data: normalLows,
+        smooth: false,
+        connectNulls: true,
+        symbol: 'none',
+        lineStyle: {
+          width: isMobile ? 2 : 2.5,
+          type: 'dotted',
+          opacity: 0.8,
+          color: darkMode ? normalColors.low.dark : normalColors.low.light
+        },
+        itemStyle: {
+          color: darkMode ? normalColors.low.dark : normalColors.low.light,
+          opacity: 0.5,
+        },
+        markPoint: (() => {
+          // Find first valid normal low
+          const firstIdx = normalLows.findIndex(v => v !== null);
+          if (firstIdx === -1) return undefined;
+          return {
+            data: [{
+              coord: [firstIdx, normalLows[firstIdx]],
+              label: {
+                show: true,
+                formatter: `${Math.round(normalLows[firstIdx] as number)}°`,
+                position: 'left',
+                color: '#fff',
+                fontSize: isMobile ? 10 : 11,
+                fontWeight: 'bold',
+                backgroundColor: darkMode ? 'rgba(4, 173, 219, 0.8)' : 'rgba(4, 173, 219, 0.7)',
+                padding: [2, 5],
+                borderRadius: 4
+              },
+              symbolSize: 0
+            }]
+          };
+        })(),
+        z: 0
+      }] : []),
+
+      // Average temperature line (gray dotted horizontal line)
+      ...(showAvgLine && periodStats.avgTemp !== null ? [{
+        name: 'Average',
+        type: 'line',
+        data: timestamps.map(() => periodStats.avgTemp),
+        symbol: 'none',
+        lineStyle: {
+          width: 2,
+          type: 'dotted',
+          opacity: 0.7,
+          color: darkMode ? '#94a3b8' : '#64748b'
+        },
+        itemStyle: {
+          color: darkMode ? '#94a3b8' : '#64748b',
+          opacity: 0.5,
+        },
+        markPoint: {
+          data: [{
+            coord: [0, periodStats.avgTemp],
+            label: {
+              show: true,
+              formatter: `${Math.round(periodStats.avgTemp)}°`,
+              position: 'left',
+              color: '#fff',
+              fontSize: isMobile ? 10 : 11,
+              fontWeight: 'bold',
+              backgroundColor: darkMode ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.7)',
+              padding: [2, 5],
+              borderRadius: 4
+            },
+            symbolSize: 0
+          }]
+        },
+        z: 0
+      }] : [])
     ],
     
     animation: true,
@@ -623,54 +878,56 @@ markPoint: lastFeelsLike ? {
           </button>
         ))}
       </div>
-      {/* Feels Like toggle (Apple-style) */}
-<div
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 10,
-    margin: isMobile ? '6px 0 10px' : '8px 0 12px',
-    userSelect: 'none'
-  }}
->
-  <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? '#cbd5e1' : '#334155' }}>
-    Feels Like
-  </span>
-
-  <div
-    onClick={() => setShowFeelsLike(v => !v)}
-    style={{
-      width: 42,
-      height: 24,
-      borderRadius: 999,
-      background: showFeelsLike
-        ? (darkMode ? 'rgba(96,165,250,0.85)' : 'rgba(59,130,246,0.85)')
-        : (darkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'),
-      position: 'relative',
-      cursor: 'pointer',
-      transition: 'background 180ms ease'
-    }}
-    role="switch"
-    aria-checked={showFeelsLike}
-    title="Toggle feels-like temperature"
-  >
-    <div
-      style={{
-        position: 'absolute',
-        top: 3,
-        left: 3,
-        width: 18,
-        height: 18,
-        borderRadius: '50%',
-        background: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
-        transform: showFeelsLike ? 'translateX(18px)' : 'translateX(0)',
-        transition: 'transform 180ms ease'
-      }}
-    />
-  </div>
-</div>
+      {/* Toggle controls row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          gap: isMobile ? 16 : 24,
+          margin: isMobile ? '6px 0 10px' : '8px 0 12px',
+          userSelect: 'none'
+        }}
+      >
+        {/* Feels Like toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? '#cbd5e1' : '#334155' }}>
+            Feels Like
+          </span>
+          <div
+            onClick={() => setShowFeelsLike(v => !v)}
+            style={{
+              width: 42,
+              height: 24,
+              borderRadius: 999,
+              background: showFeelsLike
+                ? (darkMode ? 'rgba(96,165,250,0.85)' : 'rgba(59,130,246,0.85)')
+                : (darkMode ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)'),
+              position: 'relative',
+              cursor: 'pointer',
+              transition: 'background 180ms ease'
+            }}
+            role="switch"
+            aria-checked={showFeelsLike}
+            title="Toggle feels-like temperature"
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: 3,
+                left: 3,
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                background: '#fff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                transform: showFeelsLike ? 'translateX(18px)' : 'translateX(0)',
+                transition: 'transform 180ms ease'
+              }}
+            />
+          </div>
+        </div>
+      </div>
 
 
       {/* Chart */}
@@ -690,6 +947,232 @@ markPoint: lastFeelsLike ? {
           notMerge={true}
           lazyUpdate={true}
         />
+      </div>
+
+      {/* Half-width summary cards */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        marginTop: '12px',
+        width: '100%'
+      }}>
+        {/* Card 1: Average Temp - clickable to toggle avg line */}
+        <div
+          onClick={() => setShowAvgLine(v => !v)}
+          style={{
+            flex: 1,
+            background: darkMode ? '#1e293b' : '#ffffff',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            boxShadow: showAvgLine
+              ? (darkMode ? '0 0 0 2px #94a3b8, 0 2px 8px rgba(0,0,0,0.3)' : '0 0 0 2px #64748b, 0 2px 8px rgba(0,0,0,0.08)')
+              : (darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)'),
+            cursor: 'pointer',
+            transition: 'box-shadow 0.2s ease'
+          }}
+        >
+          {/* Title row with icon */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            marginBottom: '4px'
+          }}>
+            <WiThermometer style={{
+              fontSize: '18px',
+              color: darkMode ? '#94a3b8' : '#64748b'
+            }} />
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: darkMode ? '#94a3b8' : '#64748b'
+            }}>
+              AVERAGE TEMP
+            </span>
+          </div>
+
+          {/* Main value */}
+          <div style={{
+            fontSize: '1.8rem',
+            fontWeight: 350,
+            lineHeight: 1.1,
+            letterSpacing: '-1px',
+            color: darkMode ? '#e2e8f0' : '#1e293b'
+          }}>
+            {periodStats.avgTemp !== null ? `${Math.round(periodStats.avgTemp)}°` : '--'}
+          </div>
+
+          {/* Divider */}
+          <div style={{
+            height: '1px',
+            background: darkMode ? '#334155' : '#e2e8f0',
+            margin: '10px 0'
+          }} />
+
+          {/* Min/Max section */}
+          <div style={{
+            fontSize: '0.75rem',
+            color: darkMode ? '#64748b' : '#94a3b8',
+            marginBottom: '4px',
+            textAlign: 'center'
+          }}>
+            {periodStats.days} Day Min/Max
+          </div>
+
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <span style={{
+              fontSize: '0.9rem',
+              fontWeight: 500,
+              color: darkMode ? '#f87171' : '#dc2626'
+            }}>
+              H:{periodStats.maxTemp !== null ? `${Math.round(periodStats.maxTemp)}°` : '--'}
+            </span>
+            <span style={{
+              fontSize: '0.9rem',
+              fontWeight: 500,
+              color: darkMode ? '#60a5fa' : '#2563eb'
+            }}>
+              L:{periodStats.minTemp !== null ? `${Math.round(periodStats.minTemp)}°` : '--'}
+            </span>
+          </div>
+        </div>
+
+        {/* Card 2: Averages (vs Normal) - clickable to toggle normals */}
+        <div
+          onClick={() => setShowNormals(v => !v)}
+          style={{
+            flex: 1,
+            background: darkMode ? '#1e293b' : '#ffffff',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            boxShadow: showNormals
+              ? (darkMode ? '0 0 0 2px #60a5fa, 0 2px 8px rgba(0,0,0,0.3)' : '0 0 0 2px #3b82f6, 0 2px 8px rgba(0,0,0,0.08)')
+              : (darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)'),
+            cursor: 'pointer',
+            transition: 'box-shadow 0.2s ease'
+          }}
+        >
+          {(() => {
+            const isWarmer = periodStats.deviation !== null && periodStats.deviation > 0;
+            const isColder = periodStats.deviation !== null && periodStats.deviation < 0;
+
+            // Format date range for display
+            const periodLabel = periodStats.days === 1
+              ? '24-Hour'
+              : `${periodStats.days}-Day`;
+
+            return (
+              <>
+                {/* Title row with icon */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  marginBottom: '2px'
+                }}>
+                  {isWarmer ? (
+                    <LuTrendingUp style={{
+                      fontSize: '14px',
+                      color: darkMode ? '#f97316' : '#9c2626'
+                    }} />
+                  ) : isColder ? (
+                    <LuTrendingDown style={{
+                      fontSize: '14px',
+                      color: '#3b82f6'
+                    }} />
+                  ) : (
+                    <LuTrendingUp style={{
+                      fontSize: '14px',
+                      color: '#22c55e'
+                    }} />
+                  )}
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    color: darkMode ? '#94a3b8' : '#64748b'
+                  }}>
+                    AVERAGES
+                  </span>
+                </div>
+
+                {/* Deviation value */}
+                <div style={{
+                  fontSize: '1.8rem',
+                  fontWeight: 350,
+                  lineHeight: 1.1,
+                  letterSpacing: '-1px',
+                  color: isWarmer
+                    ? (darkMode ? '#f97316' : '#9c2626')
+                    : isColder
+                      ? (darkMode ? '#3b82f6' : '#167cc0')
+                      : (darkMode ? '#22c55e' : '#409c88')
+                }}>
+                  {periodStats.deviation !== null
+                    ? `${periodStats.deviation > 0 ? '+' : ''}${periodStats.deviation}°`
+                    : '--'}
+                </div>
+
+                {/* above/below average label */}
+                <div style={{
+                  fontSize: '0.8rem',
+                  color: darkMode ? '#94a3b8' : '#64748b'
+                }}>
+                  {periodStats.deviation === null ? 'average' :
+                    periodStats.deviation > 0 ? 'above average' :
+                      periodStats.deviation < 0 ? 'below average' :
+                        'on average'}
+                </div>
+
+                {/* Divider */}
+                <div style={{
+                  height: '1px',
+                  background: darkMode ? '#334155' : '#e2e8f0',
+                  margin: '10px 0'
+                }} />
+
+                {/* Period + Normals label */}
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: darkMode ? '#64748b' : '#94a3b8',
+                  marginBottom: '4px',
+                  textAlign: 'center'
+                }}>
+                  {periodLabel} Normals
+                </div>
+
+                {/* Normal H and L temps */}
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    color: darkMode ? '#f87171' : '#dc2626'
+                  }}>
+                    H:{periodStats.avgNormalHigh !== null ? `${Math.round(periodStats.avgNormalHigh)}°` : '--'}
+                  </span>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    color: darkMode ? '#60a5fa' : '#2563eb'
+                  }}>
+                    L:{periodStats.avgNormalLow !== null ? `${Math.round(periodStats.avgNormalLow)}°` : '--'}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
+        </div>
       </div>
     </div>
   );
