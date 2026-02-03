@@ -20,6 +20,7 @@ import {
   CloudLightning,
   Snowflake,
   CloudDrizzle,
+  CloudSun,
   // Cloudy,
   Waves,
   // Moon,
@@ -42,7 +43,7 @@ import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
-import { LuMoon} from "react-icons/lu";
+import { LuMoon, LuCloudHail} from "react-icons/lu";
 // import { LuMoonStar, LuCloudMoon } from "react-icons/lu";
 // import { BsCloudMoon } from "react-icons/bs";
 // import { PiCloudMoon } from "react-icons/pi";
@@ -324,9 +325,10 @@ function getWeatherIcon(
     if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className={`${className} icon-snow`} />;
     if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className={`${className} icon-freezing`} />;
     if (wx.includes('RA')) return <CloudRain {...iconProps} className={`${className} icon-rain`} />;
-    if (wx.includes('DZ')) return <CloudDrizzle {...iconProps} className={`${className} icon-drizzle`} />;
+    if (wx.includes('DZ') || wx.includes('UP')) return <CloudDrizzle {...iconProps} className={`${className} icon-drizzle`} />;
     if (wx.includes('FG')) return <CloudFog {...iconProps} className={`${className} icon-fog`} />;
     if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className={`${className} icon-mist`} />;
+    if (wx.includes('GR') || wx.includes('GS')) return <LuCloudHail {...iconProps} className={`${className} icon-rain`} />;
   }
   
   // Sky condition - use moon SVGs at night
@@ -356,7 +358,7 @@ function getWeatherIcon(
     // Partly cloudy
     if (sky === 'SCT' || sky === 'BKN') {
       if (isDay) {
-        return <Cloud {...iconProps} className={`${className} icon-partly-cloudy`} />;
+        return <CloudSun {...iconProps} className={`${className} icon-partly-cloudy`} />;
       } else {
         // REPLACE THE <img> TAG WITH THIS:
         return (

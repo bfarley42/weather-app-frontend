@@ -266,8 +266,8 @@ export default function HourlyChartSimple({
     const days = activeRange === '1D' ? 1 : activeRange === '3D' ? 3 : 7;
 
     // Calculate normal averages for the period (average of normal highs and lows)
-    const validNormalHighsForStats = normalHighs.filter((t): t is number => t !== null);
-    const validNormalLowsForStats = normalLows.filter((t): t is number => t !== null);
+    // const _validNormalHighsForStats = normalHighs.filter((t): t is number => t !== null);
+    // const _validNormalLowsForStats = normalLows.filter((t): t is number => t !== null);
 
     // Get unique daily normals (since hourly data repeats same normal for each hour)
     const uniqueNormalHighs: number[] = [];
