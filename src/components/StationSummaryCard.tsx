@@ -7,67 +7,31 @@
  * Card 2: Last 24 hours (temp band + 5 stats)
  */
 import HourlyChartModal from './HourlyChartModal';
+import ConditionHistoryModal from './ConditionHistoryModal';
+import { getWeatherIcon, getConditionIcon } from '../utils/weatherIcons';
+import MetarModal from './MetarModal';
 import { useState, useEffect, useRef  } from 'react';
 import { 
   Droplets, 
   Wind, 
   Clock,
   CloudRain,
-  CloudSnow,
-  Cloud,
-  Sun,
-  CloudFog,
-  CloudLightning,
   Snowflake,
-  CloudDrizzle,
-  CloudSun,
-  // Cloudy,
   Waves,
-  // Moon,
 } from 'lucide-react';
 
 import { 
-  // FaThermometerEmpty, 
-  // FaThermometerQuarter, 
   FaThermometerHalf, 
-  // FaThermometerThreeQuarters, 
-  // FaThermometerFull,
   FaArrowUp,
   FaArrowDown
 } from 'react-icons/fa';
-// import { 
-//   // BsThermometerSnow,
-//   // BsThermometerSun ,
-//  } from "react-icons/bs";
+
 import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
 import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
-import { LuMoon, LuCloudHail} from "react-icons/lu";
-// import { LuMoonStar, LuCloudMoon } from "react-icons/lu";
-// import { BsCloudMoon } from "react-icons/bs";
-// import { PiCloudMoon } from "react-icons/pi";
-// import { PiMoonStarsFill, PiCloudMoonLight } from "react-icons/pi";
-import { CiCloudMoon } from "react-icons/ci";
-// import { LiaCloudMoonSolid } from "react-icons/lia";
 import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
-// import { WiThermometer, WiSnow, WiRaindrop } from 'react-icons/wi';
 import { WiThermometer, WiRaindrop } from 'react-icons/wi';
-
-// REMOVE the ?url imports
-// import moonUrl from '../assets/weather/moon.svg?url';
-// import moonCloudUrl from '../assets/weather/MoonCloud.svg?url';
-
-// ADD these component imports
-// import MoonIcon from '../assets/weather/moon.svg?react';
-// import MoonCloudIcon from '../assets/weather/MoonCloud.svg?react';
-
-// import { BsCloudMoon } from 'react-icons/bs';
-// // Custom moon icons
-// import { ReactComponent as MoonIcon } from '../assets/weather/moon.svg?react';
-// import { ReactComponent as MoonCloudIcon } from '../assets/weather/moon_cloud.svg?react';
-
-// import HourlyWeatherChart from './HourlyWeatherChart';
 // ============================================================================
 // Types
 // ============================================================================
@@ -83,9 +47,13 @@ interface CurrentConditions {
   wx_code: string | null;
   observed_at: string | null;
   hours_ago: number | null;
-  pressure_in?: number | null;      // <-- ADD THIS
-  pressure_trend?: string | null;   // <-- ADD THIS (e.g. "Rising", "Falling")
+  pressure_in?: number | null;
+  pressure_trend?: string | null;
   wind_direction_deg?: number | null;
+  dewpoint_f?: number | null;        // ADD if not already there
+  // ADD these two for METAR modal:
+  metar_raw?: string | null;
+  visibility_mi?: number | null;
 }
 
 interface Last24hStats {
@@ -309,93 +277,6 @@ function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin
 // Unified Weather Icon Function
 // ============================================================================
 
-function getWeatherIcon(
-  skyCode: string | null, 
-  wxCode: string | null, 
-  size: number = 52, 
-  isDay: boolean = true,
-  className: string = "weather-icon"
-) {
-  const iconProps = { size, strokeWidth: 1.5 };
-  
-  // Check weather code first (precipitation - same day/night)
-  if (wxCode) {
-    const wx = wxCode.toUpperCase();
-    if (wx.includes('TS')) return <CloudLightning {...iconProps} className={`${className} icon-lightning`} />;
-    if (wx.includes('SN') || wx.includes('SG') || wx.includes('PL')) return <Snowflake {...iconProps} className={`${className} icon-snow`} />;
-    if (wx.includes('FZRA') || wx.includes('FZDZ')) return <CloudSnow {...iconProps} className={`${className} icon-freezing`} />;
-    if (wx.includes('RA')) return <CloudRain {...iconProps} className={`${className} icon-rain`} />;
-    if (wx.includes('DZ') || wx.includes('UP')) return <CloudDrizzle {...iconProps} className={`${className} icon-drizzle`} />;
-    if (wx.includes('FG')) return <CloudFog {...iconProps} className={`${className} icon-fog`} />;
-    if (wx.includes('BR') || wx.includes('HZ')) return <CloudFog {...iconProps} className={`${className} icon-mist`} />;
-    if (wx.includes('GR') || wx.includes('GS')) return <LuCloudHail {...iconProps} className={`${className} icon-rain`} />;
-  }
-  
-  // Sky condition - use moon SVGs at night
-  if (skyCode) {
-    const sky = skyCode.toUpperCase();
-    
-// ... inside getWeatherIcon function ...
-
-    // Clear
-    if (sky === 'CLR' || sky === 'SKC' || sky === 'FEW') {
-      if (isDay) {
-        return <Sun {...iconProps} className={`${className} icon-clear`} />;
-      } else {
-        // REPLACE THE <img> TAG WITH THIS:
-        return (
-          <LuMoon
-            size = {size}
-            // width={size} 
-            // height={size} 
-            className={`${className} icon-clear-night`} 
-            // SVG will now inherit color from CSS (fill="currentColor" or stroke="currentColor")
-          />
-        );
-      }
-    }
-    
-    // Partly cloudy
-    if (sky === 'SCT' || sky === 'BKN') {
-      if (isDay) {
-        return <CloudSun {...iconProps} className={`${className} icon-partly-cloudy`} />;
-      } else {
-        // REPLACE THE <img> TAG WITH THIS:
-        return (
-          <CiCloudMoon 
-            size={size*1.1} 
-            // height={size} 
-            className={`${className} icon-cloudy-night`} 
-          />
-        );
-      }
-    }
-    
-    // Overcast - same day/night
-    if (sky === 'OVC') {
-      return <Cloud {...iconProps} className={`${className} icon-overcast`} />;
-    }
-  }
-  
-  return <Cloud {...iconProps} className={`${className} icon-default`} />;
-}
-
-
-function getConditionIcon(condition: string | null, size: number = 24) {
-  if (!condition) return <Cloud size={size} className="stat-icon" />;
-  
-  const cond = condition.toLowerCase();
-  const iconProps = { size, strokeWidth: 1.5, className: "stat-icon" };
-  
-  if (cond.includes('rain') || cond.includes('shower')) return <CloudRain {...iconProps} className="stat-icon precip-icon" />;
-  if (cond.includes('snow')) return <Snowflake {...iconProps} className="stat-icon snow-icon" />;
-  if (cond.includes('storm')) return <CloudLightning {...iconProps} className="stat-icon condition-icon" />;
-  if (cond.includes('fog') || cond.includes('haz') || cond.includes('mist')) return <CloudFog {...iconProps} className="stat-icon" />;
-  if (cond.includes('cloud') || cond.includes('cldy')) return <Cloud {...iconProps} className="stat-icon" />;
-  if (cond.includes('clear')) return <Sun {...iconProps} className="stat-icon icon-clear" />;
-  
-  return <Cloud {...iconProps} className="stat-icon" />;
-}
 
 function getWindDirection(degrees: number): string {
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
@@ -629,6 +510,8 @@ export default function StationSummaryCard({
   const [showSnowRecords, setShowSnowRecords] = useState(false);
   const hourlyScrollRef = useRef<HTMLDivElement>(null);
   const [showHourlyChart, setShowHourlyChart] = useState(false);
+  const [showConditionHistory, setShowConditionHistory] = useState(false);
+  const [showMetarModal, setShowMetarModal] = useState(false);
 
   // After the data loads, scroll to the right
 useEffect(() => {
@@ -764,7 +647,12 @@ useEffect(() => {
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
-            <div className="weather-icon-container">
+            <div
+              className="weather-icon-container clickable"
+              onClick={() => setShowMetarModal(true)}
+              style={{ cursor: 'pointer' }}
+              title="View current observation details"
+            >
               {getWeatherIcon(current.sky_code, current.wx_code, 56, summary.sun_times?.is_day ?? true, "weather-icon")}
               {current.condition && (
                 <span className="condition-label">{current.condition}</span>
@@ -1422,7 +1310,42 @@ useEffect(() => {
         onClose={() => setShowHourlyChart(false)}
       />
 
+      {/* Condition History Modal */}
+      <ConditionHistoryModal
+        stationId={stationId}
+        darkMode={darkMode}
+        isOpen={showConditionHistory}
+        onClose={() => setShowConditionHistory(false)}
+        getWeatherIcon={getWeatherIcon}
+        sunTimes={summary.sun_times}
+      />
 
+      {/* METAR Modal */}
+    <MetarModal
+      stationId={stationId}
+      stationName={displayName}
+      darkMode={darkMode}
+      isOpen={showMetarModal}
+      onClose={() => setShowMetarModal(false)}
+      isDay={summary.sun_times?.is_day ?? true}
+      initialData={{
+        station_id: stationId,
+        observed_at: current.observed_at,
+        metar_raw: current.metar_raw ?? null,
+        temp_f: current.temp_f,
+        dewpoint_f: current.dewpoint_f ?? null,
+        humidity_pct: current.humidity_pct,
+        pressure_in: current.pressure_in ?? null,
+        pressure_trend: current.pressure_trend ?? null,
+        wind_speed_mph: current.wind_mph,
+        wind_gust_mph: current.wind_gust_mph,
+        wind_direction_deg: current.wind_direction_deg ?? null,
+        sky_code: current.sky_code,
+        wx_code: current.wx_code,
+        visibility_mi: current.visibility_mi ?? null,
+        precip_in: null,  // Not in current, but rarely needed
+      }}
+    />
 
     </div>
     

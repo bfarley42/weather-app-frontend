@@ -1,0 +1,965 @@
+/* src/components/MetarSummary.css */
+
+/* ============================================================================
+   Container
+   ============================================================================ */
+.metar-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.metar-header {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.metar-summary.dark .metar-header {
+  border-bottom-color: #334155;
+}
+
+.metar-station-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.metar-summary.dark .metar-station-name {
+  color: #f1f5f9;
+}
+
+.metar-observed-time {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.metar-summary.dark .metar-observed-time {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   New Two-Column Layout
+   ============================================================================ */
+.metar-layout {
+  display: flex;
+  gap: 12px;
+}
+
+.metar-left-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* CHANGE TO: */
+.metar-right-column {
+  flex: 1;
+  display: flex;
+  flex-direction: row;  /* Changed from column */
+  gap: 12px;
+}
+
+.metar-right-column .metar-card {
+  flex: 1;  /* Each card takes half width */
+}
+
+/* Mobile: stack columns */
+@media (max-width: 480px) {
+  .metar-layout {
+    flex-direction: column;
+  }
+}
+
+
+/* ============================================================================
+   Cards Base
+   ============================================================================ */
+.metar-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.metar-summary.dark .metar-card {
+  background: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.metar-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.metar-summary.dark .metar-card-header {
+  color: #94a3b8;
+}
+
+/* Add after .metar-card styles */
+.metar-card.clickable-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metar-card.clickable-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metar-summary.dark .metar-card.clickable-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+/* ============================================================================
+   Info Button & Tooltip
+   ============================================================================ */
+/* .card-info-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+
+.card-info-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #64748b;
+} */
+
+.metar-summary.dark .card-info-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+}
+
+.metar-summary.dark .card-info-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+}
+
+/* Tooltip */
+.metar-tooltip {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  left: 8px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: tooltipFadeIn 0.15s ease-out;
+  max-width: calc(100vw - 40px);
+  width: 280px;  /* Fixed width for consistency */
+  max-width: calc(100vw - 40px);  /* Don't overflow screen on mobile */
+}
+/* When a card has an active tooltip, raise the whole card */
+.metar-card:has(.metar-tooltip) {
+  z-index: 100;
+}
+
+/* Fallback for browsers without :has() support - add a class via JS */
+.metar-card.tooltip-active {
+  z-index: 100;
+}
+.metar-tooltip.dark {
+  background: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* @keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} */
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tooltip-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.metar-tooltip.dark .tooltip-title {
+  color: #f1f5f9;
+}
+
+.tooltip-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.15s ease;
+}
+
+.tooltip-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.metar-tooltip.dark .tooltip-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.tooltip-content {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+}
+
+.metar-tooltip.dark .tooltip-content {
+  color: #cbd5e1;
+}
+
+/* ============================================================================
+   Weather Icon Card - Softer colors
+   ============================================================================ */
+.metar-icon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  /* Softer, more sophisticated gradient */
+  background: linear-gradient(145deg, #64748b 0%, #475569 100%);
+  color: white;
+}
+
+.metar-summary.dark .metar-icon-card {
+  background: linear-gradient(145deg, #475569 0%, #334155 100%);
+}
+
+/* Alternative: muted blue-gray */
+.metar-icon-card {
+  background: linear-gradient(145deg, #6b7fa3 0%, #4a5a78 100%);
+}
+
+.metar-summary.dark .metar-icon-card {
+  background: linear-gradient(145deg, #3d4f6f 0%, #2d3a52 100%);
+}
+
+.metar-icon-card .card-info-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.metar-icon-card .card-info-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.metar-icon-card .metar-tooltip {
+  background: #ffffff;
+  color: #1e293b;
+}
+/* Make cloud icons stand out on the gray-blue background */
+.metar-icon-card .metar-weather-icon.icon-overcast,
+.metar-icon-card .metar-weather-icon.icon-default {
+  color: rgba(255, 255, 255, 0.9);  /* White cloud */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));  /* Stronger shadow */
+}
+
+/* Or make them slightly blue-tinted */
+.metar-icon-card .metar-weather-icon.icon-overcast,
+.metar-icon-card .metar-weather-icon.icon-default {
+  color: #bfdbfe;  /* Light blue cloud */
+}
+
+.metar-icon-card .metar-tooltip.dark {
+  background: #1e293b;
+}
+
+.metar-icon-wrapper {
+  margin-bottom: 6px;
+}
+
+.metar-weather-icon {
+  color: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.metar-weather-icon.icon-clear {
+  color: #fbbf24;
+}
+
+.metar-weather-icon.icon-clear-night {
+  color: #fcd34d;
+}
+
+.metar-weather-icon.icon-rain,
+.metar-weather-icon.icon-drizzle {
+  color: #bfdbfe;
+}
+
+.metar-weather-icon.icon-snow,
+.metar-weather-icon.icon-freezing {
+  color: #e0f2fe;
+}
+
+.metar-weather-icon.icon-lightning {
+  color: #fde047;
+}
+
+.metar-condition-text {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Cloud cover display */
+.metar-cloud-cover {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 6px;
+}
+
+.metar-cloud-cover svg {
+  opacity: 0.8;
+}
+
+.metar-temp-large {
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+/* ============================================================================
+   Summary Card (below weather icon)
+   ============================================================================ */
+.metar-summary-card {
+  flex: 1;
+}
+
+.metar-summary-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.metar-summary.dark .metar-summary-card p {
+  color: #cbd5e1;
+}
+
+/* ============================================================================
+   Wind Card
+   ============================================================================ */
+.metar-wind-card {
+  flex: 1;
+}
+
+.metar-wind-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Compass */
+.metar-compass {
+  width: 85px;
+  height: 85px;
+}
+
+.metar-card .compass-ring {
+  width: 100%;
+  height: 100%;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  position: relative;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.metar-summary.dark .metar-card .compass-ring {
+  border-color: #475569;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
+.metar-card .compass-dir {
+  position: absolute;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.metar-summary.dark .metar-card .compass-dir {
+  color: #64748b;
+}
+
+.metar-card .compass-n { top: 4px; left: 50%; transform: translateX(-50%); }
+.metar-card .compass-s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+.metar-card .compass-e { right: 6px; top: 50%; transform: translateY(-50%); }
+.metar-card .compass-w { left: 6px; top: 50%; transform: translateY(-50%); }
+
+.metar-card .compass-ticks {
+  position: absolute;
+  inset: 8px;
+}
+
+.metar-card .compass-tick {
+  position: absolute;
+  width: 1px;
+  height: 4px;
+  background: #cbd5e1;
+  left: 50%;
+  top: 0;
+  transform-origin: 50% 35px;
+}
+
+.metar-summary.dark .metar-card .compass-tick {
+  background: #475569;
+}
+
+.metar-card .compass-pointer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.metar-card .pointer-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 26px solid #3b82f6;
+  margin-top: 10px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.metar-summary.dark .metar-card .pointer-arrow {
+  border-bottom-color: #60a5fa;
+}
+
+.metar-card .compass-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #94a3b8;
+  border-radius: 50%;
+}
+
+/* Wind stats */
+.metar-wind-stats {
+  text-align: center;
+}
+
+.wind-speed-main {
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.metar-summary.dark .wind-speed-main {
+  color: #f1f5f9;
+}
+
+.wind-speed-main .wind-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.metar-summary.dark .wind-speed-main .wind-unit {
+  color: #94a3b8;
+}
+
+.wind-direction-text {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.metar-summary.dark .wind-direction-text {
+  color: #94a3b8;
+}
+
+.wind-gust-text {
+  font-size: 0.7rem;
+  color: #f97316;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   Pressure Card with Gauge
+   ============================================================================ */
+.metar-pressure-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pressure-gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pressure-gauge-svg {
+  width: 100%;
+  max-width: 100px;
+}
+
+.gauge-label {
+  font-size: 8px;
+  font-weight: 500;
+  fill: #94a3b8;
+}
+
+.gauge-label.dark {
+  fill: #64748b;
+}
+
+.pressure-gauge-value {
+  text-align: center;
+  margin-top: -4px;
+}
+
+.pressure-number {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #1e293b;
+}
+
+.metar-summary.dark .pressure-number {
+  color: #f1f5f9;
+}
+
+.pressure-unit {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.metar-summary.dark .pressure-unit {
+  color: #94a3b8;
+}
+
+/* Trend badge */
+.pressure-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.metar-summary.dark .pressure-trend-badge {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+}
+
+/* CHANGE TO: */
+.pressure-trend-badge.rising {
+  background: rgba(20, 184, 166, 0.12);
+  color: #0d9488;
+}
+
+.metar-summary.dark .pressure-trend-badge.rising {
+  background: rgba(20, 184, 166, 0.18);
+  color: #2dd4bf;
+}
+
+.pressure-trend-badge.falling {
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+}
+
+.metar-summary.dark .pressure-trend-badge.falling {
+  background: rgba(99, 102, 241, 0.18);
+  color: #818cf8;
+}
+
+.pressure-trend-badge.steady {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+/* ============================================================================
+   Details Card
+   ============================================================================ */
+
+
+.metar-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.metar-summary.dark .detail-item {
+  background: #0f172a;
+}
+
+.detail-icon {
+  color: #64748b;
+}
+
+.metar-summary.dark .detail-icon {
+  color: #94a3b8;
+}
+
+.detail-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.metar-summary.dark .detail-label {
+  color: #94a3b8;
+}
+
+.detail-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.metar-summary.dark .detail-value {
+  color: #f1f5f9;
+}
+
+/* ============================================================================
+   Raw METAR
+   ============================================================================ */
+.metar-raw {
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.metar-summary.dark .metar-raw {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.metar-raw-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.metar-summary.dark .metar-raw-label {
+  color: #94a3b8;
+}
+
+.metar-raw-code {
+  display: block;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 0.7rem;
+  color: #334155;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.metar-summary.dark .metar-raw-code {
+  color: #cbd5e1;
+}
+
+/* ============================================================================
+   Responsive Adjustments
+   ============================================================================ */
+@media (max-width: 380px) {
+  .metar-layout {
+    gap: 10px;
+  }
+  
+  .metar-left-column,
+  .metar-right-column {
+    gap: 10px;
+  }
+  
+  .metar-card {
+    padding: 14px;
+  }
+  
+  .metar-temp-large {
+    font-size: 2rem;
+  }
+  
+  .metar-compass {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .metar-card .compass-tick {
+    transform-origin: 50% 28px;
+  }
+  
+  .metar-card .pointer-arrow {
+    border-bottom-width: 20px;
+    margin-top: 8px;
+  }
+  
+  .metar-details-grid {
+    gap: 8px;
+  }
+  
+  .detail-value {
+    font-size: 1rem;
+  }
+  
+  .pressure-gauge-svg {
+    max-width: 120px;
+  }
+  
+  .pressure-number {
+    font-size: 1.3rem;
+  }
+}
+.detail-item.clickable-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  position: relative; /* needed for tooltip positioning */
+}
+
+.detail-item.clickable-card:hover {
+  transform: translateY(-1px);
+  background: #f1f5f9;
+}
+
+.metar-summary.dark .detail-item.clickable-card:hover {
+  background: #1e293b;
+}
+/* Tooltips inside detail items - position above the item */
+.detail-item .metar-tooltip {
+  top: auto;
+  bottom: calc(100% + 8px);  /* Position above the item */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Adjust animation for upward tooltips */
+.detail-item .metar-tooltip {
+  animation: tooltipFadeInUp 0.15s ease-out;
+}
+
+@keyframes tooltipFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+/* ============================================
+   Tooltip positioning by card location
+   ============================================ */
+
+/* LEFT-ALIGNED CARDS: conditions, wind, dewpoint */
+/* Tooltip aligns to LEFT edge of card, extends RIGHT */
+.metar-icon-card .metar-tooltip,
+.metar-wind-card .metar-tooltip {
+  left: 0;
+  right: auto;
+  transform: none;
+}
+
+/* RIGHT-ALIGNED CARDS: visibility */
+/* Tooltip aligns to RIGHT edge of card, extends LEFT */
+
+/* CENTERED CARDS: pressure, humidity */
+/* Tooltip stays centered */
+.metar-pressure-card .metar-tooltip {
+  left: 50%;
+  transform: translateX(-75%);
+}
+/* Detail item tooltips - position above */
+.detail-item .metar-tooltip {
+  top: auto;
+  bottom: calc(100% + 8px);
+  width: 260px;
+}
+
+/* Dewpoint (first/left item) - align left */
+.detail-item:first-child .metar-tooltip,
+.detail-item:nth-child(1) .metar-tooltip {
+  left: 0;
+  right: auto;
+  transform: none;
+}
+
+/* Humidity (middle item) - center */
+.detail-item:nth-child(2) .metar-tooltip {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+/* Visibility (last/right item) - align right */
+.detail-item:last-child .metar-tooltip,
+.detail-item:nth-child(3) .metar-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+/* Animation for left-aligned tooltips */
+.metar-icon-card .metar-tooltip,
+.metar-wind-card .metar-tooltip,
+.detail-item:first-child .metar-tooltip {
+  animation: tooltipFadeInLeft 0.15s ease-out;
+}
+
+@keyframes tooltipFadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation for right-aligned tooltips */
+.detail-item:last-child .metar-tooltip {
+  animation: tooltipFadeInRight 0.15s ease-out;
+}
+
+@keyframes tooltipFadeInRight {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation for centered tooltips */
+.metar-pressure-card .metar-tooltip,
+.detail-item:nth-child(2) .metar-tooltip {
+  animation: tooltipFadeInCenter 0.15s ease-out;
+}
+
+@keyframes tooltipFadeInCenter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Detail items go upward, so adjust Y direction */
+.detail-item:first-child .metar-tooltip {
+  animation: tooltipFadeUpLeft 0.15s ease-out;
+}
+
+.detail-item:nth-child(2) .metar-tooltip {
+  animation: tooltipFadeUpCenter 0.15s ease-out;
+}
+
+.detail-item:last-child .metar-tooltip {
+  animation: tooltipFadeUpRight 0.15s ease-out;
+}
+
+@keyframes tooltipFadeUpLeft {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tooltipFadeUpCenter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes tooltipFadeUpRight {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
