@@ -23,6 +23,13 @@ interface HourlyChartModalProps {
   onClose: () => void;
 }
 
+// Map range labels to hours
+const rangeToHours: Record<string, number> = {
+  '1D': 24,
+  '3D': 72,
+  '7D': 168,
+};
+
 export default function HourlyChartModal({
   stationId,
   stationName,
@@ -33,37 +40,13 @@ export default function HourlyChartModal({
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState('1D');  // Default to 1D
+  const [dateRange, setDateRange] = useState('1D');
   const [chartReady, setChartReady] = useState(false);
 
-  // Calculate date range
-  const getDateRange = (range: string) => {
-    const end = new Date();
-    const start = new Date();
-    
-    switch (range) {
-      case '1D': start.setDate(start.getDate() - 1); break;
-      case '3D': start.setDate(start.getDate() - 3); break;
-      case '7D': start.setDate(start.getDate() - 7); break;
-      default: start.setDate(start.getDate() - 1);  // Default 1D
-    }
-    
-    const formatDate = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
+  // Get hours from current range
+  const hours = rangeToHours[dateRange] || 24;
 
-    return {
-      startDate: formatDate(start),
-      endDate: formatDate(end),
-    };
-  };
-
-  const { startDate, endDate } = getDateRange(dateRange);
-
-  // Fetch data when modal opens or date range changes
+  // Fetch data when modal opens or range changes
   useEffect(() => {
     if (!isOpen || !stationId) return;
 
@@ -74,7 +57,7 @@ export default function HourlyChartModal({
 
       try {
         const response = await fetch(
-          `${API_URL}/api/weather/hourly?station=${stationId}&start=${startDate}&end=${endDate}`
+          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=${hours}`
         );
 
         if (!response.ok) {
@@ -94,12 +77,11 @@ export default function HourlyChartModal({
     }
 
     fetchHourlyData();
-  }, [isOpen, stationId, startDate, endDate]);
+  }, [isOpen, stationId, hours]);
 
-  // Reset states when modal opens/closes
+  // Reset to 1D when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Always reset to 1D when modal opens
       setDateRange('1D');
     } else {
       setChartReady(false);
@@ -183,8 +165,6 @@ export default function HourlyChartModal({
               stationId={stationId}
               stationName={stationName}
               darkMode={darkMode}
-              startDate={startDate}
-              endDate={endDate}
               onDateRangeChange={handleDateRangeChange}
               initialRange={dateRange}
             />

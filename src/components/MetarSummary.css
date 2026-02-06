@@ -462,7 +462,7 @@
   transition: transform 0.3s ease;
 }
 
-.metar-card .pointer-arrow {
+/* .metar-card .pointer-arrow {
   width: 0;
   height: 0;
   border-left: 5px solid transparent;
@@ -474,8 +474,76 @@
 
 .metar-summary.dark .metar-card .pointer-arrow {
   border-bottom-color: #60a5fa;
+} */
+* /*============================================
+   Wind Compass Pointer - Apple Weather Style
+   Double-ended: dot/tail shows "from", point shows "to"
+   ============================================ */
+
+.compass-pointer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
 }
 
+/* The full pointer element */
+.pointer-arrow {
+  position: relative;
+  width: 4px;
+  height: 50px;  /* Full height of pointer */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Arrow point (bottom - direction wind is going TO) */
+.pointer-arrow::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 12px solid #3b82f6;
+}
+
+/* Shaft */
+.pointer-arrow::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 12px;
+  width: 3px;
+  background: #3b82f6;
+  border-radius: 1px;
+}
+
+/* Tail circle (top - direction wind is coming FROM) */
+.pointer-tail {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+
+/* Dark mode */
+.dark .pointer-arrow::after {
+  border-top-color: #60a5fa;
+}
+
+.dark .pointer-arrow::before {
+  background: #60a5fa;
+}
+
+.dark .pointer-tail {
+  background: #60a5fa;
+}
 .metar-card .compass-center-dot {
   position: absolute;
   top: 50%;

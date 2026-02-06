@@ -47,8 +47,6 @@ interface HourlyChartSimpleProps {
   stationId: string;
   stationName: string;
   darkMode?: boolean;
-  startDate: string;
-  endDate: string;
   onDateRangeChange: (range: string) => void;
   initialRange?: string;
 }
@@ -58,8 +56,6 @@ export default function HourlyChartSimple({
   stationId,
   stationName,
   darkMode = false,
-  startDate,
-  endDate,
   onDateRangeChange,
   initialRange = '1D',
 }: HourlyChartSimpleProps) {
@@ -307,7 +303,7 @@ export default function HourlyChartSimple({
     
     title: {
       text: shortenStationName(stationName),
-      subtext: `${formatDisplayDate(startDate)} – ${formatDisplayDate(endDate)}`,
+      // subtext: `${formatDisplayDate(startDate)} – ${formatDisplayDate(endDate)}`,
       left: 'center',
       top: 8,
       itemGap: 4,

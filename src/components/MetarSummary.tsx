@@ -448,16 +448,19 @@ export default function MetarSummary({
                     ))}
                   </div>
                   
-                  {data.wind_direction_deg !== null ? (
+                  {data.wind_direction_deg !== null && data.wind_direction_deg !== undefined? (
                     <div 
                       className="compass-pointer"
                       style={{ transform: `rotate(${data.wind_direction_deg}deg)` }}
                     >
-                      <div className="pointer-arrow" />
+                    <div className="pointer-arrow">
+                    <div className="pointer-tail" />
                     </div>
-                  ) : (
-                    <div className="compass-center-dot" />
-                  )}
+                    <div className="pointer-pin" />
+                </div>
+                ) : (
+                <div className="compass-center-dot" />
+                )}
                 </div>
               </div>
               

@@ -1110,16 +1110,19 @@ useEffect(() => {
             ))}
           </div>
           
-          {current.wind_direction_deg !== null && current.wind_direction_deg !== undefined ? (
-            <div 
-              className="compass-pointer"
-              style={{ transform: `rotate(${current.wind_direction_deg}deg)` }}
-            >
-              <div className="pointer-arrow" />
+        {current.wind_direction_deg !== null && current.wind_direction_deg !== undefined ? (
+          <div 
+            className="compass-pointer"
+            style={{ transform: `rotate(${current.wind_direction_deg + 0}deg)` }}
+          >
+            <div className="pointer-arrow">
+              <div className="pointer-tail" />
             </div>
-          ) : (
-            <div className="compass-center-dot" />
-          )}
+            <div className="pointer-pin" />
+          </div>
+        ) : (
+          <div className="compass-center-dot" />
+        )}
         </div>
       </div>
       
