@@ -14,6 +14,7 @@ import SunshineModal from './SunshineModal';
 import CloudCoverModal from './CloudCoverModal';
 import HourlyPrecipModal from './HourlyPrecipModal';
 import MetarModal from './MetarModal';
+import WindModal from './WindModal';
 import { useState, useEffect, useRef  } from 'react';
 
 import { 
@@ -659,6 +660,7 @@ export default function StationSummaryCard({
       : null;
   const [showSunshineModal, setShowSunshineModal] = useState(false);
   const [showCloudCoverModal, setShowCloudCoverModal] = useState(false);
+  const [showWindModal, setShowWindModal] = useState(false);
 
   // After the data loads, scroll to the right
 useEffect(() => {
@@ -877,16 +879,20 @@ useEffect(() => {
   <span className="stat-label">CLOUDS</span>
 </div>
 
-    {/* 4. Avg Wind */}
-    <div className="stat-item-vertical">
-      <Wind size={18} className="stat-icon" style={{ color: '#94a3b8' }} />
-      <span className="stat-value">
-        {last_24h.avg_wind_mph !== null 
-          ? <>{Math.round(last_24h.avg_wind_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
-          : '--'}
-      </span>
-      <span className="stat-label">WINDS</span>
-    </div>
+  {/* 4. Avg Wind */}
+  <div 
+    className="stat-item-vertical clickable"
+    onClick={() => setShowWindModal(true)}
+    title="View wind details"
+  >
+    <Wind size={18} className="stat-icon" style={{ color: '#0891b2' }} />
+    <span className="stat-value">
+      {last_24h.avg_wind_mph !== null 
+        ? <>{Math.round(last_24h.avg_wind_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
+        : '--'}
+    </span>
+    <span className="stat-label">WINDS</span>
+  </div>
 
     {/* 5. Max Gust */}
     <div className="stat-item-vertical">
@@ -1529,6 +1535,17 @@ useEffect(() => {
       isOpen={showCloudCoverModal}
       onClose={() => setShowCloudCoverModal(false)}
     />
+
+    {/* Wind Modal */}
+  <WindModal
+  stationId={stationId}
+  stationName={displayName}
+  darkMode={darkMode}
+  isOpen={showWindModal}
+  onClose={() => setShowWindModal(false)}
+  currentWind={current.wind_mph}
+  currentGust={current.wind_gust_mph}
+/>
 
     </div>
     

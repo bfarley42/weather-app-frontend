@@ -1,0 +1,603 @@
+/* src/components/WindModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.wind-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: windOverlayFadeIn 0.2s ease-out;
+}
+
+.wind-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes windOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.wind-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: windModalSlideUp 0.3s ease-out;
+}
+
+.wind-modal-overlay.dark .wind-modal {
+  background: #0f172a;
+}
+
+@keyframes windModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .wind-modal-overlay {
+    align-items: center;
+  }
+  
+  .wind-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: windModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes windModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.wind-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.wind-modal-overlay.dark .wind-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .wind-modal-handle {
+    display: none;
+  }
+}
+
+.wind-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.wind-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.wind-modal-overlay.dark .wind-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.wind-modal-overlay.dark .wind-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.wind-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.wind-modal-loading,
+.wind-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.wind-modal-overlay.dark .wind-modal-loading,
+.wind-modal-overlay.dark .wind-modal-error {
+  color: #94a3b8;
+}
+
+.wind-modal-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(8, 145, 178, 0.2);
+  border-top-color: #0891b2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.wind-modal-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.wind-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.wind-modal-overlay.dark .wind-modal-title {
+  color: #f1f5f9;
+}
+
+.wind-modal-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.wind-modal-overlay.dark .wind-modal-subtitle {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   Summary Cards - Cyan/Teal Theme
+   ============================================================================ */
+.wind-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.wind-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.1);
+}
+
+.wind-modal-overlay.dark .wind-summary-card {
+  background: linear-gradient(135deg, #164e63 0%, #155e75 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Current card highlight */
+.wind-summary-card.current {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.wind-modal-overlay.dark .wind-summary-card.current {
+  background: linear-gradient(135deg, #0e7490 0%, #0891b2 100%);
+}
+
+.wind-summary-card.current .wind-card-icon,
+.wind-summary-card.current .wind-card-value,
+.wind-summary-card.current .wind-card-unit,
+.wind-summary-card.current .wind-card-label {
+  color: #ffffff;
+}
+
+/* Gust card - orange accent */
+.wind-summary-card.gust {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.1);
+}
+
+.wind-modal-overlay.dark .wind-summary-card.gust {
+  background: linear-gradient(135deg, #7c2d12 0%, #9a3412 100%);
+}
+
+.wind-summary-card.gust .wind-card-icon {
+  color: #ea580c;
+}
+
+.wind-modal-overlay.dark .wind-summary-card.gust .wind-card-icon {
+  color: #fdba74;
+}
+
+.wind-summary-card.gust .wind-card-value {
+  color: #c2410c;
+}
+
+.wind-modal-overlay.dark .wind-summary-card.gust .wind-card-value {
+  color: #fed7aa;
+}
+
+.wind-card-icon {
+  color: #0891b2;
+  margin-bottom: 6px;
+}
+
+.wind-modal-overlay.dark .wind-card-icon {
+  color: #22d3ee;
+}
+
+.wind-card-icon.gust-icon {
+  animation: gustPulse 2s ease-in-out infinite;
+}
+
+@keyframes gustPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.wind-card-value {
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: #0e7490;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.wind-modal-overlay.dark .wind-card-value {
+  color: #ecfeff;
+}
+
+.wind-card-unit {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #0891b2;
+  margin-left: 2px;
+}
+
+.wind-modal-overlay.dark .wind-card-unit {
+  color: #67e8f9;
+}
+
+.wind-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0e7490;
+  margin-top: 4px;
+}
+
+.wind-modal-overlay.dark .wind-card-label {
+  color: #a5f3fc;
+}
+
+.wind-summary-card.gust .wind-card-label {
+  color: #9a3412;
+}
+
+.wind-modal-overlay.dark .wind-summary-card.gust .wind-card-label {
+  color: #fdba74;
+}
+
+.wind-card-time {
+  font-size: 0.7rem;
+  color: #9a3412;
+  margin-top: 2px;
+}
+
+.wind-modal-overlay.dark .wind-card-time {
+  color: #fcd34d;
+}
+
+/* ============================================================================
+   Breakdown Row
+   ============================================================================ */
+.wind-breakdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  margin-bottom: 12px;
+}
+
+.wind-breakdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.wind-breakdown-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0e7490;
+}
+
+.wind-modal-overlay.dark .wind-breakdown-value {
+  color: #22d3ee;
+}
+
+.wind-breakdown-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wind-modal-overlay.dark .wind-breakdown-label {
+  color: #94a3b8;
+}
+
+.wind-breakdown-divider {
+  width: 1px;
+  height: 28px;
+  background: #cbd5e1;
+}
+
+.wind-modal-overlay.dark .wind-breakdown-divider {
+  background: #475569;
+}
+
+/* ============================================================================
+   Toggle
+   ============================================================================ */
+.wind-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.wind-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wind-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.wind-modal-overlay.dark .wind-toggle-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.wind-modal-overlay.dark .wind-toggle-btn:hover {
+  background: #334155;
+}
+
+.wind-toggle-btn .toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.wind-modal-overlay.dark .wind-toggle-btn .toggle-label {
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.wind-toggle-btn .toggle-switch {
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.wind-toggle-btn .toggle-switch.on {
+  background: #0891b2;
+}
+
+.wind-modal-overlay.dark .wind-toggle-btn .toggle-switch {
+  background: #475569;
+}
+
+.wind-modal-overlay.dark .wind-toggle-btn .toggle-switch.on {
+  background: #22d3ee;
+}
+
+.wind-toggle-btn .toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.wind-toggle-btn .toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+/* ============================================================================
+   Legend
+   ============================================================================ */
+.wind-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.wind-modal-overlay.dark .wind-legend {
+  border-top-color: #334155;
+}
+
+.wind-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.wind-modal-overlay.dark .wind-legend .legend-item {
+  color: #94a3b8;
+}
+
+.wind-legend .legend-line {
+  width: 20px;
+  height: 3px;
+  background: #0891b2;
+  border-radius: 2px;
+}
+
+.wind-modal-overlay.dark .wind-legend .legend-line {
+  background: #22d3ee;
+}
+
+.wind-legend .legend-diamond {
+  width: 10px;
+  height: 10px;
+  background: #ea580c;
+  transform: rotate(45deg);
+}
+
+.wind-modal-overlay.dark .wind-legend .legend-diamond {
+  background: #f97316;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .wind-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .wind-summary-cards {
+    gap: 8px;
+  }
+  
+  .wind-summary-card {
+    padding: 10px 6px;
+  }
+  
+  .wind-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .wind-card-value {
+    font-size: 1.4rem;
+  }
+  
+  .wind-card-unit {
+    font-size: 0.75rem;
+  }
+  
+  .wind-card-label {
+    font-size: 0.6rem;
+  }
+  
+  .wind-card-time {
+    font-size: 0.6rem;
+  }
+  
+  .wind-breakdown {
+    gap: 12px;
+  }
+  
+  .wind-breakdown-value {
+    font-size: 1rem;
+  }
+  
+  .wind-breakdown-label {
+    font-size: 0.65rem;
+  }
+  
+  .wind-toggle-btn {
+    padding: 8px 14px;
+  }
+  
+  .wind-toggle-btn .toggle-label {
+    font-size: 0.85rem;
+  }
+  
+  .wind-toggle-btn .toggle-switch {
+    width: 40px;
+    height: 24px;
+  }
+  
+  .wind-toggle-btn .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .wind-toggle-btn .toggle-switch.on .toggle-knob {
+    transform: translateX(16px);
+  }
+  
+  .wind-legend {
+    gap: 16px;
+  }
+  
+  .wind-legend .legend-item {
+    font-size: 0.75rem;
+  }
+}
