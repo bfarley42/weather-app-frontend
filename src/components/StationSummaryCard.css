@@ -129,7 +129,7 @@
 }
 
 .current-temp {
-  font-size: 4rem;
+  font-size: 4.8rem;
   font-weight: 200;
   color: #0f172a;
   line-height: 1;
@@ -162,9 +162,9 @@
 }
 
 .feels-like {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 16px;
   font-weight: 500;
 }
 
@@ -959,12 +959,12 @@
   }
   
   .current-temp {
-    font-size: 3rem;
+    font-size: 4.5rem;
   }
   
   .feels-like {
-    font-size: 0.8rem;
-    margin-top: 6px;
+    font-size: 0.9rem;
+    margin-top: 10px;
   }
   
   .weather-icon {
@@ -2280,4 +2280,37 @@
   margin-top: -16px;  /* pull it up */
   padding-top: 0;
   gap: 2px;
+}
+.stat-item-vertical.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  border-radius: 8px;
+  padding: 8px;
+  margin: -8px;
+}
+
+.stat-item-vertical.clickable:hover {
+  transform: translateY(-2px);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.dark .stat-item-vertical.clickable:hover {
+  background: rgba(96, 165, 250, 0.12);
+}
+/* Sunshine icon - golden yellow */
+.stat-icon.sunshine-icon {
+  color: #f59e0b;
+}
+
+.dark .stat-icon.sunshine-icon {
+  color: #fbbf24;
+}
+
+/* Cloud icon - blue-gray */
+.stat-icon.cloud-icon {
+  color: #64748b;
+}
+
+.dark .stat-icon.cloud-icon {
+  color: #94a3b8;
 }

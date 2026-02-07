@@ -1,0 +1,530 @@
+/* src/components/CloudCoverModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.cloudcover-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: cloudcoverOverlayFadeIn 0.2s ease-out;
+}
+
+.cloudcover-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes cloudcoverOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.cloudcover-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: cloudcoverModalSlideUp 0.3s ease-out;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-modal {
+  background: #0f172a;
+}
+
+@keyframes cloudcoverModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .cloudcover-modal-overlay {
+    align-items: center;
+  }
+  
+  .cloudcover-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: cloudcoverModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes cloudcoverModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.cloudcover-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .cloudcover-modal-handle {
+    display: none;
+  }
+}
+
+.cloudcover-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.cloudcover-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.cloudcover-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.cloudcover-modal-loading,
+.cloudcover-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-modal-loading,
+.cloudcover-modal-overlay.dark .cloudcover-modal-error {
+  color: #94a3b8;
+}
+
+.cloudcover-modal-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(100, 116, 139, 0.2);
+  border-top-color: #64748b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.cloudcover-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.cloudcover-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-title {
+  color: #f1f5f9;
+}
+
+.cloudcover-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-subtitle {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   Summary Stats - Grayish Blue Theme
+   ============================================================================ */
+.cloudcover-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.15);
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-summary {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.cloudcover-stat-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cloudcover-icon {
+  color: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-icon {
+  color: #94a3b8;
+}
+
+.cloudcover-pct {
+  font-size: 3rem;
+  font-weight: 300;
+  color: #334155;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-pct {
+  color: #f1f5f9;
+}
+
+.cloudcover-pct-symbol {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #475569;
+  margin-left: -4px;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-pct-symbol {
+  color: #cbd5e1;
+}
+
+.cloudcover-stat-secondary {
+  margin-top: 2px;
+}
+
+.cloudcover-label {
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-label {
+  color: #94a3b8;
+}
+
+/* Breakdown Row */
+.cloudcover-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(71, 85, 105, 0.2);
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-breakdown {
+  border-top-color: rgba(148, 163, 184, 0.2);
+}
+
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.breakdown-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cloudcover-modal-overlay.dark .breakdown-value {
+  color: #f1f5f9;
+}
+
+.breakdown-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cloudcover-modal-overlay.dark .breakdown-label {
+  color: #94a3b8;
+}
+
+.breakdown-divider {
+  width: 1px;
+  height: 30px;
+  background: rgba(71, 85, 105, 0.3);
+}
+
+.cloudcover-modal-overlay.dark .breakdown-divider {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* ============================================================================
+   Toggle
+   ============================================================================ */
+.cloudcover-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.cloudcover-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cloudcover-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-toggle-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-toggle-btn:hover {
+  background: #334155;
+}
+
+.cloudcover-toggle-btn .toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-toggle-btn .toggle-label {
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.cloudcover-toggle-btn .toggle-switch {
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.cloudcover-toggle-btn .toggle-switch.on {
+  background: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-toggle-btn .toggle-switch {
+  background: #475569;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-toggle-btn .toggle-switch.on {
+  background: #94a3b8;
+}
+
+.cloudcover-toggle-btn .toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.cloudcover-toggle-btn .toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+/* ============================================================================
+   Legend
+   ============================================================================ */
+.cloudcover-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-legend {
+  border-top-color: #334155;
+}
+
+.cloudcover-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-legend .legend-item {
+  color: #94a3b8;
+}
+
+.cloudcover-legend .legend-color {
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.cloudcover-legend .legend-color.clear-color {
+  background: #bfdbfe;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-legend .legend-color.clear-color {
+  background: #93c5fd;
+}
+
+.cloudcover-legend .legend-color.partly-color {
+  background: #cbd5e1;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-legend .legend-color.partly-color {
+  background: #94a3b8;
+}
+
+.cloudcover-legend .legend-color.overcast-color {
+  background: #64748b;
+}
+
+.cloudcover-modal-overlay.dark .cloudcover-legend .legend-color.overcast-color {
+  background: #475569;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .cloudcover-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .cloudcover-summary {
+    padding: 12px;
+  }
+  
+  .cloudcover-pct {
+    font-size: 2.5rem;
+  }
+  
+  .cloudcover-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .cloudcover-pct-symbol {
+    font-size: 1.2rem;
+  }
+  
+  .cloudcover-breakdown {
+    gap: 8px;
+  }
+  
+  .breakdown-value {
+    font-size: 1.1rem;
+  }
+  
+  .breakdown-label {
+    font-size: 0.65rem;
+  }
+  
+  .cloudcover-toggle-btn {
+    padding: 8px 14px;
+  }
+  
+  .cloudcover-toggle-btn .toggle-label {
+    font-size: 0.85rem;
+  }
+  
+  .cloudcover-toggle-btn .toggle-switch {
+    width: 40px;
+    height: 24px;
+  }
+  
+  .cloudcover-toggle-btn .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .cloudcover-toggle-btn .toggle-switch.on .toggle-knob {
+    transform: translateX(16px);
+  }
+  
+  .cloudcover-legend {
+    gap: 12px;
+  }
+  
+  .cloudcover-legend .legend-item {
+    font-size: 0.7rem;
+  }
+}

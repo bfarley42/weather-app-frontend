@@ -1,0 +1,459 @@
+/* src/components/SunshineModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.sunshine-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: sunshineOverlayFadeIn 0.2s ease-out;
+}
+
+.sunshine-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes sunshineOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.sunshine-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: sunshineModalSlideUp 0.3s ease-out;
+}
+
+.sunshine-modal-overlay.dark .sunshine-modal {
+  background: #0f172a;
+}
+
+@keyframes sunshineModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .sunshine-modal-overlay {
+    align-items: center;
+  }
+  
+  .sunshine-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: sunshineModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes sunshineModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.sunshine-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.sunshine-modal-overlay.dark .sunshine-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .sunshine-modal-handle {
+    display: none;
+  }
+}
+
+.sunshine-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.sunshine-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.sunshine-modal-overlay.dark .sunshine-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.sunshine-modal-overlay.dark .sunshine-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.sunshine-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.sunshine-modal-loading,
+.sunshine-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.sunshine-modal-overlay.dark .sunshine-modal-loading,
+.sunshine-modal-overlay.dark .sunshine-modal-error {
+  color: #94a3b8;
+}
+
+.sunshine-modal-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.sunshine-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.sunshine-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.sunshine-modal-overlay.dark .sunshine-title {
+  color: #f1f5f9;
+}
+
+.sunshine-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.sunshine-modal-overlay.dark .sunshine-subtitle {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   Summary Stats
+   ============================================================================ */
+.sunshine-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+}
+
+.sunshine-modal-overlay.dark .sunshine-summary {
+  background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sunshine-stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.sunshine-icon {
+  font-size: 2rem;
+  color: #f5b301;
+  line-height: 1;
+  margin-right: 0.35rem;
+}
+
+.sunshine-hours {
+  font-size: 3rem;
+  font-weight: 300;
+  color: #92400e;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.sunshine-modal-overlay.dark .sunshine-hours {
+  color: #fef3c7;
+}
+
+.sunshine-hours-label {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #b45309;
+}
+
+.sunshine-modal-overlay.dark .sunshine-hours-label {
+  color: #fde68a;
+}
+
+.sunshine-stat-secondary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.sunshine-pct {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.sunshine-modal-overlay.dark .sunshine-pct {
+  color: #fef3c7;
+}
+
+.sunshine-pct-label {
+  font-size: 0.85rem;
+  color: #b45309;
+}
+
+.sunshine-modal-overlay.dark .sunshine-pct-label {
+  color: #fcd34d;
+}
+
+/* ============================================================================
+   Toggle
+   ============================================================================ */
+.sunshine-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.sunshine-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sunshine-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.sunshine-modal-overlay.dark .sunshine-toggle-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.sunshine-modal-overlay.dark .sunshine-toggle-btn:hover {
+  background: #334155;
+}
+
+.sunshine-toggle-btn .toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.sunshine-modal-overlay.dark .sunshine-toggle-btn .toggle-label {
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.sunshine-toggle-btn .toggle-switch {
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.sunshine-toggle-btn .toggle-switch.on {
+  background: #f59e0b;
+}
+
+.sunshine-modal-overlay.dark .sunshine-toggle-btn .toggle-switch {
+  background: #475569;
+}
+
+.sunshine-modal-overlay.dark .sunshine-toggle-btn .toggle-switch.on {
+  background: #f59e0b;
+}
+
+.sunshine-toggle-btn .toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.sunshine-toggle-btn .toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+/* ============================================================================
+   Legend
+   ============================================================================ */
+.sunshine-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.sunshine-modal-overlay.dark .sunshine-legend {
+  border-top-color: #334155;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.sunshine-modal-overlay.dark .legend-item {
+  color: #94a3b8;
+}
+
+.legend-color {
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-color.sunshine-color {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.legend-color.night-color {
+  background: #cbd5e1;
+}
+
+.sunshine-modal-overlay.dark .legend-color.night-color {
+  background: #334155;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .sunshine-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .sunshine-summary {
+    padding: 12px;
+  }
+  
+  .sunshine-hours {
+    font-size: 2.5rem;
+  }
+  
+  .sunshine-icon {
+    font-size: 1.9rem;
+  }
+  
+  .sunshine-pct {
+    font-size: 1.2rem;
+  }
+  
+  .sunshine-toggle-btn {
+    padding: 8px 14px;
+  }
+  
+  .sunshine-toggle-btn .toggle-label {
+    font-size: 0.85rem;
+  }
+  
+  .sunshine-toggle-btn .toggle-switch {
+    width: 40px;
+    height: 24px;
+  }
+  
+  .sunshine-toggle-btn .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .sunshine-toggle-btn .toggle-switch.on .toggle-knob {
+    transform: translateX(16px);
+  }
+  
+  .sunshine-legend {
+    gap: 16px;
+  }
+}

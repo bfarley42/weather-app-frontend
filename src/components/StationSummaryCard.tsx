@@ -8,9 +8,14 @@
  */
 import HourlyChartModal from './HourlyChartModal';
 import ConditionHistoryModal from './ConditionHistoryModal';
+import ConditionSummary24HModal from './ConditionSummary24HModal';
 import { getWeatherIcon, getConditionIcon } from '../utils/weatherIcons';
+import SunshineModal from './SunshineModal';
+import CloudCoverModal from './CloudCoverModal';
+import HourlyPrecipModal from './HourlyPrecipModal';
 import MetarModal from './MetarModal';
 import { useState, useEffect, useRef  } from 'react';
+
 import { 
   Droplets, 
   Wind, 
@@ -22,14 +27,14 @@ import {
 
 import { 
   FaThermometerHalf, 
-  FaArrowUp,
-  FaArrowDown
+  // FaArrowUp,
+  // FaArrowDown
 } from 'react-icons/fa';
-
-import { IoSpeedometerOutline } from 'react-icons/io5';
+import { Sun, Cloud, /* ...other icons you already have */ } from 'lucide-react';
+// import { IoSpeedometerOutline } from 'react-icons/io5';
 import { API_URL } from '../config';
 import './StationSummaryCard.css';
-import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
+// import { PiThermometerColdFill, PiThermometerHotFill, PiThermometerFill  } from "react-icons/pi";
 import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
 import { WiThermometer, WiRaindrop } from 'react-icons/wi';
 // ============================================================================
@@ -69,6 +74,13 @@ interface Last24hStats {
   observation_count: number;
   avg_dewpoint_f: number | null;
 
+}
+
+interface SunshineStats {
+  sunshineHours: number;
+  sunshinePct: number;
+  cloudCoverPct: number;
+  daylightHours: number;
 }
 
 interface HourlyDataPoint {
@@ -273,6 +285,134 @@ function DailyTempBar({ low, high, normalLow, normalHigh, currentTemp, globalMin
     </div>
   );
 }
+
+function calculateSunshineStats(
+  hourlyHistory: HourlyDataPoint[],
+  sunTimes: SunTimes | null
+): SunshineStats | null {
+
+  if (!hourlyHistory || hourlyHistory.length === 0 || !sunTimes?.sunrise || !sunTimes?.sunset) {
+    
+    return null;
+  }
+
+  // Parse sunrise/sunset times to get hour values
+  const parseTimeToHour = (timeStr: string): number => {
+    // Expects format like "7:15 AM" or "5:30 PM"
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return 0;
+    let hour = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+    return hour + minutes / 60;
+  };
+
+  const sunriseHour = parseTimeToHour(sunTimes.sunrise);
+  const sunsetHour = parseTimeToHour(sunTimes.sunset);
+  const daylightHours = sunsetHour - sunriseHour;
+
+ 
+  // Sky code to cloud cover percentage
+  const skyToCloudPct = (skyCode: string | null): number => {
+    if (!skyCode) return 50; // Unknown - assume 50%
+    const code = skyCode.toUpperCase();
+    switch (code) {
+      case 'CLR':
+      case 'SKC': return 0;
+      case 'FEW': return 18;
+      case 'SCT': return 44;
+      case 'BKN': return 75;
+      case 'OVC': return 100;
+      default: return 50;
+    }
+  };
+
+  // Sky code to sunshine factor (inverse of cloud cover, but not linear)
+  const skyToSunshineFactor = (skyCode: string | null): number => {
+    if (!skyCode) return 0.5;
+    const code = skyCode.toUpperCase();
+    switch (code) {
+      case 'CLR':
+      case 'SKC': return 1.0;
+      case 'FEW': return 0.90;
+      case 'SCT': return 0.55;
+      case 'BKN': return 0.25;
+      case 'OVC': return 0.05;
+      default: return 0.5;
+    }
+  };
+
+  // Precipitation/visibility attenuation factor
+  const wxToAttenuation = (wxCode: string | null): number => {
+    if (!wxCode) return 1.0;
+    const wx = wxCode.toLowerCase();
+    if (wx.includes('ts')) return 0.0;   // Thunderstorm
+    if (wx.includes('+ra')) return 0.05; // Heavy rain
+    if (wx.includes('ra')) return 0.10;  // Rain
+    if (wx.includes('-ra')) return 0.15; // Light rain
+    if (wx.includes('sn')) return 0.05;  // Snow
+    if (wx.includes('fz')) return 0.05;  // Freezing precip
+    if (wx.includes('dz')) return 0.20;  // Drizzle
+    if (wx.includes('fg')) return 0.15;  // Fog
+    if (wx.includes('br')) return 0.70;  // Mist
+    if (wx.includes('hz')) return 0.75;  // Haze
+    return 1.0;
+  };
+
+// Parse hour string to numeric hour (e.g., "6am" -> 6, "1 PM" -> 13, "2pm" -> 14)
+const parseHourLabel = (hourStr: string): number => {
+  const match = hourStr.match(/(\d+)\s*(AM|PM|am|pm)/i);
+  if (!match) {
+    
+    return -1;
+  }
+  let hour = parseInt(match[1]);
+  const period = match[2].toUpperCase();
+  if (period === 'PM' && hour !== 12) hour += 12;
+  if (period === 'AM' && hour === 12) hour = 0;
+  return hour;
+};
+
+  let totalSunshine = 0;
+  let totalCloudCover = 0;
+  let daylightObservations = 0;
+  
+
+  hourlyHistory.forEach(hour => {
+    const hourNum = parseHourLabel(hour.hour);
+    if (hourNum < 0) return;
+
+    // Only count daylight hours for sunshine
+    const isDaylight = hourNum >= Math.floor(sunriseHour) && hourNum < Math.ceil(sunsetHour);
+
+    if (isDaylight) {
+      const sunshineFactor = skyToSunshineFactor(hour.sky_code);
+      const attenuation = wxToAttenuation(hour.wx_code);
+      totalSunshine += sunshineFactor * attenuation;
+      daylightObservations++;
+    }
+
+    // Cloud cover counts all hours
+    totalCloudCover += skyToCloudPct(hour.sky_code);
+  });
+
+  const avgCloudCover = hourlyHistory.length > 0 
+    ? totalCloudCover / hourlyHistory.length 
+    : 0;
+
+const sunshinePct = daylightObservations > 0 
+  ? (totalSunshine / daylightObservations) * 100 
+  : 0;
+
+  return {
+    sunshineHours: Math.round(totalSunshine * 10) / 10, // Round to 1 decimal
+    sunshinePct: Math.round(sunshinePct),
+    cloudCoverPct: Math.round(avgCloudCover),
+    daylightHours: Math.round(daylightHours * 10) / 10,
+  };
+}
 // ============================================================================
 // Unified Weather Icon Function
 // ============================================================================
@@ -285,58 +425,58 @@ function getWindDirection(degrees: number): string {
   return directions[index];
 }
 
-interface ThermometerResult {
-  icon: React.ReactNode;
-  color: string;
-}
+// interface ThermometerResult {
+//   icon: React.ReactNode;
+//   color: string;
+// }
 
-function getThermometerIcon(tempDiff: number | null, size: number = 18): ThermometerResult {
-  // Default (no data)
-  if (tempDiff === null) {
-    return { 
-      icon: <PiThermometerFill  size={size} />, 
-      color: '#8d8d8dff' 
-    };
-  }
+// function getThermometerIcon(tempDiff: number | null, size: number = 18): ThermometerResult {
+//   // Default (no data)
+//   if (tempDiff === null) {
+//     return { 
+//       icon: <PiThermometerFill  size={size} />, 
+//       color: '#8d8d8dff' 
+//     };
+//   }
   
-  // Much Colder: <= -10°
-  if (tempDiff <= -10) {
-    return { 
-      icon: <PiThermometerColdFill  size={size} />, 
-      color: '#3ea8e6ff' 
-    };
-  }
+//   // Much Colder: <= -10°
+//   if (tempDiff <= -10) {
+//     return { 
+//       icon: <PiThermometerColdFill  size={size} />, 
+//       color: '#3ea8e6ff' 
+//     };
+//   }
   
-  // Colder: -10° to -5°
-  if (tempDiff <= -5) {
-    return { 
-      icon: <PiThermometerFill  size={size} />, 
-      color: '#8d8d8dff' 
-    };
-  }
+//   // Colder: -10° to -5°
+//   if (tempDiff <= -5) {
+//     return { 
+//       icon: <PiThermometerFill  size={size} />, 
+//       color: '#8d8d8dff' 
+//     };
+//   }
   
-  // Normal: -5° to +5°
-  if (tempDiff <= 5) {
-    return { 
-      icon: <PiThermometerFill  size={size} />, 
-      color: '#8d8d8dff' 
-    };
-  }
+//   // Normal: -5° to +5°
+//   if (tempDiff <= 5) {
+//     return { 
+//       icon: <PiThermometerFill  size={size} />, 
+//       color: '#8d8d8dff' 
+//     };
+//   }
   
-  // Warmer: +5° to +10°
-  if (tempDiff <= 10) {
-    return { 
-      icon: <FaThermometerHalf size={size} />, 
-      color: '#8d8d8dff' 
-    };
-  }
+//   // Warmer: +5° to +10°
+//   if (tempDiff <= 10) {
+//     return { 
+//       icon: <FaThermometerHalf size={size} />, 
+//       color: '#8d8d8dff' 
+//     };
+//   }
   
-  // Much Warmer: > +10°
-  return { 
-    icon: <PiThermometerHotFill   size={size} />, 
-    color: '#d61e0d' 
-  };
-}
+//   // Much Warmer: > +10°
+//   return { 
+//     icon: <PiThermometerHotFill   size={size} />, 
+//     color: '#d61e0d' 
+//   };
+// }
 
 // ============================================================================
 // Temperature Gradient Band Component
@@ -512,6 +652,13 @@ export default function StationSummaryCard({
   const [showHourlyChart, setShowHourlyChart] = useState(false);
   const [showConditionHistory, setShowConditionHistory] = useState(false);
   const [showMetarModal, setShowMetarModal] = useState(false);
+  const [showPrecipModal, setShowPrecipModal] = useState(false);
+  const [showConditionSummary24H, setShowConditionSummary24H] = useState(false);
+  const sunshineStats = summary?.hourly_history && summary?.sun_times
+      ? calculateSunshineStats(summary.hourly_history, summary.sun_times)
+      : null;
+  const [showSunshineModal, setShowSunshineModal] = useState(false);
+  const [showCloudCoverModal, setShowCloudCoverModal] = useState(false);
 
   // After the data loads, scroll to the right
 useEffect(() => {
@@ -629,18 +776,6 @@ useEffect(() => {
             Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
         </div>
 
-        {/* Barometric Pressure */}
-        {current.pressure_in !== null && current.pressure_in !== undefined && (
-          <div className="pressure-display" aria-label="Barometric pressure">
-            {/* <span className="pressure-label">Pressure</span> */}
-            <IoSpeedometerOutline size={14} style={{ marginRight: '2px' }} />
-            <span className="pressure-val">{current.pressure_in.toFixed(2)}" Hg</span>
-
-            {current.pressure_trend === 'Rising' && <FaArrowUp size={10} className="trend-up" />}
-            {current.pressure_trend === 'Falling' && <FaArrowDown size={10} className="trend-down" />}
-            {current.pressure_trend === 'Steady' && <span className="trend-steady">—</span>}
-          </div>
-        )}       
 
         </div>
 
@@ -699,41 +834,48 @@ useEffect(() => {
 <div className="stats-scroll-container">
   <div className="stats-row-horizontal">
 
-    {/* 1. Precip */}
-    <div className="stat-item-vertical">
-      <Droplets size={18} className="stat-icon precip-icon" />
-      <span className="stat-value">
-        {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
-      </span>
-      <span className="stat-label">PRECIP</span>
-    </div>
+  {/* 1. Precip */}
+  <div 
+    className="stat-item-vertical clickable"
+    onClick={() => setShowPrecipModal(true)}
+    title="View 24-hour precipitation"
+  >
+    <Droplets size={18} className="stat-icon precip-icon" />
+    <span className="stat-value">
+      {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
+    </span>
+    <span className="stat-label">PRECIP</span>
+  </div>
 
+{/* 2. Sunshine Hours */}
+<div 
+  className="stat-item-vertical clickable"
+  onClick={() => setShowSunshineModal(true)}
+  title="View sunshine breakdown"
+>
+  <Sun size={18} className="stat-icon sunshine-icon" />
+  <span className="stat-value">
+    {sunshineStats 
+      ? <>{sunshineStats.sunshineHours}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>hrs</span></>
+      : '--'}
+  </span>
+  <span className="stat-label">
+    {sunshineStats ? `${sunshineStats.sunshinePct}% SUN` : 'SUNSHINE'}
+  </span>
+</div>
 
-    {/* 2. Dominant condition */}
-    <div className="stat-item-vertical">
-      <div className="condition-stat-icon">
-        {getConditionIcon(last_24h.dominant_condition, 18)}
-      </div>
-      <span className="stat-value">
-        {last_24h.condition_hours ? `${last_24h.condition_hours} hrs` : '--'}
-      </span>
-      <span className="stat-label">{last_24h.dominant_condition || 'COND'}</span>
-    </div>
-
-    {/* 3. Avg Temp vs Normal */}
-    <div className="stat-item-vertical">
-      <div className="stat-icon" style={{ color: getThermometerIcon(vs_normal?.temp_diff_f ?? null).color }}>
-        {getThermometerIcon(vs_normal?.temp_diff_f ?? null, 18).icon}
-      </div>
-      <span className="stat-value">
-        {last_24h.high_f !== null && last_24h.low_f !== null  ? `${Math.round(last_24h.low_f)}°/${Math.round(last_24h.high_f)}°` : '--'}
-      </span>
-      <span className="stat-label">
-        {vs_normal?.temp_diff_f !== null && vs_normal?.temp_diff_f !== undefined
-          ? `${vs_normal.temp_diff_f >= 0 ? '+' : ''}${Math.round(vs_normal.temp_diff_f)}° NORMAL`
-          : 'NORMAL'}
-      </span>
-    </div>
+{/* 3. Cloud Cover */}
+<div 
+  className="stat-item-vertical clickable"
+  onClick={() => setShowCloudCoverModal(true)}
+  title="View cloud cover breakdown"
+>
+  <Cloud size={18} className="stat-icon cloud-icon" />
+  <span className="stat-value">
+    {sunshineStats ? `${sunshineStats.cloudCoverPct}%` : '--'}
+  </span>
+  <span className="stat-label">CLOUDS</span>
+</div>
 
     {/* 4. Avg Wind */}
     <div className="stat-item-vertical">
@@ -1348,6 +1490,44 @@ useEffect(() => {
         visibility_mi: current.visibility_mi ?? null,
         precip_in: null,  // Not in current, but rarely needed
       }}
+    />
+    {/* Hourly Precipitation Modal */}
+    <HourlyPrecipModal
+      stationId={stationId}
+      stationName={displayName}
+      darkMode={darkMode}
+      isOpen={showPrecipModal}
+      onClose={() => setShowPrecipModal(false)}
+      totalPrecip24h={last_24h.precip_in}
+    />
+
+    {/* Condition Summary 24H Modal */}
+    <ConditionSummary24HModal
+      stationId={stationId}
+      stationName={displayName}
+      darkMode={darkMode}
+      isOpen={showConditionSummary24H}   // <-- Change this
+      onClose={() => setShowConditionSummary24H(false)}
+      timezone={summary.timezone ?? 'America/New_York'} 
+    />
+
+    {/* Sunshine Modal */}
+    <SunshineModal
+      stationId={stationId}
+      stationName={displayName}
+      darkMode={darkMode}
+      isOpen={showSunshineModal}
+      onClose={() => setShowSunshineModal(false)}
+      sunTimes={summary.sun_times}
+    />
+
+    {/* Cloud Cover Modal */}
+    <CloudCoverModal
+      stationId={stationId}
+      stationName={displayName}
+      darkMode={darkMode}
+      isOpen={showCloudCoverModal}
+      onClose={() => setShowCloudCoverModal(false)}
     />
 
     </div>
