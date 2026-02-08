@@ -37,7 +37,7 @@ export default function WindModal({
   isOpen,
   onClose,
   currentWind,
-  currentGust,
+//   currentGust,
 }: WindModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +116,7 @@ export default function WindModal({
     }
 
     const winds = data.map(h => h.avg_wspd_mph).filter((w): w is number => w !== null);
-    const gusts = data.map(h => h.max_gust_mph).filter((g): g is number => g !== null && g > 0);
+    // const gusts = data.map(h => h.max_gust_mph).filter((g): g is number => g !== null && g > 0);
     
     const avgWind = winds.length > 0 
       ? winds.reduce((sum, w) => sum + w, 0) / winds.length 

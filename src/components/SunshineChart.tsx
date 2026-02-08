@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
-import { FaSun, FaRegMoon  } from "react-icons/fa6";
+// import { FaSun, FaRegMoon  } from "react-icons/fa6";
 
 
 

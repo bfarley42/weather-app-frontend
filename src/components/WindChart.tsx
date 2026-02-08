@@ -301,7 +301,7 @@ if (gustParam && gustParam.value !== null && gustParam.value !== undefined && !i
           borderWidth: 1.5
         },
         emphasis: {
-          symbolSize: isMobile ? 14 : 16
+        //   symbolSize: isMobile ? 14 : 16
         },
         // Label max gust
         markPoint: maxGustIndex >= 0 ? {

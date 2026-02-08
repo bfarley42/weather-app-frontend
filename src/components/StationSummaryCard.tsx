@@ -9,7 +9,7 @@
 import HourlyChartModal from './HourlyChartModal';
 import ConditionHistoryModal from './ConditionHistoryModal';
 import ConditionSummary24HModal from './ConditionSummary24HModal';
-import { getWeatherIcon, getConditionIcon } from '../utils/weatherIcons';
+import { getWeatherIcon } from '../utils/weatherIcons';
 import SunshineModal from './SunshineModal';
 import CloudCoverModal from './CloudCoverModal';
 import HourlyPrecipModal from './HourlyPrecipModal';
@@ -741,7 +741,7 @@ useEffect(() => {
     );
   }
   
-  const { current, last_24h, vs_normal } = summary;
+  const { current, last_24h } = summary;
   const displayName = stationName || summary.station_name || stationId;
   
   // ----------------------------------------------------------------
