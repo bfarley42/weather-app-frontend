@@ -203,15 +203,15 @@ export default function HourlyChartSimple({
   };
 
   // Format display date for title
-  const formatDisplayDate = (dateStr: string): string => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric'
-    });
-  };
+  // const formatDisplayDate = (dateStr: string): string => {
+  //   if (!dateStr) return '';
+  //   const d = new Date(dateStr);
+  //   return d.toLocaleDateString('en-US', {
+  //     month: '2-digit',
+  //     day: '2-digit',
+  //     year: 'numeric'
+  //   });
+  // };
 
   // Shorten long station names
   const shortenStationName = (name: string): string => {
