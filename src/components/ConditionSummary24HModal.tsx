@@ -10,7 +10,7 @@
  */
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Droplets, Wind, Eye, Thermometer } from 'lucide-react';
+import { Droplets, Wind, Thermometer } from 'lucide-react';
 import MetarModal from './MetarModal';
 import { API_URL } from '../config';
 import './ConditionSummary24HModal.css';
@@ -76,7 +76,7 @@ const conditionStyles: Record<string, { color: string; colorDark: string; icon: 
   'unknown': { color: '#cbd5e1', colorDark: '#e2e8f0', icon: '❓' },
 };
 
-function getConditionStyle(skyCode: string | null, wxCode: string | null, darkMode: boolean) {
+function getConditionStyle(skyCode: string | null, wxCode: string | null, _darkMode: boolean) {
   // Check weather codes first (precipitation takes priority)
   if (wxCode) {
     const wx = wxCode.toLowerCase();
@@ -270,7 +270,7 @@ export default function ConditionHistoryModal({
   darkMode = false,
   isOpen,
   onClose,
-  timezone = 'America/New_York',
+
 }: ConditionHistoryModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyCondition[]>([]);
   const [loading, setLoading] = useState(true);

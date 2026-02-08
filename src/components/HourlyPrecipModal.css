@@ -355,3 +355,8 @@
     transform: translateX(16px);
   }
 }
+.precip-toggle-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

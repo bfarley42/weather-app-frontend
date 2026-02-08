@@ -34,6 +34,7 @@ export default function HourlyPrecipChart({
   const [showCumulative, setShowCumulative] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const chartRef = useRef<ReactECharts | null>(null);
+  const [showTodayOnly, setShowTodayOnly] = useState(false);
 
   // Detect mobile
   useEffect(() => {
@@ -54,7 +55,21 @@ export default function HourlyPrecipChart({
     };
   }, []);
 
-  if (!data || data.length === 0) {
+
+
+// Filter data for today only if toggle is on (same pattern as SunshineModal)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filteredData = showTodayOnly
+    ? data.filter(d => {
+        const hourDate = new Date(d.ts_local);
+        hourDate.setHours(0, 0, 0, 0);
+        return hourDate.getTime() === today.getTime();
+        })
+    : data;
+
+  if (showTodayOnly && filteredData.length === 0) {
     return (
       <div style={{ 
         padding: '60px 20px', 
@@ -66,9 +81,9 @@ export default function HourlyPrecipChart({
     );
   }
 
-  // Prepare data
-  const timestamps = data.map(d => d.ts_local);
-  const precipValues = data.map(d => d.precip_in ?? 0);
+    // Prepare data from filtered set
+    const timestamps = filteredData.map(d => d.ts_local);
+    const precipValues = filteredData.map(d => d.precip_in ?? 0);
 
   // Calculate cumulative values
   const cumulativeValues: number[] = [];
@@ -79,8 +94,8 @@ export default function HourlyPrecipChart({
   });
 
   // Calculate total
-  const calculatedTotal = precipValues.reduce((sum, val) => sum + val, 0);
-  const displayTotal = totalPrecip ?? calculatedTotal;
+    const calculatedTotal = precipValues.reduce((sum, val) => sum + val, 0);
+    const displayTotal = showTodayOnly ? calculatedTotal : (totalPrecip ?? calculatedTotal);
 
   // Format hour for x-axis
   const formatAxisLabel = (dateStr: string) => {
@@ -145,7 +160,7 @@ export default function HourlyPrecipChart({
     
     title: {
       text: shortenStationName(stationName),
-      subtext: 'Last 24 Hours Precipitation',
+      subtext: showTodayOnly ? "Today's Precipitation" : 'Last 24 Hours Precipitation',
       left: 'center',
       top: 5,
       itemGap: 4,
@@ -400,17 +415,30 @@ export default function HourlyPrecipChart({
       </div>
 
       {/* Cumulative Toggle - Apple Style */}
-      <div className={`precip-toggle-container ${darkMode ? 'dark' : ''}`}>
+        <div className={`precip-toggle-container ${darkMode ? 'dark' : ''}`}>
         <button
-          className={`precip-toggle-btn ${showCumulative ? 'active' : ''}`}
-          onClick={() => setShowCumulative(!showCumulative)}
+            className={`precip-toggle-btn ${showCumulative ? 'active' : ''}`}
+            onClick={() => setShowCumulative(!showCumulative)}
         >
-          <span className="toggle-label">Show Cumulative</span>
-          <div className={`toggle-switch ${showCumulative ? 'on' : ''}`}>
+            <span className="toggle-label">Cumulative</span>
+            <div className={`toggle-switch ${showCumulative ? 'on' : ''}`}>
             <div className="toggle-knob" />
-          </div>
+            </div>
         </button>
-      </div>
+
+        <button
+            className={`precip-toggle-btn ${showTodayOnly ? 'active' : ''}`}
+            onClick={() => setShowTodayOnly(!showTodayOnly)}
+        >
+            <span className="toggle-label">Today Only</span>
+            <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
+            <div className="toggle-knob" />
+            </div>
+        </button>
+        </div>
+
+
+
     </div>
   );
 }
