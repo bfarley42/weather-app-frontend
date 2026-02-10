@@ -1,0 +1,575 @@
+/* src/components/HumidityModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.humidity-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: humidityOverlayFadeIn 0.2s ease-out;
+}
+
+.humidity-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes humidityOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.humidity-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: humidityModalSlideUp 0.3s ease-out;
+}
+
+.humidity-modal-overlay.dark .humidity-modal {
+  background: #0f172a;
+}
+
+@keyframes humidityModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .humidity-modal-overlay {
+    align-items: center;
+  }
+  
+  .humidity-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: humidityModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes humidityModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.humidity-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .humidity-modal-handle {
+    display: none;
+  }
+}
+
+.humidity-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.humidity-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.humidity-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.humidity-modal-loading,
+.humidity-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-loading,
+.humidity-modal-overlay.dark .humidity-modal-error {
+  color: #94a3b8;
+}
+
+.humidity-modal-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.humidity-modal-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.humidity-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-title {
+  color: #f1f5f9;
+}
+
+.humidity-modal-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.humidity-modal-overlay.dark .humidity-modal-subtitle {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   Summary Cards - Purple/Blue Theme
+   ============================================================================ */
+.humidity-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.humidity-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+}
+
+.humidity-modal-overlay.dark .humidity-summary-card {
+  background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Current card highlight */
+.humidity-summary-card.current {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.humidity-modal-overlay.dark .humidity-summary-card.current {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+}
+
+.humidity-summary-card.current .humidity-card-icon,
+.humidity-summary-card.current .humidity-card-value,
+.humidity-summary-card.current .humidity-card-unit,
+.humidity-summary-card.current .humidity-card-label {
+  color: #ffffff;
+}
+
+/* Range card */
+.humidity-summary-card.range {
+  justify-content: center;
+  gap: 4px;
+}
+
+.humidity-range-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.humidity-range-label {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.humidity-modal-overlay.dark .humidity-range-label {
+  color: #c4b5fd;
+}
+
+.humidity-range-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.humidity-range-value.high {
+  color: #7c3aed;
+}
+
+.humidity-range-value.low {
+  color: #a78bfa;
+}
+
+.humidity-modal-overlay.dark .humidity-range-value.high {
+  color: #e9d5ff;
+}
+
+.humidity-modal-overlay.dark .humidity-range-value.low {
+  color: #c4b5fd;
+}
+
+.humidity-card-icon {
+  color: #8b5cf6;
+  margin-bottom: 6px;
+}
+
+.humidity-modal-overlay.dark .humidity-card-icon {
+  color: #a78bfa;
+}
+
+.humidity-card-value {
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: #5b21b6;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.humidity-modal-overlay.dark .humidity-card-value {
+  color: #f5f3ff;
+}
+
+.humidity-card-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #7c3aed;
+  margin-left: 1px;
+}
+
+.humidity-modal-overlay.dark .humidity-card-unit {
+  color: #c4b5fd;
+}
+
+.humidity-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6d28d9;
+  margin-top: 4px;
+}
+
+.humidity-modal-overlay.dark .humidity-card-label {
+  color: #ddd6fe;
+}
+
+.humidity-card-comfort {
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   Toggle
+   ============================================================================ */
+.humidity-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.humidity-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.humidity-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.humidity-modal-overlay.dark .humidity-toggle-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.humidity-modal-overlay.dark .humidity-toggle-btn:hover {
+  background: #334155;
+}
+
+.humidity-toggle-btn .toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.humidity-modal-overlay.dark .humidity-toggle-btn .toggle-label {
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.humidity-toggle-btn .toggle-switch {
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.humidity-toggle-btn .toggle-switch.on {
+  background: #8b5cf6;
+}
+
+.humidity-modal-overlay.dark .humidity-toggle-btn .toggle-switch {
+  background: #475569;
+}
+
+.humidity-modal-overlay.dark .humidity-toggle-btn .toggle-switch.on {
+  background: #a78bfa;
+}
+
+.humidity-toggle-btn .toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.humidity-toggle-btn .toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+/* ============================================================================
+   Comfort Scale
+   ============================================================================ */
+.humidity-comfort-scale {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.humidity-modal-overlay.dark .humidity-comfort-scale {
+  border-top-color: #334155;
+}
+
+.humidity-comfort-scale .comfort-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-width: 65px;
+}
+
+.humidity-comfort-scale .comfort-item.dry {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.humidity-comfort-scale .comfort-item.comfortable {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.humidity-comfort-scale .comfort-item.moderate {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.humidity-comfort-scale .comfort-item.humid {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.humidity-modal-overlay.dark .humidity-comfort-scale .comfort-item.dry {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.humidity-modal-overlay.dark .humidity-comfort-scale .comfort-item.comfortable {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.humidity-modal-overlay.dark .humidity-comfort-scale .comfort-item.moderate {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.humidity-modal-overlay.dark .humidity-comfort-scale .comfort-item.humid {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.comfort-item .comfort-range {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.humidity-modal-overlay.dark .comfort-item .comfort-range {
+  color: #cbd5e1;
+}
+
+.comfort-item .comfort-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.comfort-item.dry .comfort-label { color: #f59e0b; }
+.comfort-item.comfortable .comfort-label { color: #22c55e; }
+.comfort-item.moderate .comfort-label { color: #3b82f6; }
+.comfort-item.humid .comfort-label { color: #8b5cf6; }
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .humidity-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .humidity-summary-cards {
+    gap: 8px;
+  }
+  
+  .humidity-summary-card {
+    padding: 10px 6px;
+  }
+  
+  .humidity-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .humidity-card-value {
+    font-size: 1.4rem;
+  }
+  
+  .humidity-card-unit {
+    font-size: 0.85rem;
+  }
+  
+  .humidity-card-label {
+    font-size: 0.6rem;
+  }
+  
+  .humidity-range-value {
+    font-size: 1rem;
+  }
+  
+  .humidity-toggle-btn {
+    padding: 8px 14px;
+  }
+  
+  .humidity-toggle-btn .toggle-label {
+    font-size: 0.85rem;
+  }
+  
+  .humidity-toggle-btn .toggle-switch {
+    width: 40px;
+    height: 24px;
+  }
+  
+  .humidity-toggle-btn .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .humidity-toggle-btn .toggle-switch.on .toggle-knob {
+    transform: translateX(16px);
+  }
+  
+  .humidity-comfort-scale {
+    gap: 6px;
+  }
+  
+  .humidity-comfort-scale .comfort-item {
+    padding: 4px 8px;
+    min-width: 55px;
+  }
+  
+  .comfort-item .comfort-range {
+    font-size: 0.65rem;
+  }
+  
+  .comfort-item .comfort-label {
+    font-size: 0.6rem;
+  }
+}

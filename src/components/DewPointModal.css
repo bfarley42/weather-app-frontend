@@ -1,0 +1,584 @@
+/* src/components/DewPointModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.dewpoint-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: dewpointOverlayFadeIn 0.2s ease-out;
+}
+
+.dewpoint-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes dewpointOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.dewpoint-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: dewpointModalSlideUp 0.3s ease-out;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal {
+  background: #0f172a;
+}
+
+@keyframes dewpointModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .dewpoint-modal-overlay {
+    align-items: center;
+  }
+  
+  .dewpoint-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: dewpointModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes dewpointModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.dewpoint-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .dewpoint-modal-handle {
+    display: none;
+  }
+}
+
+.dewpoint-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.dewpoint-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.dewpoint-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.dewpoint-modal-loading,
+.dewpoint-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-loading,
+.dewpoint-modal-overlay.dark .dewpoint-modal-error {
+  color: #94a3b8;
+}
+
+.dewpoint-modal-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(20, 184, 166, 0.2);
+  border-top-color: #14b8a6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.dewpoint-modal-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.dewpoint-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-title {
+  color: #f1f5f9;
+}
+
+.dewpoint-modal-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-modal-subtitle {
+  color: #94a3b8;
+}
+
+/* ============================================================================
+   Summary Cards - Teal/Green Theme
+   ============================================================================ */
+.dewpoint-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dewpoint-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.1);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-summary-card {
+  background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Current card highlight */
+.dewpoint-summary-card.current {
+  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-summary-card.current {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+}
+
+.dewpoint-summary-card.current .dewpoint-card-icon,
+.dewpoint-summary-card.current .dewpoint-card-value,
+.dewpoint-summary-card.current .dewpoint-card-unit,
+.dewpoint-summary-card.current .dewpoint-card-label {
+  color: #ffffff;
+}
+
+/* Range card */
+.dewpoint-summary-card.range {
+  justify-content: center;
+  gap: 4px;
+}
+
+.dewpoint-range-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dewpoint-range-label {
+  font-size: 0.75rem;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-range-label {
+  color: #5eead4;
+}
+
+.dewpoint-range-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.dewpoint-range-value.high {
+  color: #0d9488;
+}
+
+.dewpoint-range-value.low {
+  color: #2dd4bf;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-range-value.high {
+  color: #99f6e4;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-range-value.low {
+  color: #5eead4;
+}
+
+.dewpoint-card-icon {
+  color: #14b8a6;
+  margin-bottom: 6px;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-card-icon {
+  color: #2dd4bf;
+}
+
+.dewpoint-card-value {
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: #0f766e;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-card-value {
+  color: #f0fdfa;
+}
+
+.dewpoint-card-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0d9488;
+  margin-left: 1px;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-card-unit {
+  color: #5eead4;
+}
+
+.dewpoint-card-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0f766e;
+  margin-top: 4px;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-card-label {
+  color: #99f6e4;
+}
+
+.dewpoint-card-comfort {
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================================================
+   Toggle
+   ============================================================================ */
+.dewpoint-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.dewpoint-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dewpoint-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-toggle-btn {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-toggle-btn:hover {
+  background: #334155;
+}
+
+.dewpoint-toggle-btn .toggle-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-toggle-btn .toggle-label {
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.dewpoint-toggle-btn .toggle-switch {
+  width: 44px;
+  height: 26px;
+  background: #cbd5e1;
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.dewpoint-toggle-btn .toggle-switch.on {
+  background: #14b8a6;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-toggle-btn .toggle-switch {
+  background: #475569;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-toggle-btn .toggle-switch.on {
+  background: #2dd4bf;
+}
+
+.dewpoint-toggle-btn .toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.dewpoint-toggle-btn .toggle-switch.on .toggle-knob {
+  transform: translateX(18px);
+}
+
+/* ============================================================================
+   Comfort Scale
+   ============================================================================ */
+.dewpoint-comfort-scale {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale {
+  border-top-color: #334155;
+}
+
+.dewpoint-comfort-scale .comfort-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  min-width: 50px;
+}
+
+.dewpoint-comfort-scale .comfort-item.dry {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.dewpoint-comfort-scale .comfort-item.comfortable {
+  background: rgba(132, 204, 22, 0.1);
+}
+
+.dewpoint-comfort-scale .comfort-item.slight {
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.dewpoint-comfort-scale .comfort-item.humid {
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.dewpoint-comfort-scale .comfort-item.very-humid {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item.dry {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item.comfortable {
+  background: rgba(132, 204, 22, 0.15);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item.slight {
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item.humid {
+  background: rgba(249, 115, 22, 0.15);
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item.very-humid {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.dewpoint-comfort-scale .comfort-item .comfort-range {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.dewpoint-modal-overlay.dark .dewpoint-comfort-scale .comfort-item .comfort-range {
+  color: #cbd5e1;
+}
+
+.dewpoint-comfort-scale .comfort-item .comfort-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dewpoint-comfort-scale .comfort-item.dry .comfort-label { color: #22c55e; }
+.dewpoint-comfort-scale .comfort-item.comfortable .comfort-label { color: #576e35; }
+.dewpoint-comfort-scale .comfort-item.slight .comfort-label { color: #7e7149; }
+.dewpoint-comfort-scale .comfort-item.humid .comfort-label { color: #d37430; }
+.dewpoint-comfort-scale .comfort-item.very-humid .comfort-label { color: #ef4444; }
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .dewpoint-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .dewpoint-summary-cards {
+    gap: 8px;
+  }
+  
+  .dewpoint-summary-card {
+    padding: 10px 6px;
+  }
+  
+  .dewpoint-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .dewpoint-card-value {
+    font-size: 1.4rem;
+  }
+  
+  .dewpoint-card-unit {
+    font-size: 0.85rem;
+  }
+  
+  .dewpoint-card-label {
+    font-size: 0.6rem;
+  }
+  
+  .dewpoint-range-value {
+    font-size: 1rem;
+  }
+  
+  .dewpoint-toggle-btn {
+    padding: 8px 14px;
+  }
+  
+  .dewpoint-toggle-btn .toggle-label {
+    font-size: 0.85rem;
+  }
+  
+  .dewpoint-toggle-btn .toggle-switch {
+    width: 40px;
+    height: 24px;
+  }
+  
+  .dewpoint-toggle-btn .toggle-knob {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .dewpoint-toggle-btn .toggle-switch.on .toggle-knob {
+    transform: translateX(16px);
+  }
+  
+  .dewpoint-comfort-scale {
+    gap: 4px;
+  }
+  
+  .dewpoint-comfort-scale .comfort-item {
+    padding: 4px 6px;
+    min-width: 45px;
+  }
+  
+  .dewpoint-comfort-scale .comfort-item .comfort-range {
+    font-size: 0.65rem;
+  }
+  
+  .dewpoint-comfort-scale .comfort-item .comfort-label {
+    font-size: 0.55rem;
+  }
+}

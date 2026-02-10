@@ -149,7 +149,7 @@ export default function HourlyPrecipChart({
 
   // Calculate y-axis max for precip bars
   const maxPrecip = Math.max(...precipValues);
-  const precipAxisMax = maxPrecip > 0.25 ? undefined : 0.25;
+  const precipAxisMax = maxPrecip > 0.2 ? undefined : 0.2;
 
   // Calculate cumulative y-axis max
   const maxCumulative = cumulativeValues[cumulativeValues.length - 1] || 0;

@@ -21,6 +21,7 @@ interface HourlyPrecipModalProps {
   isOpen: boolean;
   onClose: () => void;
   totalPrecip24h?: number | null;
+  filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
 export default function HourlyPrecipModal({
@@ -30,6 +31,7 @@ export default function HourlyPrecipModal({
   isOpen,
   onClose,
   totalPrecip24h,
+  filterDate,
 }: HourlyPrecipModalProps) {
   const [precipData, setPrecipData] = useState<HourlyPrecipData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,9 +46,12 @@ export default function HourlyPrecipModal({
       setError(null);
 
       try {
-        const response = await fetch(
-          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`
-        );
+      // Use date-specific endpoint if filterDate provided
+      const url = filterDate
+        ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
+        : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
+      
+      const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch precip data: ${response.status}`);
@@ -66,7 +71,7 @@ export default function HourlyPrecipModal({
     }
 
     fetchPrecipData();
-  }, [isOpen, stationId]);
+  }, [isOpen, stationId, filterDate]);
 
   // Handle escape key
   useEffect(() => {

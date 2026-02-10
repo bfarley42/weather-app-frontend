@@ -27,6 +27,7 @@ interface CloudCoverModalProps {
   darkMode?: boolean;
   isOpen: boolean;
   onClose: () => void;
+  filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
 export default function CloudCoverModal({
@@ -35,6 +36,7 @@ export default function CloudCoverModal({
   darkMode = false,
   isOpen,
   onClose,
+  filterDate,
 }: CloudCoverModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,9 +52,12 @@ export default function CloudCoverModal({
       setError(null);
 
       try {
-        const response = await fetch(
-          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`
-        );
+      // Use date-specific endpoint if filterDate provided
+      const url = filterDate
+        ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
+        : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
+      
+      const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);
@@ -68,7 +73,7 @@ export default function CloudCoverModal({
     }
 
     fetchData();
-  }, [isOpen, stationId]);
+  }, [isOpen, stationId, filterDate]);
 
   // Handle escape key
   useEffect(() => {

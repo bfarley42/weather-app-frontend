@@ -12,6 +12,8 @@ import SunshineChart from './SunshineChart';
 import { API_URL } from '../config';
 import './SunshineModal.css';
 import { FaSun } from "react-icons/fa6";
+import { IoMdInformationCircleOutline } from "react-icons/io";
+
 
 interface HourlyData {
   ts_local: string;
@@ -31,6 +33,7 @@ interface SunshineModalProps {
     sunrise: string | null;
     sunset: string | null;
   } | null;
+  filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
 export default function SunshineModal({
@@ -40,6 +43,7 @@ export default function SunshineModal({
   isOpen,
   onClose,
   sunTimes,
+  filterDate,
 }: SunshineModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,8 +59,13 @@ export default function SunshineModal({
       setError(null);
 
       try {
+      // Use date-specific endpoint if filterDate provided
+      const url = filterDate
+        ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
+        : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
+        
         const response = await fetch(
-          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`
+          url
         );
 
         if (!response.ok) {
@@ -73,7 +82,7 @@ export default function SunshineModal({
     }
 
     fetchData();
-  }, [isOpen, stationId]);
+  }, [isOpen, stationId, filterDate]);
 
   // Handle escape key
   useEffect(() => {
@@ -241,11 +250,24 @@ export default function SunshineModal({
                 </div>
                 <div className="sunshine-stat-secondary">
                   <span className="sunshine-pct">{summary.sunshinePct}%</span>
-                  <span className="sunshine-pct-label">
-                    of {summary.daylightHours} daylight hours
-                  </span>
+<span className="sunshine-pct-label">
+  of {summary.daylightHours} daylight hours
+  <button
+    type="button"
+    className="sunshine-info-btn"
+    aria-label="How sunshine is calculated"
+  > 
+    <span aria-hidden="true"><IoMdInformationCircleOutline /></span>
+    <span className="sunshine-tooltip" role="tooltip">
+      Sunshine hours and % sunshine are modeled from METAR sky cover and weather 
+      codes (wx_codes) during daylight (sunrise to sunset). 
+      These are estimates and may differ from instrument-measured sunshine duration.
+    </span>
+  </button>
+</span>
                 </div>
               </div>
+
 
               {/* Chart */}
               <SunshineChart

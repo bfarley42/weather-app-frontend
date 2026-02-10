@@ -21,6 +21,7 @@ interface HourlyChartModalProps {
   darkMode?: boolean;
   isOpen: boolean;
   onClose: () => void;
+  filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
 // Map range labels to hours
@@ -36,6 +37,7 @@ export default function HourlyChartModal({
   darkMode = false,
   isOpen,
   onClose,
+  filterDate,
 }: HourlyChartModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +58,12 @@ export default function HourlyChartModal({
       setError(null);
 
       try {
-        const response = await fetch(
-          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=${hours}`
-        );
+      // Use date-specific endpoint if filterDate provided
+      const url = filterDate
+        ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
+        : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
+      
+      const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch hourly data: ${response.status}`);
@@ -77,7 +82,7 @@ export default function HourlyChartModal({
     }
 
     fetchHourlyData();
-  }, [isOpen, stationId, hours]);
+  }, [isOpen, stationId, hours, filterDate]);
 
   // Reset to 1D when modal opens
   useEffect(() => {

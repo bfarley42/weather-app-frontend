@@ -1,0 +1,501 @@
+/* src/components/DailySummaryModal.css */
+
+/* ============================================================================
+   Modal Overlay
+   ============================================================================ */
+.daily-summary-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: dailySummaryOverlayFadeIn 0.2s ease-out;
+}
+
+.daily-summary-modal-overlay.dark {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+@keyframes dailySummaryOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================================================
+   Modal Container
+   ============================================================================ */
+.daily-summary-modal {
+  background: #f8fafc;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: dailySummaryModalSlideUp 0.3s ease-out;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-modal {
+  background: #0f172a;
+}
+
+@keyframes dailySummaryModalSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Desktop: center the modal */
+@media (min-width: 640px) {
+  .daily-summary-modal-overlay {
+    align-items: center;
+  }
+  
+  .daily-summary-modal {
+    border-radius: 20px;
+    max-height: 85vh;
+    margin: 20px;
+    animation: dailySummaryModalScaleIn 0.25s ease-out;
+  }
+  
+  @keyframes dailySummaryModalScaleIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================================
+   Modal Handle & Close
+   ============================================================================ */
+.daily-summary-modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  margin: 12px auto 8px;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-modal-handle {
+  background: #475569;
+}
+
+@media (min-width: 640px) {
+  .daily-summary-modal-handle {
+    display: none;
+  }
+}
+
+.daily-summary-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.daily-summary-modal-close:hover {
+  background: rgba(0, 0, 0, 0.15);
+  color: #1e293b;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-modal-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+/* ============================================================================
+   Modal Content
+   ============================================================================ */
+.daily-summary-modal-content {
+  padding: 8px 16px 24px;
+}
+
+/* Loading & Error */
+.daily-summary-loading,
+.daily-summary-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #64748b;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-loading,
+.daily-summary-modal-overlay.dark .daily-summary-error {
+  color: #94a3b8;
+}
+
+.daily-summary-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   Header
+   ============================================================================ */
+.daily-summary-header {
+  text-align: center;
+  padding: 8px 0 12px;
+}
+
+.daily-summary-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 2px;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-title {
+  color: #f1f5f9;
+}
+
+.daily-summary-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-subtitle {
+  color: #94a3b8;
+}
+
+.daily-summary-station {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-station {
+  color: #64748b;
+}
+
+/* ============================================================================
+   Dominant Condition Banner
+   ============================================================================ */
+.daily-summary-condition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  border-radius: 12px;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-condition {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+}
+
+.condition-emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.condition-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1e40af;
+}
+
+.daily-summary-modal-overlay.dark .condition-text {
+  color: #bfdbfe;
+}
+
+/* ============================================================================
+   Stats Grid
+   ============================================================================ */
+.daily-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.daily-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.daily-summary-modal-overlay.dark .daily-stat-card {
+  background: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.daily-stat-card.clickable {
+  cursor: pointer;
+}
+
+.daily-stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.daily-summary-modal-overlay.dark .daily-stat-card.clickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: #334155;
+}
+
+.daily-stat-card.clickable:active {
+  transform: translateY(0);
+}
+
+/* Card Icons */
+.stat-card-icon {
+  margin-bottom: 8px;
+}
+
+.stat-card-icon.temp-icon {
+  color: #f97316;
+}
+
+.stat-card-icon.sunshine-icon {
+  color: #f59e0b;
+}
+
+.stat-card-icon.precip-icon {
+  color: #3b82f6;
+}
+
+.stat-card-icon.cloud-icon {
+  color: #64748b;
+}
+
+.stat-card-icon.wind-icon {
+  color: #0891b2;
+}
+
+.stat-card-icon.humidity-icon {
+  color: #8b5cf6;
+}
+
+/* Card Values */
+.stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #1e293b;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.daily-summary-modal-overlay.dark .stat-card-value {
+  color: #f1f5f9;
+}
+
+.stat-card-unit {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.daily-summary-modal-overlay.dark .stat-card-unit {
+  color: #94a3b8;
+}
+
+/* Temperature Card Special */
+.stat-card-values {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.stat-high {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #dc2626;
+}
+
+.daily-summary-modal-overlay.dark .stat-high {
+  color: #f87171;
+}
+
+.stat-separator {
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.stat-low {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #2563eb;
+}
+
+.daily-summary-modal-overlay.dark .stat-low {
+  color: #60a5fa;
+}
+
+/* Card Labels */
+.stat-card-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+
+.daily-summary-modal-overlay.dark .stat-card-label {
+  color: #64748b;
+}
+
+/* Card Sub-text */
+.stat-card-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.daily-summary-modal-overlay.dark .stat-card-sub {
+  color: #94a3b8;
+}
+
+/* Temperature Diff */
+.stat-card-diff {
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.stat-card-diff.warm {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.stat-card-diff.cool {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.daily-summary-modal-overlay.dark .stat-card-diff.warm {
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.daily-summary-modal-overlay.dark .stat-card-diff.cool {
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.2);
+}
+
+/* ============================================================================
+   Hint
+   ============================================================================ */
+.daily-summary-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.daily-summary-modal-overlay.dark .daily-summary-hint {
+  color: #64748b;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+@media (max-width: 480px) {
+  .daily-summary-modal-content {
+    padding: 4px 12px 20px;
+  }
+  
+  .daily-summary-title {
+    font-size: 1.3rem;
+  }
+  
+  .daily-summary-grid {
+    gap: 8px;
+  }
+  
+  .daily-stat-card {
+    padding: 10px 6px;
+  }
+  
+  .stat-card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .stat-card-value {
+    font-size: 1.3rem;
+  }
+  
+  .stat-high,
+  .stat-low {
+    font-size: 1.2rem;
+  }
+  
+  .stat-card-unit {
+    font-size: 0.75rem;
+  }
+  
+  .stat-card-label {
+    font-size: 0.6rem;
+  }
+  
+  .stat-card-sub {
+    font-size: 0.7rem;
+  }
+  
+  .stat-card-diff {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+  
+  .condition-emoji {
+    font-size: 1.5rem;
+  }
+  
+  .condition-text {
+    font-size: 1rem;
+  }
+}

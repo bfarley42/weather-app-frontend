@@ -456,4 +456,74 @@
   .sunshine-legend {
     gap: 16px;
   }
+}.sunshine-info-btn {
+  position: relative;
+  margin-left: 6px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  line-height: 1;
+  cursor: help;
+  color: inherit;
+  font: inherit;
+}
+
+.sunshine-info-btn > span[aria-hidden="true"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Hidden by default */
+.sunshine-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  width: 260px;
+  max-width: min(80vw, 320px);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  z-index: 50;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 120ms ease, visibility 120ms ease, transform 120ms ease;
+  transform-origin: bottom center;
+}
+
+/* Show on hover and keyboard focus */
+.sunshine-info-btn:hover .sunshine-tooltip,
+.sunshine-info-btn:focus-visible .sunshine-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Light theme */
+.sunshine-tooltip {
+  background: #0f172a;
+  color: #f8fafc;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+/* Optional arrow */
+.sunshine-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
 }

@@ -15,6 +15,9 @@ import CloudCoverModal from './CloudCoverModal';
 import HourlyPrecipModal from './HourlyPrecipModal';
 import MetarModal from './MetarModal';
 import WindModal from './WindModal';
+import HumidityModal from './HumidityModal';
+import DewPointModal from './DewPointModal';
+import DailySummaryModal from './DailySummaryModal';
 import { useState, useEffect, useRef  } from 'react';
 
 import { 
@@ -86,9 +89,19 @@ interface SunshineStats {
 
 interface HourlyDataPoint {
   hour: string;
+  ts_local: string | null;  // NEW
   temp_f: number | null;
   sky_code: string | null;
   wx_code: string | null;
+  dewpoint_f: number | null;  // NEW
+  humidity_pct: number | null;  // NEW
+  wind_speed_mph: number | null;  // NEW
+  wind_gust_mph: number | null;  // NEW
+  wind_direction_deg: number | null;  // NEW
+  visibility_mi: number | null;  // NEW
+  pressure_in: number | null;  // NEW
+  precip_in: number | null;  // NEW
+  metar_raw: string | null;  // NEW
 }
 
 interface Comparison {
@@ -426,59 +439,6 @@ function getWindDirection(degrees: number): string {
   return directions[index];
 }
 
-// interface ThermometerResult {
-//   icon: React.ReactNode;
-//   color: string;
-// }
-
-// function getThermometerIcon(tempDiff: number | null, size: number = 18): ThermometerResult {
-//   // Default (no data)
-//   if (tempDiff === null) {
-//     return { 
-//       icon: <PiThermometerFill  size={size} />, 
-//       color: '#8d8d8dff' 
-//     };
-//   }
-  
-//   // Much Colder: <= -10°
-//   if (tempDiff <= -10) {
-//     return { 
-//       icon: <PiThermometerColdFill  size={size} />, 
-//       color: '#3ea8e6ff' 
-//     };
-//   }
-  
-//   // Colder: -10° to -5°
-//   if (tempDiff <= -5) {
-//     return { 
-//       icon: <PiThermometerFill  size={size} />, 
-//       color: '#8d8d8dff' 
-//     };
-//   }
-  
-//   // Normal: -5° to +5°
-//   if (tempDiff <= 5) {
-//     return { 
-//       icon: <PiThermometerFill  size={size} />, 
-//       color: '#8d8d8dff' 
-//     };
-//   }
-  
-//   // Warmer: +5° to +10°
-//   if (tempDiff <= 10) {
-//     return { 
-//       icon: <FaThermometerHalf size={size} />, 
-//       color: '#8d8d8dff' 
-//     };
-//   }
-  
-//   // Much Warmer: > +10°
-//   return { 
-//     icon: <PiThermometerHotFill   size={size} />, 
-//     color: '#d61e0d' 
-//   };
-// }
-
 // ============================================================================
 // Temperature Gradient Band Component
 // ============================================================================
@@ -632,6 +592,7 @@ function isHourDaytime(hourStr: string, sunrise: string | null, sunset: string |
   const sunriseHour = parseHour(sunrise);
   const sunsetHour = parseHour(sunset);
   
+  
   return hour >= sunriseHour && hour < sunsetHour;
 }
 
@@ -661,6 +622,12 @@ export default function StationSummaryCard({
   const [showSunshineModal, setShowSunshineModal] = useState(false);
   const [showCloudCoverModal, setShowCloudCoverModal] = useState(false);
   const [showWindModal, setShowWindModal] = useState(false);
+  const [showHumidityModal, setShowHumidityModal] = useState(false);
+  const [showDewPointModal, setShowDewPointModal] = useState(false);
+  const [metarModalData, setMetarModalData] = useState<any>(null);
+  const [metarModalIsDay, setMetarModalIsDay] = useState<boolean>(true);
+  const [showDailySummary, setShowDailySummary] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<DailyHistoryPoint | null>(null);
 
   // After the data loads, scroll to the right
 useEffect(() => {
@@ -784,12 +751,32 @@ useEffect(() => {
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
-            <div
-              className="weather-icon-container clickable"
-              onClick={() => setShowMetarModal(true)}
-              style={{ cursor: 'pointer' }}
-              title="View current observation details"
-            >
+<div
+  className="weather-icon-container clickable"
+  onClick={() => {
+    setMetarModalData({
+      station_id: stationId,
+      observed_at: current.observed_at,
+      metar_raw: current.metar_raw ?? null,
+      temp_f: current.temp_f,
+      dewpoint_f: current.dewpoint_f ?? null,
+      humidity_pct: current.humidity_pct,
+      pressure_in: current.pressure_in ?? null,
+      pressure_trend: current.pressure_trend ?? null,
+      wind_speed_mph: current.wind_mph,
+      wind_gust_mph: current.wind_gust_mph,
+      wind_direction_deg: current.wind_direction_deg ?? null,
+      sky_code: current.sky_code,
+      wx_code: current.wx_code,
+      visibility_mi: current.visibility_mi ?? null,
+      precip_in: null,
+    });
+    setMetarModalIsDay(summary.sun_times?.is_day ?? true);
+    setShowMetarModal(true);
+  }}
+  style={{ cursor: 'pointer' }}
+  title="View current observation details"
+>
               {getWeatherIcon(current.sky_code, current.wx_code, 56, summary.sun_times?.is_day ?? true, "weather-icon")}
               {current.condition && (
                 <span className="condition-label">{current.condition}</span>
@@ -830,6 +817,8 @@ useEffect(() => {
     current={current.temp_f}
   />
 </div>
+
+
             {/* Apple-style scroll indicator */}
         <div className="scroll-indicator"></div>    
 {/* 1x7 Horizontal Scroll Stats */}
@@ -895,8 +884,12 @@ useEffect(() => {
   </div>
 
     {/* 5. Max Gust */}
-    <div className="stat-item-vertical">
-      <Wind size={18} className="stat-icon wind-stat-icon" />
+  <div 
+    className="stat-item-vertical clickable"
+    onClick={() => setShowWindModal(true)}
+    title="View wind details"
+  >
+    <Wind size={18} className="stat-icon" style={{ color: '#495c61' }} />
       <span className="stat-value">
         {last_24h.max_gust_mph !== null 
           ? <>{Math.round(last_24h.max_gust_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
@@ -908,23 +901,31 @@ useEffect(() => {
 
 
 
-    {/* 6. Humidity (avg) */}
-    <div className="stat-item-vertical">
-      <Waves size={18} className="stat-icon humidity-icon" />
-      <span className="stat-value">
-        {last_24h.avg_humidity_pct !== null ? `${Math.round(last_24h.avg_humidity_pct)}%` : '--'}
-      </span>
-      <span className="stat-label">HUMIDITY</span>
-    </div>
+        {/* 6. Humidity (avg) */}
+        <div 
+          className="stat-item-vertical clickable"
+          onClick={() => setShowHumidityModal(true)}
+          title="View humidity details"
+        >
+          <Waves size={18} className="stat-icon humidity-icon" />
+          <span className="stat-value">
+            {last_24h.avg_humidity_pct !== null ? `${Math.round(last_24h.avg_humidity_pct)}%` : '--'}
+          </span>
+          <span className="stat-label">HUMIDITY</span>
+        </div>
 
-    {/* 7. Dew Point (avg) */}
-    <div className="stat-item-vertical">
-      <FaThermometerHalf size={18} className="stat-icon dewpoint-icon" />
-      <span className="stat-value">
-        {last_24h.avg_dewpoint_f !== null ? `${Math.round(last_24h.avg_dewpoint_f)}°` : '--'}
-      </span>
-      <span className="stat-label">DEW PT</span>
-    </div>
+      {/* 7. Dew Point (avg) */}
+      <div 
+        className="stat-item-vertical clickable"
+        onClick={() => setShowDewPointModal(true)}
+        title="View dew point details"
+      >
+        <FaThermometerHalf size={18} className="stat-icon dewpoint-icon" />
+        <span className="stat-value">
+          {last_24h.avg_dewpoint_f !== null ? `${Math.round(last_24h.avg_dewpoint_f)}°` : '--'}
+        </span>
+        <span className="stat-label">DEW PT</span>
+      </div>
 
   </div>
 </div>
@@ -950,31 +951,58 @@ useEffect(() => {
         
         <div className="hourly-scroll-container" ref={hourlyScrollRef}>
           <div className="hourly-scroll-row">
-          {summary.hourly_history.map((hour, index) => {
-            const isDay = isHourDaytime(
-              hour.hour, 
-              summary.sun_times?.sunrise ?? null, 
-              summary.sun_times?.sunset ?? null
-            );
-            
-            return (
-              <div key={index} className="hourly-item">
-                <span className="hourly-time">{hour.hour}</span>
-                <div className="hourly-icon-wrapper">
-                  {getWeatherIcon(hour.sky_code, hour.wx_code, 24, isDay, "hourly-icon")}
-                </div>
-                <span className="hourly-temp">
-                  {hour.temp_f !== null ? `${Math.round(hour.temp_f)}°` : '--'}
-                </span>
-              </div>
-            );
-          })}
+{summary.hourly_history.map((hour, index) => {
+  const isDay = isHourDaytime(
+    hour.hour, 
+    summary.sun_times?.sunrise ?? null, 
+    summary.sun_times?.sunset ?? null
+  );
+  
+  return (
+    <div 
+      key={index} 
+      className="hourly-item clickable"
+      onClick={() => {
+        setMetarModalData({
+          station_id: stationId,
+          observed_at: hour.ts_local,  // Use full timestamp
+          metar_raw: hour.metar_raw,
+          temp_f: hour.temp_f,
+          dewpoint_f: hour.dewpoint_f,
+          humidity_pct: hour.humidity_pct,
+          pressure_in: hour.pressure_in,
+          pressure_trend: null,
+          wind_speed_mph: hour.wind_speed_mph,
+          wind_gust_mph: hour.wind_gust_mph,
+          wind_direction_deg: hour.wind_direction_deg,
+          sky_code: hour.sky_code,
+          wx_code: hour.wx_code,
+          visibility_mi: hour.visibility_mi,
+          precip_in: hour.precip_in,
+        });
+          setMetarModalIsDay(
+          isHourDaytime(hour.hour, summary.sun_times?.sunrise ?? null, summary.sun_times?.sunset ?? null)
+        );
+        setShowMetarModal(true);
+      }}
+      title={`View details for ${hour.hour}`}
+    >
+      <span className="hourly-time">{hour.hour}</span>
+      <div className="hourly-icon-wrapper">
+        {getWeatherIcon(hour.sky_code, hour.wx_code, 24, isDay, "hourly-icon")}
+      </div>
+      <span className="hourly-temp">
+        {hour.temp_f !== null ? `${Math.round(hour.temp_f)}°` : '--'}
+      </span>
+    </div>
+  );
+})}
           </div>
         </div>
         
       </div>     
     
-{/* ============================================================
+        {/* ============================================================
           CARD 4: Daily History (7-day)
           ============================================================ */}
     {summary.daily_history && summary.daily_history.length > 0 && (() => {
@@ -997,7 +1025,24 @@ useEffect(() => {
       
       <div className="daily-history-list">
         {daysWithData.map((day, index) => (
-                <div key={day.date} className="daily-row">
+                <div
+                      key={day.date}
+                      className="daily-row clickable"
+                      onClick={() => {
+                        setSelectedDay(day);
+                        setShowDailySummary(true);
+                      }}
+                      title={`View details for ${day.day_label}`}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedDay(day);
+                          setShowDailySummary(true);
+                        }
+                      }}
+                    >
                   {/* Column 1: Day label */}
                   <div className="daily-day-label">
                     {day.day_label}
@@ -1477,25 +1522,29 @@ useEffect(() => {
       stationName={displayName}
       darkMode={darkMode}
       isOpen={showMetarModal}
-      onClose={() => setShowMetarModal(false)}
-      isDay={summary.sun_times?.is_day ?? true}
-      initialData={{
-        station_id: stationId,
-        observed_at: current.observed_at,
-        metar_raw: current.metar_raw ?? null,
-        temp_f: current.temp_f,
-        dewpoint_f: current.dewpoint_f ?? null,
-        humidity_pct: current.humidity_pct,
-        pressure_in: current.pressure_in ?? null,
-        pressure_trend: current.pressure_trend ?? null,
-        wind_speed_mph: current.wind_mph,
-        wind_gust_mph: current.wind_gust_mph,
-        wind_direction_deg: current.wind_direction_deg ?? null,
-        sky_code: current.sky_code,
-        wx_code: current.wx_code,
-        visibility_mi: current.visibility_mi ?? null,
-        precip_in: null,  // Not in current, but rarely needed
-      }}
+              onClose={() => {
+          setShowMetarModal(false);
+          setMetarModalData(null);
+        }}
+      isDay={metarModalIsDay}
+      initialData={metarModalData}  // <-- USE THE STATE HERE
+      // initialData={{
+      //   station_id: stationId,
+      //   observed_at: current.observed_at,
+      //   metar_raw: current.metar_raw ?? null,
+      //   temp_f: current.temp_f,
+      //   dewpoint_f: current.dewpoint_f ?? null,
+      //   humidity_pct: current.humidity_pct,
+      //   pressure_in: current.pressure_in ?? null,
+      //   pressure_trend: current.pressure_trend ?? null,
+      //   wind_speed_mph: current.wind_mph,
+      //   wind_gust_mph: current.wind_gust_mph,
+      //   wind_direction_deg: current.wind_direction_deg ?? null,
+      //   sky_code: current.sky_code,
+      //   wx_code: current.wx_code,
+      //   visibility_mi: current.visibility_mi ?? null,
+      //   precip_in: null,  // Not in current, but rarely needed
+      // }}
     />
     {/* Hourly Precipitation Modal */}
     <HourlyPrecipModal
@@ -1545,6 +1594,39 @@ useEffect(() => {
   onClose={() => setShowWindModal(false)}
   currentWind={current.wind_mph}
   currentGust={current.wind_gust_mph}
+/>
+
+{/* Humidity Modal */}
+<HumidityModal
+  stationId={stationId}
+  stationName={displayName}
+  darkMode={darkMode}
+  isOpen={showHumidityModal}
+  onClose={() => setShowHumidityModal(false)}
+  currentHumidity={current.humidity_pct}
+/>
+
+{/* Dew Point Modal */}
+<DewPointModal
+  stationId={stationId}
+  stationName={displayName}
+  darkMode={darkMode}
+  isOpen={showDewPointModal}
+  onClose={() => setShowDewPointModal(false)}
+  currentDewPoint={current.dewpoint_f}
+/>
+
+<DailySummaryModal
+  stationId={stationId}
+  stationName={displayName}
+  darkMode={darkMode}
+  isOpen={showDailySummary}
+  onClose={() => {
+    setShowDailySummary(false);
+    setSelectedDay(null);
+  }}
+  dayData={selectedDay}
+  sunTimes={summary.sun_times}
 />
 
     </div>

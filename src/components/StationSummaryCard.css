@@ -763,7 +763,7 @@
 .stats-row-horizontal {
   display: flex;
   flex-direction: row;
-  gap: 20px;
+  gap: 34px;
   padding: 4px 8px;
   min-width: min-content; /* Allow content to overflow */
 }
@@ -1016,7 +1016,7 @@
   
   /* Horizontal scroll stats - mobile adjustments */
   .stats-row-horizontal {
-    gap: 16px;
+    gap: 32px;
     padding: 4px 4px;
   }
   
@@ -2313,4 +2313,14 @@
 
 .dark .stat-icon.cloud-icon {
   color: #94a3b8;
+}
+.daily-row.clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+.daily-row.clickable:hover {
+  background-color: rgba(127, 127, 127, 0.08);
+}
+.daily-row.clickable:active {
+  transform: translateY(1px);
 }
