@@ -224,7 +224,7 @@ export default function DailySummaryModal({
 
     const sunriseHour = parseTimeToHour(sunTimes?.sunrise ?? null);
     const sunsetHour = parseTimeToHour(sunTimes?.sunset ?? null);
-    const _daylightHours = sunsetHour - sunriseHour;
+    // const daylightHours = sunsetHour - sunriseHour;
 
     let totalSunshine = 0;
     let totalCloudCover = 0;
