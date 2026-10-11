@@ -7,8 +7,21 @@
  */
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Cloud, Wind, Droplets, Thermometer } from 'lucide-react';
-import { FaThermometerHalf } from 'react-icons/fa';
+import {
+    Sun,
+    CloudSun,
+    Cloud,
+    Wind,
+    Droplets,
+    Thermometer,
+    Waves,
+    Snowflake,
+    CloudRain,
+    CloudFog,
+    CloudLightning
+
+} from 'lucide-react';
+// import { FaThermometerHalf } from 'react-icons/fa';
 import { API_URL } from '../config';
 import './DailySummaryModal.css';
 
@@ -19,6 +32,7 @@ import WindModal from './WindModal';
 import HumidityModal from './HumidityModal';
 import DewPointModal from './DewPointModal';
 import HourlyPrecipModal from './HourlyPrecipModal';
+import HourlyChartModal from './HourlyChartModal';
 
 interface DailyData {
   date: string;
@@ -71,8 +85,9 @@ export default function DailySummaryModal({
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Sub-modal states
+  const [showHourlyModal, setShowHourlyModal] = useState(false);
   const [showSunshineModal, setShowSunshineModal] = useState(false);
   const [showCloudModal, setShowCloudModal] = useState(false);
   const [showWindModal, setShowWindModal] = useState(false);
@@ -117,11 +132,11 @@ export default function DailySummaryModal({
   // Handle escape key
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
@@ -246,10 +261,10 @@ export default function DailySummaryModal({
     });
 
     const sunshineHours = Math.round(totalSunshine * 10) / 10;
-    const sunshinePct = daylightObservations > 0 
+    const sunshinePct = daylightObservations > 0
       ? Math.round((totalSunshine / daylightObservations) * 100)
       : null;
-    const cloudCoverPct = hourlyData.length > 0 
+    const cloudCoverPct = hourlyData.length > 0
       ? Math.round(totalCloudCover / hourlyData.length)
       : null;
 
@@ -293,28 +308,46 @@ export default function DailySummaryModal({
   const tempDiff = getTempDiff();
 
   // Get condition icon
-  const getConditionEmoji = (condition: string | null): string => {
-    if (!condition) return '🌤️';
-    const c = condition.toLowerCase();
-    if (c.includes('clear') || c.includes('sunny')) return '☀️';
-    if (c.includes('partly')) return '⛅';
-    if (c.includes('cloud') || c.includes('overcast')) return '☁️';
-    if (c.includes('rain')) return '🌧️';
-    if (c.includes('snow')) return '❄️';
-    if (c.includes('fog')) return '🌫️';
-    if (c.includes('thunder')) return '⛈️';
-    return '🌤️';
-  };
+const getConditionEmoji = (condition: string | null) => {
+  // Default / Fallback
+  if (!condition) return <CloudSun className="w-6 h-6 text-gray-500" />;
+
+  const c = condition.toLowerCase();
+
+  if (c.includes('clear') || c.includes('sunny')) {
+    return <Sun className="w-6 h-6 text-yellow-500" />;
+  }
+  if (c.includes('partly')) {
+    return <CloudSun className="w-6 h-6 text-yellow-500" />;
+  }
+  if (c.includes('cloud') || c.includes('overcast')) {
+    return <Cloud className="w-6 h-6 text-gray-400" />;
+  }
+  if (c.includes('rain')) {
+    return <CloudRain className="w-6 h-6 text-blue-400" />;
+  }
+  if (c.includes('snow')) {
+    return <Snowflake className="w-6 h-6 text-cyan-300" />;
+  }
+  if (c.includes('fog')) {
+    return <CloudFog className="w-6 h-6 text-gray-300" />;
+  }
+  if (c.includes('thunder')) {
+    return <CloudLightning className="w-6 h-6 text-purple-500" />;
+  }
+
+  return <CloudSun className="w-6 h-6 text-gray-500" />;
+};
 
   const modalContent = (
-    <div 
+    <div
       className={`daily-summary-modal-overlay ${darkMode ? 'dark' : ''}`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="daily-summary-modal">
-        <button 
+        <button
           className="daily-summary-modal-close"
           onClick={onClose}
           aria-label="Close"
@@ -351,24 +384,29 @@ export default function DailySummaryModal({
 
               {/* Stats Grid - Row 1 */}
               <div className="daily-summary-grid">
+
                 {/* Temperature Card */}
-                <div className="daily-stat-card temp-card">
-                  <Thermometer size={20} className="stat-card-icon temp-icon" />
-                  <div className="stat-card-values">
+                <div
+                className="daily-stat-card temp-card clickable"
+                onClick={() => setShowHourlyModal(true)}
+                title="View hourly temperature chart"
+                >
+                <Thermometer size={20} className="stat-card-icon temp-icon" />
+                <div className="stat-card-values">
                     <span className="stat-high">{dayData.high_f !== null ? `${Math.round(dayData.high_f)}°` : '--'}</span>
                     <span className="stat-separator">/</span>
                     <span className="stat-low">{dayData.low_f !== null ? `${Math.round(dayData.low_f)}°` : '--'}</span>
-                  </div>
-                  <div className="stat-card-label">HIGH / LOW</div>
-                  {tempDiff && (
+                </div>
+                <div className="stat-card-label">HIGH / LOW</div>
+                {tempDiff && (
                     <div className={`stat-card-diff ${tempDiff.diff >= 0 ? 'warm' : 'cool'}`}>
-                      {tempDiff.label}
+                    {tempDiff.label}
                     </div>
-                  )}
+                )}
                 </div>
 
                 {/* Sunshine Card */}
-                <div 
+                <div
                   className="daily-stat-card sunshine-card clickable"
                   onClick={() => setShowSunshineModal(true)}
                   title="View sunshine details"
@@ -385,7 +423,7 @@ export default function DailySummaryModal({
                 </div>
 
                 {/* Precipitation Card */}
-                <div 
+                <div
                   className="daily-stat-card precip-card clickable"
                   onClick={() => setShowPrecipModal(true)}
                   title="View precipitation details"
@@ -402,7 +440,7 @@ export default function DailySummaryModal({
               {/* Stats Grid - Row 2 */}
               <div className="daily-summary-grid">
                 {/* Cloud Cover Card */}
-                <div 
+                <div
                   className="daily-stat-card cloud-card clickable"
                   onClick={() => setShowCloudModal(true)}
                   title="View cloud cover details"
@@ -416,7 +454,7 @@ export default function DailySummaryModal({
                 </div>
 
                 {/* Wind Card */}
-                <div 
+                <div
                   className="daily-stat-card wind-card clickable"
                   onClick={() => setShowWindModal(true)}
                   title="View wind details"
@@ -433,12 +471,12 @@ export default function DailySummaryModal({
                 </div>
 
                 {/* Humidity Card */}
-                <div 
+                <div
                   className="daily-stat-card humidity-card clickable"
                   onClick={() => setShowHumidityModal(true)}
                   title="View humidity details"
                 >
-                  <FaThermometerHalf size={18} className="stat-card-icon humidity-icon" />
+                  <Waves size={18} className="stat-card-icon humidity-icon" />
                   <div className="stat-card-value">
                     {stats.avgHumidity !== null ? Math.round(stats.avgHumidity) : '--'}
                     <span className="stat-card-unit">%</span>
@@ -511,6 +549,17 @@ export default function DailySummaryModal({
         onClose={() => setShowPrecipModal(false)}
         filterDate={dayData.date}
       />
+
+        {/* Hourly Temperature Modal */}
+        <HourlyChartModal
+        stationId={stationId}
+        stationName={stationName}
+        darkMode={darkMode}
+        isOpen={showHourlyModal}
+        onClose={() => setShowHourlyModal(false)}
+        filterDate={dayData.date}
+        />
+
     </div>
   );
 
