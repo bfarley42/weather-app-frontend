@@ -1,5 +1,36 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import './StationDayNavigation.css';
+import { fetchHistoricalDay, type HistoricalDay } from '../api/historicalDay';
+
+function HistoricalObservations({ stationId, date, render }: {
+  stationId: string;
+  date: string;
+  render: (day: HistoricalDay) => ReactNode;
+}) {
+  const [day, setDay] = useState<HistoricalDay | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    fetchHistoricalDay(stationId, date).then(value => {
+      if (active) setDay(value);
+    }).catch((reason: unknown) => {
+      if (active) setError(reason instanceof Error ? reason.message : 'Unable to load historical observations');
+    });
+    return () => { active = false; };
+  }, [stationId, date, attempt]);
+  if (error) return <div className="station-day-placeholder" role="alert">
+    <p>{error}</p>
+    <button type="button" onClick={() => { setError(null); setAttempt(value => value + 1); }}>Retry</button>
+  </div>;
+  if (!day) return <div className="station-day-placeholder" role="status">Loading historical observations…</div>;
+  return <>
+    <p role="status">{day.has_observations
+      ? `${day.coverage.hourly_observation_count} hourly records. Observation completeness is not guaranteed.`
+      : 'No observations available for this date.'} Historical detail modals are not connected yet.</p>
+    {render(day)}
+  </>;
+}
 
 function localDate(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -15,10 +46,12 @@ function shiftDate(date: string, days: number): string {
   return value.toISOString().slice(0, 10);
 }
 
-export default function StationDayNavigation({ timezone, darkMode, children }: {
+export default function StationDayNavigation({ timezone, darkMode, children, stationId, renderHistorical }: {
   timezone: string | null;
   darkMode: boolean;
   children: ReactNode;
+  stationId: string;
+  renderHistorical: (day: HistoricalDay) => ReactNode;
 }) {
   const [now, setNow] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -55,10 +88,7 @@ export default function StationDayNavigation({ timezone, darkMode, children }: {
         }}>Next day</button>
       </nav>
       {isToday ? children : (
-        <div className="station-day-placeholder" role="status">
-          <p>Historical daily summary coming next</p>
-          <time dateTime={date}>{formattedDate}</time>
-        </div>
+        <HistoricalObservations key={`${stationId}:${date}`} stationId={stationId} date={date} render={renderHistorical} />
       )}
     </section>
   );

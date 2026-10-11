@@ -19,6 +19,7 @@ import HumidityModal from './HumidityModal';
 import DewPointModal from './DewPointModal';
 import DailySummaryModal from './DailySummaryModal';
 import StationDayNavigation from './StationDayNavigation';
+import type { HistoricalDay } from '../api/historicalDay';
 import { useState, useEffect, useRef  } from 'react';
 
 import { 
@@ -131,6 +132,7 @@ interface StationSummaryCardProps {
   stationId: string;
   stationName?: string;
   darkMode?: boolean;
+  historicalDay?: HistoricalDay;
 }
 
 interface SunTimes {
@@ -604,10 +606,29 @@ function isHourDaytime(hourStr: string, sunrise: string | null, sunset: string |
 export default function StationSummaryCard({ 
   stationId, 
   stationName,
-  darkMode = false 
+  darkMode = false,
+  historicalDay,
 }: StationSummaryCardProps) {
-  const [summary, setSummary] = useState<StationSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [liveSummary, setSummary] = useState<StationSummary | null>(null);
+  const summary: StationSummary | null = historicalDay ? {
+    station_id: historicalDay.station_id, station_name: historicalDay.station_name,
+    timezone: historicalDay.timezone,
+    current: {
+      temp_f: null, feels_like_f: null, humidity_pct: null, wind_mph: null,
+      wind_gust_mph: null, condition: null, sky_code: null, wx_code: null,
+      observed_at: null, hours_ago: null,
+    },
+    last_24h: {
+      high_f: historicalDay.high_f, low_f: historicalDay.low_f, avg_temp_f: null,
+      precip_in: historicalDay.precip_in, avg_wind_mph: historicalDay.avg_wind_mph,
+      avg_humidity_pct: null, max_gust_mph: null, dominant_condition: null,
+      condition_hours: null, observation_count: historicalDay.coverage.hourly_observation_count,
+      avg_dewpoint_f: null,
+    },
+    hourly_history: [], vs_yesterday: null, vs_normal: null,
+    data_freshness_minutes: null, generated_at: '', sun_times: null,
+  } : liveSummary;
+  const [loading, setLoading] = useState(!historicalDay);
   const [error, setError] = useState<string | null>(null);
   const [records, setRecords] = useState<StationRecords | null>(null);
   const [showSnowRecords, setShowSnowRecords] = useState(false);
@@ -617,7 +638,11 @@ export default function StationSummaryCard({
   const [showMetarModal, setShowMetarModal] = useState(false);
   const [showPrecipModal, setShowPrecipModal] = useState(false);
   const [showConditionSummary24H, setShowConditionSummary24H] = useState(false);
-  const sunshineStats = summary?.hourly_history && summary?.sun_times
+  const sunshineStats = historicalDay ? {
+    sunshineHours: historicalDay.estimated_sunshine_hours,
+    sunshinePct: historicalDay.estimated_sunshine_pct,
+    cloudCoverPct: historicalDay.cloud_cover_pct,
+  } : summary?.hourly_history && summary?.sun_times
       ? calculateSunshineStats(summary.hourly_history, summary.sun_times)
       : null;
   const [showSunshineModal, setShowSunshineModal] = useState(false);
@@ -638,6 +663,7 @@ useEffect(() => {
 }, [summary?.hourly_history]);
   
 useEffect(() => {
+  if (historicalDay) return;
   async function fetchSummary() {
     if (!stationId) return;
 
@@ -681,7 +707,7 @@ useEffect(() => {
   // Refresh every 5 minutes
   const interval = setInterval(fetchSummary, 5 * 60 * 1000);
   return () => clearInterval(interval);
-}, [stationId]);
+}, [stationId, historicalDay]);
 
   
   // ----------------------------------------------------------------
@@ -716,14 +742,17 @@ useEffect(() => {
   // ----------------------------------------------------------------
   // Render - Two Cards
   // ----------------------------------------------------------------
-  return (
-    <StationDayNavigation timezone={summary.timezone} darkMode={darkMode}>
-    <div className={`summary-cards-wrapper ${darkMode ? 'dark' : ''}`}>
+  const dashboard = (
+    <div className={`summary-cards-wrapper ${darkMode ? 'dark' : ''}`}
+      onClickCapture={historicalDay ? event => event.stopPropagation() : undefined}
+      onKeyDownCapture={historicalDay ? event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); }
+      } : undefined}>
       
       {/* ============================================================
           CARD 1: Current Conditions
           ============================================================ */}
-      <div className={`summary-card current-card ${darkMode ? 'dark' : ''}`}>
+      {!historicalDay && <div className={`summary-card current-card ${darkMode ? 'dark' : ''}`}>
         {/* Header: Station name + time */}
         <div className="summary-header">
           <h2 className="station-name">{displayName}</h2>
@@ -800,13 +829,13 @@ useEffect(() => {
           <Clock size={12} />
           <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
         </div>
-      </div>
+      </div>}
       
       {/* ============================================================
           CARD 2: Last 24 Hours
           ============================================================ */}
       <div className={`summary-card history-card ${darkMode ? 'dark' : ''}`}>
-        <div className="section-label">DAILY HIGH / LOW <small>— Preliminary</small></div>
+        <div className="section-label">DAILY HIGH / LOW {!historicalDay && <small>— Preliminary</small>}</div>
         
         {/* Temperature band - centered */}
 <div 
@@ -815,8 +844,8 @@ useEffect(() => {
   title="View hourly chart"
 >
   <TemperatureBand 
-    low={today?.low_f ?? null}
-    high={today?.high_f ?? null}
+    low={historicalDay ? historicalDay.low_f : today?.low_f ?? null}
+    high={historicalDay ? historicalDay.high_f : today?.high_f ?? null}
     current={current.temp_f}
   />
 </div>
@@ -824,7 +853,7 @@ useEffect(() => {
 
             {/* Apple-style scroll indicator */}
         <div className="scroll-indicator"></div>    
-<div className="section-label">LAST 24 HOURS</div>
+<div className="section-label">{historicalDay ? 'DAILY OBSERVATIONS' : 'LAST 24 HOURS'}</div>
 {/* Compact observation statistics */}
 <div className="stats-scroll-container">
   <div className="stats-row-horizontal">
@@ -837,7 +866,8 @@ useEffect(() => {
   >
     <Droplets size={18} className="stat-icon precip-icon" />
     <span className="stat-value">
-      {last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
+      {historicalDay?.precip_is_trace || (historicalDay && last_24h.precip_in === 0.0001)
+        ? 'Trace' : last_24h.precip_in !== null ? `${last_24h.precip_in.toFixed(2)}"` : '--'}
     </span>
     <span className="stat-label">PRECIP</span>
   </div>
@@ -850,12 +880,12 @@ useEffect(() => {
 >
   <Sun size={18} className="stat-icon sunshine-icon" />
   <span className="stat-value">
-    {sunshineStats 
+    {sunshineStats?.sunshineHours != null
       ? <>{sunshineStats.sunshineHours}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>hrs</span></>
       : '--'}
   </span>
   <span className="stat-label">
-    {sunshineStats ? `${sunshineStats.sunshinePct}% SUN` : 'SUNSHINE'}
+    {historicalDay ? 'EST. SUNSHINE' : sunshineStats ? `${sunshineStats.sunshinePct}% SUN` : 'SUNSHINE'}
   </span>
 </div>
 
@@ -867,7 +897,7 @@ useEffect(() => {
 >
   <Cloud size={18} className="stat-icon cloud-icon" />
   <span className="stat-value">
-    {sunshineStats ? `${sunshineStats.cloudCoverPct}%` : '--'}
+    {sunshineStats?.cloudCoverPct != null ? `${sunshineStats.cloudCoverPct}%` : '--'}
   </span>
   <span className="stat-label">CLOUDS</span>
 </div>
@@ -929,7 +959,7 @@ useEffect(() => {
       {/* ============================================================
           CARD 3: Hourly History
           ============================================================ */}
-      <div className={`summary-card hourly-card ${darkMode ? 'dark' : ''}`}>
+      {!historicalDay && <div className={`summary-card hourly-card ${darkMode ? 'dark' : ''}`}>
         <div className="section-label">24-HOUR HISTORY</div>
         
         {/* Apple-style scroll indicator */}
@@ -986,7 +1016,7 @@ useEffect(() => {
           </div>
         </div>
         
-      </div>     
+      </div>}
     
         {/* ============================================================
           CARD 4: Daily History (7-day)
@@ -1087,6 +1117,7 @@ useEffect(() => {
     ============================================================ */}
 
 {/* Half-width cards container */}
+{!historicalDay && <>
 <div className="half-cards-row">
   
   {/* CARD 5: Averages (vs Normal) */}
@@ -1483,6 +1514,7 @@ useEffect(() => {
   
 )}
 
+ </>}
       {/* Hourly Chart Modal */}
       <HourlyChartModal
         stationId={stationId}
@@ -1616,8 +1648,13 @@ useEffect(() => {
 />
 
     </div>
-    </StationDayNavigation>
     
   );
-  
+  if (historicalDay) return dashboard;
+  return <StationDayNavigation timezone={summary.timezone} darkMode={darkMode}
+    stationId={stationId}
+    renderHistorical={day => <StationSummaryCard key={day.local_date} stationId={stationId}
+      stationName={stationName} darkMode={darkMode} historicalDay={day} />}>
+    {dashboard}
+  </StationDayNavigation>;
 }
