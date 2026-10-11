@@ -324,7 +324,33 @@ const handleDateRangeChange = (range: string) => {
       </header>
 
       <main className="app-main">
-        {currentView === 'search' ? (
+        {currentView === 'chart' && selectedStation ? (
+          <>
+            <div className="chart-top-controls">
+              <button onClick={handleBackToSearch} className="back-button">← Home</button>
+            </div>
+            <div className="station-search-box">
+              <label>Change <br/> Station</label>
+              <StationSearch onSelectStation={handleStationSelect} />
+            </div>
+            <StationSummaryCard
+              key={selectedStation.station_id}
+              stationId={selectedStation.station_id}
+              stationName={selectedStation.name}
+              darkMode={darkMode}
+            />
+            <div className="dark-mode-footer">
+              <button
+                className={`dark-mode-button ${darkMode ? 'active' : ''}`}
+                onClick={() => setDarkMode(!darkMode)}
+                title="Toggle Dark Mode"
+              >
+                <Moon size={18} />
+                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </div>
+          </>
+        ) : currentView === 'search' ? (
           // SEARCH VIEW
           <div className="controls-section">
             <div className="control-group">

@@ -18,6 +18,7 @@ import WindModal from './WindModal';
 import HumidityModal from './HumidityModal';
 import DewPointModal from './DewPointModal';
 import DailySummaryModal from './DailySummaryModal';
+import StationDayNavigation from './StationDayNavigation';
 import { useState, useEffect, useRef  } from 'react';
 
 import { 
@@ -710,11 +711,13 @@ useEffect(() => {
   
   const { current, last_24h } = summary;
   const displayName = stationName || summary.station_name || stationId;
+  const today = summary.daily_history?.find(day => day.day_label === 'Today');
   
   // ----------------------------------------------------------------
   // Render - Two Cards
   // ----------------------------------------------------------------
   return (
+    <StationDayNavigation timezone={summary.timezone} darkMode={darkMode}>
     <div className={`summary-cards-wrapper ${darkMode ? 'dark' : ''}`}>
       
       {/* ============================================================
@@ -803,7 +806,7 @@ useEffect(() => {
           CARD 2: Last 24 Hours
           ============================================================ */}
       <div className={`summary-card history-card ${darkMode ? 'dark' : ''}`}>
-        <div className="section-label">LAST 24 HOURS</div>
+        <div className="section-label">DAILY HIGH / LOW <small>— Preliminary</small></div>
         
         {/* Temperature band - centered */}
 <div 
@@ -812,8 +815,8 @@ useEffect(() => {
   title="View hourly chart"
 >
   <TemperatureBand 
-    low={last_24h.low_f} 
-    high={last_24h.high_f} 
+    low={today?.low_f ?? null}
+    high={today?.high_f ?? null}
     current={current.temp_f}
   />
 </div>
@@ -821,7 +824,8 @@ useEffect(() => {
 
             {/* Apple-style scroll indicator */}
         <div className="scroll-indicator"></div>    
-{/* 1x7 Horizontal Scroll Stats */}
+<div className="section-label">LAST 24 HOURS</div>
+{/* Compact observation statistics */}
 <div className="stats-scroll-container">
   <div className="stats-row-horizontal">
 
@@ -882,24 +886,6 @@ useEffect(() => {
     </span>
     <span className="stat-label">WINDS</span>
   </div>
-
-    {/* 5. Max Gust */}
-  <div 
-    className="stat-item-vertical clickable"
-    onClick={() => setShowWindModal(true)}
-    title="View wind details"
-  >
-    <Wind size={18} className="stat-icon" style={{ color: '#495c61' }} />
-      <span className="stat-value">
-        {last_24h.max_gust_mph !== null 
-          ? <>{Math.round(last_24h.max_gust_mph)}<span style={{ fontSize: '0.7em', marginLeft: '1px' }}>mph</span></>
-          : '--'}
-      </span>
-      <span className="stat-label">MAX GUST</span>
-    </div>
-
-
-
 
         {/* 6. Humidity (avg) */}
         <div 
@@ -1630,6 +1616,7 @@ useEffect(() => {
 />
 
     </div>
+    </StationDayNavigation>
     
   );
   

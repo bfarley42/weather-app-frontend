@@ -1,0 +1,53 @@
+.station-day-navigation {
+  width: 100%;
+  color: #1e293b;
+}
+
+.station-day-navigation.dark {
+  color: #e2e8f0;
+}
+
+.station-day-controls {
+  max-width: 448px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: center;
+}
+
+.station-day-controls h2 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.station-day-controls button {
+  padding: 6px 8px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.station-day-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.station-day-placeholder {
+  padding: 40px 16px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .station-day-controls {
+    gap: 6px;
+    font-size: 0.8rem;
+  }
+
+  .station-day-controls button {
+    padding: 10px 8px;
+  }
+}
