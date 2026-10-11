@@ -95,6 +95,26 @@ export function getWeatherIcon(
  * Get icon based on condition text (for stats/summaries)
  * Used when we have human-readable conditions instead of METAR codes
  */
+// Daily labels select the original main-card renderer, not a new icon palette.
+// Use its daylight variant for a whole-day summary; this is not a live observation.
+export function getHistoricalConditionIcon(condition: string | null, size = 56) {
+  if (!condition) return null;
+  const label = condition.toLowerCase();
+  if (label.includes('thunder') || label.includes('storm')) return getWeatherIcon(null, 'TS', size);
+  if (label.includes('freezing')) return getWeatherIcon(null, 'FZRA', size);
+  if (label.includes('snow')) return getWeatherIcon(null, 'SN', size);
+  if (label.includes('rain') || label.includes('shower')) return getWeatherIcon(null, 'RA', size);
+  if (label.includes('drizzle')) return getWeatherIcon(null, 'DZ', size);
+  if (label.includes('fog')) return getWeatherIcon(null, 'FG', size);
+  if (label.includes('mist') || label.includes('haze')) return getWeatherIcon(null, 'BR', size);
+  if (label.includes('hail')) return getWeatherIcon(null, 'GR', size);
+  if (label.includes('partly')) return getWeatherIcon('SCT', null, size);
+  if (label.includes('mostly cloudy')) return getWeatherIcon('BKN', null, size);
+  if (label.includes('cloud') || label.includes('overcast')) return getWeatherIcon('OVC', null, size);
+  if (label.includes('clear') || label.includes('sunny')) return getWeatherIcon('CLR', null, size);
+  return null;
+}
+
 export function getConditionIcon(condition: string | null, size: number = 24) {
   if (!condition) return <Cloud size={size} className="stat-icon" />;
   

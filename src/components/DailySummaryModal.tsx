@@ -1,3 +1,4 @@
+import { getConditionEmoji } from '../utils/conditionEmoji';
 // src/components/DailySummaryModal.tsx
 /**
  * Modal showing daily weather summary
@@ -9,16 +10,11 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Sun,
-    CloudSun,
     Cloud,
     Wind,
     Droplets,
     Thermometer,
     Waves,
-    Snowflake,
-    CloudRain,
-    CloudFog,
-    CloudLightning
 
 } from 'lucide-react';
 // import { FaThermometerHalf } from 'react-icons/fa';
@@ -308,36 +304,6 @@ export default function DailySummaryModal({
   const tempDiff = getTempDiff();
 
   // Get condition icon
-const getConditionEmoji = (condition: string | null) => {
-  // Default / Fallback
-  if (!condition) return <CloudSun className="w-6 h-6 text-gray-500" />;
-
-  const c = condition.toLowerCase();
-
-  if (c.includes('clear') || c.includes('sunny')) {
-    return <Sun className="w-6 h-6 text-yellow-500" />;
-  }
-  if (c.includes('partly')) {
-    return <CloudSun className="w-6 h-6 text-yellow-500" />;
-  }
-  if (c.includes('cloud') || c.includes('overcast')) {
-    return <Cloud className="w-6 h-6 text-gray-400" />;
-  }
-  if (c.includes('rain')) {
-    return <CloudRain className="w-6 h-6 text-blue-400" />;
-  }
-  if (c.includes('snow')) {
-    return <Snowflake className="w-6 h-6 text-cyan-300" />;
-  }
-  if (c.includes('fog')) {
-    return <CloudFog className="w-6 h-6 text-gray-300" />;
-  }
-  if (c.includes('thunder')) {
-    return <CloudLightning className="w-6 h-6 text-purple-500" />;
-  }
-
-  return <CloudSun className="w-6 h-6 text-gray-500" />;
-};
 
   const modalContent = (
     <div

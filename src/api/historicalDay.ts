@@ -1,6 +1,7 @@
 import { API_URL } from '../config';
 
 export interface HistoricalDay {
+  dominant_condition?: string | null;
   station_id: string;
   station_name: string | null;
   timezone: string;

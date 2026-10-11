@@ -9,7 +9,7 @@
 import HourlyChartModal from './HourlyChartModal';
 import ConditionHistoryModal from './ConditionHistoryModal';
 import ConditionSummary24HModal from './ConditionSummary24HModal';
-import { getWeatherIcon } from '../utils/weatherIcons';
+import { getWeatherIcon, getHistoricalConditionIcon } from '../utils/weatherIcons';
 import SunshineModal from './SunshineModal';
 import CloudCoverModal from './CloudCoverModal';
 import HourlyPrecipModal from './HourlyPrecipModal';
@@ -744,15 +744,18 @@ useEffect(() => {
   // ----------------------------------------------------------------
   const dashboard = (
     <div className={`summary-cards-wrapper ${darkMode ? 'dark' : ''}`}
-      onClickCapture={historicalDay ? event => event.stopPropagation() : undefined}
+      onClickCapture={historicalDay ? event => {
+        if (!(event.target instanceof Element) || !event.target.closest('.current-temp, .temp-band-wrapper, .hourly-modal-overlay')) event.stopPropagation();
+      } : undefined}
       onKeyDownCapture={historicalDay ? event => {
+        if (event.target instanceof Element && event.target.closest('.hourly-modal-overlay')) return;
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); }
       } : undefined}>
       
       {/* ============================================================
           CARD 1: Current Conditions
           ============================================================ */}
-      {!historicalDay && <div className={`summary-card current-card ${darkMode ? 'dark' : ''}`}>
+      <div className={`summary-card current-card ${darkMode ? 'dark' : ''}`}>
         {/* Header: Station name + time */}
         <div className="summary-header">
           <h2 className="station-name">{displayName}</h2>
@@ -769,13 +772,24 @@ useEffect(() => {
     setShowHourlyChart(true);
   }}
   style={{ cursor: 'pointer' }}
-  title="View hourly forecast"
+  title={historicalDay ? 'Observed daily high' : 'View hourly forecast'}
 >
-  {current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
+  {historicalDay
+    ? historicalDay.high_f !== null ? `${Math.round(historicalDay.high_f)}°` : '--'
+    : current.temp_f !== null ? `${Math.round(current.temp_f)}°` : '--'}
 </div>
+        {!historicalDay && <div className="feels-like" data-observed-extrema
+          style={{ marginTop: 0, whiteSpace: 'pre' }}>
+          H: {today?.high_f != null ? `${Math.round(today.high_f)}°` : '--'}{'  '}
+          L: {today?.low_f != null ? `${Math.round(today.low_f)}°` : '--'}
+        </div>}
         <div className="feels-like">
-            Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}
+            {historicalDay ? 'DAILY HIGH' : <>Feels like {current.feels_like_f !== null ? `${Math.round(current.feels_like_f)}°` : '--'}</>}
         </div>
+        {historicalDay && <div className="feels-like" data-observed-extrema
+          style={{ marginTop: 0, whiteSpace: 'nowrap' }}>
+          L: {historicalDay.low_f !== null ? `${Math.round(historicalDay.low_f)}°` : '--'}
+        </div>}
 
 
         </div>
@@ -783,6 +797,11 @@ useEffect(() => {
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
+{historicalDay?.dominant_condition && <div className="weather-icon-container">
+  {getHistoricalConditionIcon(historicalDay.dominant_condition)}
+  <span className="condition-label">{historicalDay.dominant_condition}</span>
+</div>}
+{!historicalDay && <>
 <div
   className="weather-icon-container clickable"
   onClick={() => {
@@ -814,22 +833,26 @@ useEffect(() => {
                 <span className="condition-label">{current.condition}</span>
               )}
             </div>
+ </>}
             <div className="wind-display">
               <Wind size={14} className="wind-icon" />
               <span className="wind-speed">
-                {current.wind_mph !== null ? `${Math.round(current.wind_mph)} mph` : '-- mph'}
+                {historicalDay
+                  ? historicalDay.avg_wind_mph !== null ? `${Math.round(historicalDay.avg_wind_mph)} mph` : '-- mph'
+                  : current.wind_mph !== null ? `${Math.round(current.wind_mph)} mph` : '-- mph'}
               </span>
+              {historicalDay && <span>AVG</span>}
             </div>
           </div>
                   {/* Centered timestamp */}
         
         </div>
         
-        <div className="observed-time">
+        {!historicalDay && <div className="observed-time">
           <Clock size={12} />
           <span>as of {formatObservedTime(current.observed_at, current.hours_ago)}</span>
-        </div>
-      </div>}
+        </div>}
+      </div>
       
       {/* ============================================================
           CARD 2: Last 24 Hours
@@ -1517,6 +1540,8 @@ useEffect(() => {
  </>}
       {/* Hourly Chart Modal */}
       <HourlyChartModal
+        filterDate={historicalDay?.local_date}
+        timezone={historicalDay?.timezone}
         stationId={stationId}
         stationName={displayName}
         darkMode={darkMode}

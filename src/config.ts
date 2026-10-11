@@ -23,7 +23,9 @@
 
 // export { API_URL };
 
-export const API_URL = 'https://weather-api-huq7.onrender.com';
+export const API_URL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || 'https://weather-api-huq7.onrender.com').replace(/\/$/, '')
+  : 'https://weather-api-huq7.onrender.com';
 
 // Debug logging
 console.log('🔍 API_URL configured as:', API_URL);

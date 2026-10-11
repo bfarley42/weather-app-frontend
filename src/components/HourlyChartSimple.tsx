@@ -49,6 +49,8 @@ interface HourlyChartSimpleProps {
   darkMode?: boolean;
   onDateRangeChange: (range: string) => void;
   initialRange?: string;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function HourlyChartSimple({
@@ -58,6 +60,8 @@ export default function HourlyChartSimple({
   darkMode = false,
   onDateRangeChange,
   initialRange = '1D',
+  filterDate,
+  timezone,
 }: HourlyChartSimpleProps) {
   const [activeRange, setActiveRange] = useState<string>(initialRange);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -847,7 +851,7 @@ markPoint: lastFeelsLike ? {
         gap: isMobile ? '8px' : '10px',
         marginBottom: '16px'
       }}>
-        {['1D', '3D', '7D'].map(range => (
+        {(filterDate ? ['1D'] : ['1D', '3D', '7D']).map(range => (
           <button
             key={range}
             onClick={() => handleRangeClick(range)}
@@ -1059,7 +1063,7 @@ markPoint: lastFeelsLike ? {
             const isColder = periodStats.deviation !== null && periodStats.deviation < 0;
 
             // Format date range for display
-            const periodLabel = periodStats.days === 1
+            const periodLabel = filterDate ? `${filterDate} (${timezone || 'station local time'})` : periodStats.days === 1
               ? '24-Hour'
               : `${periodStats.days}-Day`;
 

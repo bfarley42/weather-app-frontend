@@ -22,6 +22,7 @@ interface HourlyChartModalProps {
   isOpen: boolean;
   onClose: () => void;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
+  timezone?: string;
 }
 
 // Map range labels to hours
@@ -38,12 +39,14 @@ export default function HourlyChartModal({
   isOpen,
   onClose,
   filterDate,
+  timezone,
 }: HourlyChartModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyWeather[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('1D');
   const [chartReady, setChartReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Get hours from current range
   const hours = rangeToHours[dateRange] || 24;
@@ -51,6 +54,7 @@ export default function HourlyChartModal({
   // Fetch data when modal opens or range changes
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchHourlyData() {
       setLoading(true);
@@ -63,26 +67,31 @@ export default function HourlyChartModal({
         ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch hourly data: ${response.status}`);
         }
 
         const data = await response.json();
+        if (filterDate && data.some((hour: HourlyWeather) => hour.ts_local.slice(0, 10) !== filterDate)) {
+          throw new Error('Hourly observations do not match the selected local date');
+        }
+        if (controller.signal.aborted) return;
         setHourlyData(data);
         
         // Delay chart render to let modal animation complete
-        setTimeout(() => setChartReady(true), 150);
+        setTimeout(() => { if (!controller.signal.aborted) setChartReady(true); }, 150);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load hourly data');
+        if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Failed to load hourly data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchHourlyData();
-  }, [isOpen, stationId, hours, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, hours, filterDate, attempt]);
 
   // Reset to 1D when modal opens
   useEffect(() => {
@@ -153,7 +162,7 @@ export default function HourlyChartModal({
           ) : error ? (
             <div className="hourly-modal-error">
               <span>⚠️ {error}</span>
-              <button onClick={() => setDateRange(dateRange)}>Retry</button>
+              <button onClick={() => setAttempt(value => value + 1)}>Retry</button>
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="hourly-modal-loading">
@@ -172,6 +181,8 @@ export default function HourlyChartModal({
               darkMode={darkMode}
               onDateRangeChange={handleDateRangeChange}
               initialRange={dateRange}
+              filterDate={filterDate}
+              timezone={timezone}
             />
           )}
         </div>

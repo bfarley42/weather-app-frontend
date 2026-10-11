@@ -25,9 +25,9 @@ function HistoricalObservations({ stationId, date, render }: {
   </div>;
   if (!day) return <div className="station-day-placeholder" role="status">Loading historical observations…</div>;
   return <>
-    <p role="status">{day.has_observations
+    <div className="summary-cards-wrapper"><p className="section-label history-card" role="status">{day.has_observations
       ? `${day.coverage.hourly_observation_count} hourly records. Observation completeness is not guaranteed.`
-      : 'No observations available for this date.'} Historical detail modals are not connected yet.</p>
+      : 'No observations available for this date.'} Historical temperature details are available; other detail modals are not connected yet.</p></div>
     {render(day)}
   </>;
 }
