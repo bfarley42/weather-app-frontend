@@ -11,6 +11,8 @@ import { createPortal } from 'react-dom';
 import { Thermometer } from 'lucide-react';
 import DewPointChart from './DewPointChart';
 import { API_URL } from '../config';
+import { fetchHistoricalMoisture } from '../api/historicalMoisture';
+import { moistureStatistics, type HourlyMoisture } from '../utils/historicalMoisture';
 import './DewPointModal.css';
 
 interface HourlyData {
@@ -26,6 +28,8 @@ interface DewPointModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentDewPoint?: number | null;
+  timezone?: string;
+  onHistoricalData?: (rows: HourlyMoisture[]) => void;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
@@ -37,43 +41,57 @@ export default function DewPointModal({
   onClose,
   currentDewPoint,
   filterDate,
+  timezone,
+  onHistoricalData,
 }: DewPointModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Fetch hourly data when modal opens
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchData() {
       setLoading(true);
       setError(null);
 
       try {
+        if (filterDate) {
+          const rows = await fetchHistoricalMoisture(stationId, filterDate, controller.signal);
+          if (!controller.signal.aborted) {
+            setHourlyData(rows);
+            onHistoricalData?.(rows);
+          }
+          return;
+        }
       // Use date-specific endpoint if filterDate provided
       const url = filterDate
         ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);
         }
 
         const data = await response.json();
-        setHourlyData(data);
+        if (!controller.signal.aborted) setHourlyData(data);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, filterDate, attempt, onHistoricalData]);
 
   // Handle escape key
   useEffect(() => {
@@ -103,7 +121,7 @@ export default function DewPointModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const filteredData = showTodayOnly
+  const filteredData = !filterDate && showTodayOnly
     ? hourlyData.filter(h => {
         const hourDate = new Date(h.ts_local);
         hourDate.setHours(0, 0, 0, 0);
@@ -151,7 +169,12 @@ export default function DewPointModal({
     };
   };
 
-  const summary = calculateSummary(filteredData);
+  const historicalStats = filterDate ? moistureStatistics(filteredData as HourlyMoisture[], 'dwpf') : null;
+  const summary = historicalStats ? {
+    avgDewPoint: historicalStats.average == null ? null : Math.round(historicalStats.average),
+    highDewPoint: historicalStats.high == null ? null : Math.round(historicalStats.high),
+    lowDewPoint: historicalStats.low == null ? null : Math.round(historicalStats.low),
+  } : calculateSummary(filteredData);
 
   // Get comfort level description based on dew point
   const getComfortLevel = (dewPoint: number): { label: string; color: string; description: string } => {
@@ -163,9 +186,11 @@ export default function DewPointModal({
     return { label: 'Oppressive', color: '#dc2626', description: 'Dangerous for some' };
   };
 
-  const comfort = currentDewPoint !== null && currentDewPoint !== undefined 
+  const comfort = filterDate
+    ? summary.highDewPoint == null ? { label: '--', color: '#666', description: '' } : getComfortLevel(summary.highDewPoint)
+    : currentDewPoint !== null && currentDewPoint !== undefined
     ? getComfortLevel(currentDewPoint) 
-    : getComfortLevel(summary.avgDewPoint);
+    : summary.avgDewPoint == null ? { label: '--', color: '#666', description: '' } : getComfortLevel(summary.avgDewPoint);
 
   const modalContent = (
     <div 
@@ -194,6 +219,7 @@ export default function DewPointModal({
           ) : error ? (
             <div className="dewpoint-modal-error">
               <span>⚠️ {error}</span>
+              {filterDate && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="dewpoint-modal-loading">
@@ -205,7 +231,7 @@ export default function DewPointModal({
               <div className="dewpoint-modal-header">
                 <h2 className="dewpoint-modal-title">{stationName}</h2>
                 <div className="dewpoint-modal-subtitle">
-                  {showTodayOnly ? "Today's Dew Point" : 'Last 24 Hours Dew Point'}
+                  {filterDate ? `${filterDate} (${timezone || 'station local time'}) Dew Point` : showTodayOnly ? "Today's Dew Point" : 'Last 24 Hours Dew Point'}
                 </div>
               </div>
 
@@ -215,7 +241,7 @@ export default function DewPointModal({
                 <div className="dewpoint-summary-card">
                   <Thermometer size={20} className="dewpoint-card-icon" />
                   <div className="dewpoint-card-value">
-                    {summary.avgDewPoint}
+                    {summary.avgDewPoint ?? '--'}
                     <span className="dewpoint-card-unit">°F</span>
                   </div>
                   <div className="dewpoint-card-label">Average</div>
@@ -225,10 +251,10 @@ export default function DewPointModal({
                 <div className="dewpoint-summary-card current">
                   <Thermometer size={20} className="dewpoint-card-icon" />
                   <div className="dewpoint-card-value">
-                    {currentDewPoint !== null && currentDewPoint !== undefined ? Math.round(currentDewPoint) : '--'}
+                    {filterDate ? summary.highDewPoint ?? '--' : currentDewPoint !== null && currentDewPoint !== undefined ? Math.round(currentDewPoint) : '--'}
                     <span className="dewpoint-card-unit">°F</span>
                   </div>
-                  <div className="dewpoint-card-label">Current</div>
+                  <div className="dewpoint-card-label">{filterDate ? 'Maximum' : 'Current'}</div>
                   <div className="dewpoint-card-comfort" style={{ color: comfort.color }}>
                     {comfort.label}
                   </div>
@@ -238,21 +264,28 @@ export default function DewPointModal({
                 <div className="dewpoint-summary-card range">
                   <div className="dewpoint-range-row">
                     <span className="dewpoint-range-label">H:</span>
-                    <span className="dewpoint-range-value high">{summary.highDewPoint}°</span>
+                    <span className="dewpoint-range-value high">{summary.highDewPoint ?? '--'}°</span>
                   </div>
                   <div className="dewpoint-range-row">
                     <span className="dewpoint-range-label">L:</span>
-                    <span className="dewpoint-range-value low">{summary.lowDewPoint}°</span>
+                    <span className="dewpoint-range-value low">{summary.lowDewPoint ?? '--'}°</span>
                   </div>
                   <div className="dewpoint-card-label">Range</div>
                 </div>
               </div>
+
+              {historicalStats && <p className="dewpoint-modal-subtitle" role="status">
+                {historicalStats.count}/{filteredData.length} hourly records have dew point readings.
+                {' Missing readings are excluded; observation completeness is not guaranteed.'}
+              </p>}
 
               {/* Chart */}
               <DewPointChart
                 data={filteredData}
                 darkMode={darkMode}
                 showTodayOnly={showTodayOnly}
+                filterDate={filterDate}
+                timezone={timezone}
               />
 
               {/* Toggle */}
@@ -260,8 +293,9 @@ export default function DewPointModal({
                 <button
                   className={`dewpoint-toggle-btn ${showTodayOnly ? 'active' : ''}`}
                   onClick={() => setShowTodayOnly(!showTodayOnly)}
+                  disabled={!!filterDate}
                 >
-                  <span className="toggle-label">Today Only</span>
+                  <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
                   <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
                     <div className="toggle-knob" />
                   </div>

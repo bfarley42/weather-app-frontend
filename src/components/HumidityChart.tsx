@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { observationClock } from '../utils/observationClock';
 
 interface HourlyData {
   ts_local: string;
@@ -18,12 +19,16 @@ interface HumidityChartProps {
   data: HourlyData[];
   darkMode?: boolean;
   showTodayOnly?: boolean;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function HumidityChart({
   data,
   darkMode = false,
   showTodayOnly = false,
+  filterDate,
+  timezone,
 }: HumidityChartProps) {
   const chartRef = useRef<ReactECharts | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -80,6 +85,7 @@ export default function HumidityChart({
     const hourDate = new Date(hour.ts_local);
     return {
       hour: hourDate,
+      timestamp: hour.ts_local,
       humidity: hour.relh_pct,
     };
   });
@@ -100,7 +106,11 @@ export default function HumidityChart({
   };
 
   // X-axis labels
-  const xLabels = chartData.map(d => formatHourLabel(d.hour));
+  const xLabels = chartData.map(d => {
+    if (!filterDate) return formatHourLabel(d.hour);
+    const hour = observationClock(d.timestamp, timezone || 'America/New_York').hour;
+    return hour === 0 ? '12a' : hour === 12 ? '12p' : hour < 12 ? `${hour}a` : `${hour - 12}p`;
+  });
 
   // Colors - blue/purple theme
   const lineColor = darkMode ? '#a78bfa' : '#8b5cf6';
@@ -132,20 +142,22 @@ export default function HumidityChart({
         
         const idx = params[0].dataIndex;
         const d = chartData[idx];
-        const dayLabel = isYesterday(d.hour) ? 'Yesterday' : 'Today';
-        const timeStr = d.hour.toLocaleTimeString('en-US', { 
+        const dayLabel = filterDate || (isYesterday(d.hour) ? 'Yesterday' : 'Today');
+        const timeStr = filterDate ? observationClock(d.timestamp, timezone || 'America/New_York').time : d.hour.toLocaleTimeString('en-US', {
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
         });
         
-        const humidity = params[0].value;
+        const humidity = filterDate ? d.humidity : params[0].value;
         let comfortLabel = 'Dry';
         let comfortColor = '#f59e0b';
         if (humidity >= 30 && humidity < 50) { comfortLabel = 'Comfortable'; comfortColor = '#22c55e'; }
         else if (humidity >= 50 && humidity < 70) { comfortLabel = 'Moderate'; comfortColor = '#3b82f6'; }
         else if (humidity >= 70) { comfortLabel = 'Humid'; comfortColor = '#8b5cf6'; }
         
+        if (filterDate && humidity == null) { comfortLabel = '--'; comfortColor = '#666'; }
+
         return `
           <div style="font-weight:600;margin-bottom:6px">${dayLabel}, ${timeStr}</div>
           <div style="display:flex;align-items:center;gap:6px;margin:3px 0">
@@ -228,7 +240,7 @@ series: [
         width: 3
       }
     },
-    markLine: (!showTodayOnly && midnightIndex > 0) ? {
+    markLine: (!filterDate && !showTodayOnly && midnightIndex > 0) ? {
       silent: true,
       symbol: 'none',
       lineStyle: {
@@ -273,7 +285,7 @@ series: [
         fontWeight: 'bold' as const,
         formatter: (params: any) => `${Math.round(params.value)}%`
       },
-      data: [
+      data: filterDate && !chartData.some(d => d.humidity != null) ? [] : [
         {
           type: 'max' as const,
           name: 'Max',

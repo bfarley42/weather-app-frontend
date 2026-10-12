@@ -11,6 +11,8 @@ import { createPortal } from 'react-dom';
 import { Droplets } from 'lucide-react';
 import HumidityChart from './HumidityChart';
 import { API_URL } from '../config';
+import { fetchHistoricalMoisture } from '../api/historicalMoisture';
+import { moistureStatistics, type HourlyMoisture } from '../utils/historicalMoisture';
 import './HumidityModal.css';
 
 interface HourlyData {
@@ -25,6 +27,8 @@ interface HumidityModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentHumidity?: number | null;
+  timezone?: string;
+  onHistoricalData?: (rows: HourlyMoisture[]) => void;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
 }
 
@@ -36,43 +40,57 @@ export default function HumidityModal({
   onClose,
   currentHumidity,
   filterDate,
+  timezone,
+  onHistoricalData,
 }: HumidityModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Fetch hourly data when modal opens
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchData() {
       setLoading(true);
       setError(null);
 
       try {
+        if (filterDate) {
+          const rows = await fetchHistoricalMoisture(stationId, filterDate, controller.signal);
+          if (!controller.signal.aborted) {
+            setHourlyData(rows);
+            onHistoricalData?.(rows);
+          }
+          return;
+        }
       // Use date-specific endpoint if filterDate provided
       const url = filterDate
         ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);
         }
 
         const data = await response.json();
-        setHourlyData(data);
+        if (!controller.signal.aborted) setHourlyData(data);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, filterDate, attempt, onHistoricalData]);
 
   // Handle escape key
   useEffect(() => {
@@ -102,7 +120,7 @@ export default function HumidityModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const filteredData = showTodayOnly
+  const filteredData = !filterDate && showTodayOnly
     ? hourlyData.filter(h => {
         const hourDate = new Date(h.ts_local);
         hourDate.setHours(0, 0, 0, 0);
@@ -150,7 +168,12 @@ export default function HumidityModal({
     };
   };
 
-  const summary = calculateSummary(filteredData);
+  const historicalStats = filterDate ? moistureStatistics(filteredData as HourlyMoisture[], 'relh_pct') : null;
+  const summary = historicalStats ? {
+    avgHumidity: historicalStats.average == null ? null : Math.round(historicalStats.average),
+    highHumidity: historicalStats.high == null ? null : Math.round(historicalStats.high),
+    lowHumidity: historicalStats.low == null ? null : Math.round(historicalStats.low),
+  } : calculateSummary(filteredData);
 
   // Format time
 //   const formatTime = (date: Date | null): string => {
@@ -170,7 +193,8 @@ export default function HumidityModal({
     return { label: 'Humid', color: '#8b5cf6' };
   };
 
-  const comfort = getComfortLevel(summary.avgHumidity);
+  const comfortValue = filterDate ? summary.highHumidity : summary.avgHumidity;
+  const comfort = comfortValue == null ? { label: '--', color: '#666' } : getComfortLevel(comfortValue);
 
   const modalContent = (
     <div 
@@ -199,6 +223,7 @@ export default function HumidityModal({
           ) : error ? (
             <div className="humidity-modal-error">
               <span>⚠️ {error}</span>
+              {filterDate && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="humidity-modal-loading">
@@ -210,7 +235,7 @@ export default function HumidityModal({
               <div className="humidity-modal-header">
                 <h2 className="humidity-modal-title">{stationName}</h2>
                 <div className="humidity-modal-subtitle">
-                  {showTodayOnly ? "Today's Humidity" : 'Last 24 Hours Humidity'}
+                  {filterDate ? `${filterDate} (${timezone || 'station local time'}) Humidity` : showTodayOnly ? "Today's Humidity" : 'Last 24 Hours Humidity'}
                 </div>
               </div>
 
@@ -220,7 +245,7 @@ export default function HumidityModal({
                 <div className="humidity-summary-card">
                   <Droplets size={20} className="humidity-card-icon" />
                   <div className="humidity-card-value">
-                    {summary.avgHumidity}
+                    {summary.avgHumidity ?? '--'}
                     <span className="humidity-card-unit">%</span>
                   </div>
                   <div className="humidity-card-label">Average</div>
@@ -230,10 +255,10 @@ export default function HumidityModal({
                 <div className="humidity-summary-card current">
                   <Droplets size={20} className="humidity-card-icon" />
                   <div className="humidity-card-value">
-                    {currentHumidity !== null && currentHumidity !== undefined ? Math.round(currentHumidity) : '--'}
+                    {filterDate ? summary.highHumidity ?? '--' : currentHumidity !== null && currentHumidity !== undefined ? Math.round(currentHumidity) : '--'}
                     <span className="humidity-card-unit">%</span>
                   </div>
-                  <div className="humidity-card-label">Current</div>
+                  <div className="humidity-card-label">{filterDate ? 'Maximum' : 'Current'}</div>
                   <div className="humidity-card-comfort" style={{ color: comfort.color }}>
                     {comfort.label}
                   </div>
@@ -243,21 +268,28 @@ export default function HumidityModal({
                 <div className="humidity-summary-card range">
                   <div className="humidity-range-row">
                     <span className="humidity-range-label">H:</span>
-                    <span className="humidity-range-value high">{summary.highHumidity}%</span>
+                    <span className="humidity-range-value high">{summary.highHumidity ?? '--'}%</span>
                   </div>
                   <div className="humidity-range-row">
                     <span className="humidity-range-label">L:</span>
-                    <span className="humidity-range-value low">{summary.lowHumidity}%</span>
+                    <span className="humidity-range-value low">{summary.lowHumidity ?? '--'}%</span>
                   </div>
                   <div className="humidity-card-label">Range</div>
                 </div>
               </div>
+
+              {historicalStats && <p className="humidity-modal-subtitle" role="status">
+                {historicalStats.count}/{filteredData.length} hourly records have humidity readings.
+                {' Missing readings are excluded; observation completeness is not guaranteed.'}
+              </p>}
 
               {/* Chart */}
               <HumidityChart
                 data={filteredData}
                 darkMode={darkMode}
                 showTodayOnly={showTodayOnly}
+                filterDate={filterDate}
+                timezone={timezone}
               />
 
               {/* Toggle */}
@@ -265,8 +297,9 @@ export default function HumidityModal({
                 <button
                   className={`humidity-toggle-btn ${showTodayOnly ? 'active' : ''}`}
                   onClick={() => setShowTodayOnly(!showTodayOnly)}
+                  disabled={!!filterDate}
                 >
-                  <span className="toggle-label">Today Only</span>
+                  <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
                   <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
                     <div className="toggle-knob" />
                   </div>

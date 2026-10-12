@@ -36,6 +36,8 @@ interface MetarModalProps {
   isOpen: boolean;
   onClose: () => void;
   isDay?: boolean;
+  timezone?: string;
+  conditionLabel?: string;
   initialData?: {
     station_id?: string;
     observed_at?: string | null;
@@ -63,6 +65,8 @@ export default function MetarModal({
   onClose,
   isDay = true,
   initialData,
+  timezone,
+  conditionLabel,
 }: MetarModalProps) {
   
   // Convert initialData to MetarData format
@@ -138,6 +142,8 @@ export default function MetarModal({
               stationName={stationName}
               darkMode={darkMode}
               isDay={isDay}
+              timezone={timezone}
+              conditionLabel={conditionLabel}
             />
           ) : (
             <div className="metar-modal-loading">

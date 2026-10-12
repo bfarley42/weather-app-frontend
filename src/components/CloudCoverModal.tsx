@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { Cloud } from 'lucide-react';
 import CloudCoverChart from './CloudCoverChart';
 import { API_URL } from '../config';
+import { historicalCloudSummary } from '../utils/historicalCloudCover';
 import './CloudCoverModal.css';
 
 interface HourlyData {
@@ -28,6 +29,7 @@ interface CloudCoverModalProps {
   isOpen: boolean;
   onClose: () => void;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
+  timezone?: string;
 }
 
 export default function CloudCoverModal({
@@ -37,15 +39,18 @@ export default function CloudCoverModal({
   isOpen,
   onClose,
   filterDate,
+  timezone,
 }: CloudCoverModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Fetch hourly data when modal opens
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchData() {
       setLoading(true);
@@ -57,23 +62,30 @@ export default function CloudCoverModal({
         ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);
         }
 
         const data = await response.json();
-        setHourlyData(data);
+        if (filterDate && (!Array.isArray(data) || data.some((hour: HourlyData) =>
+          !hour || typeof hour.ts_local !== 'string' || hour.ts_local.slice(0, 10) !== filterDate ||
+          (hour.skyc1 != null && typeof hour.skyc1 !== 'string')))) {
+          throw new Error('Hourly observations do not match the selected date or sky format');
+        }
+        if (!controller.signal.aborted) setHourlyData(data);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, filterDate, attempt]);
 
   // Handle escape key
   useEffect(() => {
@@ -103,7 +115,7 @@ export default function CloudCoverModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const filteredData = showTodayOnly
+  const filteredData = !filterDate && showTodayOnly
     ? hourlyData.filter(h => {
         const hourDate = new Date(h.ts_local);
         hourDate.setHours(0, 0, 0, 0);
@@ -153,7 +165,8 @@ export default function CloudCoverModal({
     };
   };
 
-  const summary = calculateSummary(filteredData);
+  const historicalSummary = filterDate ? historicalCloudSummary(filteredData) : null;
+  const summary = historicalSummary ?? calculateSummary(filteredData);
 
   const modalContent = (
     <div 
@@ -182,6 +195,7 @@ export default function CloudCoverModal({
           ) : error ? (
             <div className="cloudcover-modal-error">
               <span>⚠️ {error}</span>
+              {filterDate && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="cloudcover-modal-loading">
@@ -193,7 +207,7 @@ export default function CloudCoverModal({
               <div className="cloudcover-header">
                 <h2 className="cloudcover-title">{stationName}</h2>
                 <div className="cloudcover-subtitle">
-                  {showTodayOnly ? "Today's Cloud Cover" : 'Last 24 Hours Cloud Cover'}
+                  {filterDate ? `${filterDate} (${timezone || 'station local time'}) Cloud Cover` : showTodayOnly ? "Today's Cloud Cover" : 'Last 24 Hours Cloud Cover'}
                 </div>
               </div>
 
@@ -201,11 +215,11 @@ export default function CloudCoverModal({
               <div className="cloudcover-summary">
                 <div className="cloudcover-stat-main">
                   <Cloud size={32} className="cloudcover-icon" />
-                  <span className="cloudcover-pct">{summary.avgCloudCover}</span>
+                  <span className="cloudcover-pct">{summary.avgCloudCover ?? '--'}</span>
                   <span className="cloudcover-pct-symbol">%</span>
                 </div>
                 <div className="cloudcover-stat-secondary">
-                  <span className="cloudcover-label">average cloud cover</span>
+                  <span className="cloudcover-label">{filterDate ? 'estimated average cloud cover' : 'average cloud cover'}</span>
                 </div>
                 <div className="cloudcover-breakdown">
                   <div className="breakdown-item">
@@ -225,11 +239,18 @@ export default function CloudCoverModal({
                 </div>
               </div>
 
+              {historicalSummary && <p className="cloudcover-subtitle" role="status">
+                Estimated from sky categories; {historicalSummary.observedCount}/{filteredData.length} hourly records have known sky cover.
+                {' Missing or unknown sky codes are excluded. Observation completeness is not guaranteed.'}
+              </p>}
+
               {/* Chart */}
               <CloudCoverChart
                 data={filteredData}
                 darkMode={darkMode}
                 showTodayOnly={showTodayOnly}
+                filterDate={filterDate}
+                timezone={timezone}
               />
 
               {/* Toggle */}
@@ -237,8 +258,9 @@ export default function CloudCoverModal({
                 <button
                   className={`cloudcover-toggle-btn ${showTodayOnly ? 'active' : ''}`}
                   onClick={() => setShowTodayOnly(!showTodayOnly)}
+                  disabled={!!filterDate}
                 >
-                  <span className="toggle-label">Today Only</span>
+                  <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
                   <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
                     <div className="toggle-knob" />
                   </div>

@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { API_URL } from '../config';
+import { observationClock } from '../utils/observationClock';
 import { WiThermometer } from 'react-icons/wi';
 import { LuTrendingUp, LuTrendingDown } from 'react-icons/lu';
 
@@ -140,7 +141,7 @@ export default function HourlyChartSimple({
   // Prepare data - keep as strings for echarts
   const timestamps = data.map(d => d.ts_local);
   const temps = data.map(d => d.tmpf);
-  const feelsLike = data.map(d => d.feelslike_f);
+  const feelsLike = data.map(d => filterDate ? (d.feelslike_f ?? null) : d.feelslike_f);
 
   // Map normals to hourly timestamps (same value persists for entire day)
   const normalsMap = new Map(normals.map(n => [n.mmdd, n]));
@@ -157,6 +158,10 @@ export default function HourlyChartSimple({
 
   // Format timestamp for tooltip
   const formatTimestamp = (dateStr: string) => {
+    if (filterDate) {
+      const clock = observationClock(dateStr, timezone || 'America/New_York');
+      return `${clock.month} ${clock.day}, ${clock.time}`;
+    }
     const date = new Date(dateStr);
     const month = date.toLocaleDateString('en-US', { month: 'short' });
     const day = date.getDate();
@@ -169,8 +174,9 @@ export default function HourlyChartSimple({
   // Format axis labels based on range
   const formatAxisLabel = (dateStr: string) => {
     const date = new Date(dateStr);
-    const hour = date.getHours();
-    const day = date.getDate();
+    const clock = filterDate ? observationClock(dateStr, timezone || 'America/New_York') : null;
+    const hour = clock?.hour ?? date.getHours();
+    const day = clock?.day ?? date.getDate();
 
     const formatHour = (h: number) => {
       const ampm = h >= 12 ? 'pm' : 'am';
@@ -189,7 +195,7 @@ export default function HourlyChartSimple({
 
     // Show date at midnight for other ranges
     if (hour === 0) {
-      const month = date.toLocaleDateString('en-US', { month: 'short' });
+      const month = clock?.month ?? date.toLocaleDateString('en-US', { month: 'short' });
       return `{date|${month} ${day}}`;
     }
 
@@ -555,7 +561,7 @@ export default function HourlyChartSimple({
       type: 'line',
       data: temps,
       smooth: true,
-      connectNulls: true,  // Connect across missing data gaps
+      connectNulls: !filterDate,  // Preserve missing historical observation gaps.
       symbolSize: 4,
       showSymbol: false,
         itemStyle: {
@@ -644,7 +650,7 @@ markPoint: showFeelsLike ? undefined : (lastTemp ? {
   type: 'line',
   data: feelsLike,
   smooth: true,
-  connectNulls: true,
+  connectNulls: !filterDate,
   symbol: 'none',
   lineStyle: {
     width: 2,  // Make it prominent

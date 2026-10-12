@@ -10,6 +10,9 @@ import { useState, useEffect, useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
 import { Droplets } from 'lucide-react';
+import type { HistoricalDay } from '../api/historicalDay';
+import { observationClock } from '../utils/observationClock';
+import { historicalPrecipitation } from '../utils/historicalPrecipitation';
 // import type { EChartsOption, LineSeriesOption, BarSeriesOption } from 'echarts';
 // import type { ZRFontWeight } from 'zrender';
 
@@ -23,6 +26,8 @@ interface HourlyPrecipChartProps {
   stationName: string;
   darkMode?: boolean;
   totalPrecip?: number | null;
+  filterDate?: string;
+  historicalDay?: HistoricalDay;
 }
 
 export default function HourlyPrecipChart({
@@ -30,6 +35,8 @@ export default function HourlyPrecipChart({
   stationName,
   darkMode = false,
   totalPrecip,
+  filterDate,
+  historicalDay,
 }: HourlyPrecipChartProps) {
   const [showCumulative, setShowCumulative] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -61,13 +68,13 @@ export default function HourlyPrecipChart({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const filteredData = showTodayOnly
+    const filteredData = !filterDate && showTodayOnly
     ? data.filter(d => {
         const hourDate = new Date(d.ts_local);
         hourDate.setHours(0, 0, 0, 0);
         return hourDate.getTime() === today.getTime();
         })
-    : data;
+    : filterDate ? [...data].sort((a, b) => a.ts_local.localeCompare(b.ts_local)) : data;
 
   if (showTodayOnly && filteredData.length === 0) {
     return (
@@ -83,29 +90,36 @@ export default function HourlyPrecipChart({
 
     // Prepare data from filtered set
     const timestamps = filteredData.map(d => d.ts_local);
-    const precipValues = filteredData.map(d => d.precip_in ?? 0);
+    const historical = filterDate ? historicalPrecipitation(filteredData) : null;
+    const precipValues = historical ? historical.values : filteredData.map(d => d.precip_in ?? 0);
 
   // Calculate cumulative values
-  const cumulativeValues: number[] = [];
+  const cumulativeValues: (number | null)[] = [];
   let cumSum = 0;
   precipValues.forEach(val => {
-    cumSum += val;
+    cumSum += val ?? 0;
     cumulativeValues.push(Number(cumSum.toFixed(3)));
   });
+  if (historical) cumulativeValues.splice(0, cumulativeValues.length, ...historical.cumulative);
 
   // Calculate total
-    const calculatedTotal = precipValues.reduce((sum, val) => sum + val, 0);
+    const calculatedTotal = precipValues.reduce<number>((sum, val) => sum + (val ?? 0), 0);
     const displayTotal = showTodayOnly ? calculatedTotal : (totalPrecip ?? calculatedTotal);
+    const publishedTotal = historicalDay?.sources?.prcp_in === 'daily_obs';
+    const historicalTotal = publishedTotal ? historicalDay?.precip_in ?? null : historical?.total ?? null;
+    const traceOnly = publishedTotal ? historicalDay?.precip_is_trace : historicalTotal === 0 && historical?.traces.some(Boolean);
+    const hasTrace = historical?.traces.some(Boolean);
 
   // Format hour for x-axis
   const formatAxisLabel = (dateStr: string) => {
     const date = new Date(dateStr);
-    const hour = date.getHours();
-    const day = date.getDate();
+    const clock = filterDate ? observationClock(dateStr, historicalDay?.timezone || 'America/New_York') : null;
+    const hour = clock?.hour ?? date.getHours();
+    const day = clock?.day ?? date.getDate();
     
     // Show date at midnight
     if (hour === 0) {
-      const month = date.toLocaleDateString('en-US', { month: 'short' });
+      const month = clock?.month ?? date.toLocaleDateString('en-US', { month: 'short' });
       return `{date|${month} ${day}}`;
     }
     
@@ -121,6 +135,10 @@ export default function HourlyPrecipChart({
 
   // Format timestamp for tooltip
   const formatTimestamp = (dateStr: string) => {
+    if (filterDate) {
+      const clock = observationClock(dateStr, historicalDay?.timezone || 'America/New_York');
+      return `${clock.month} ${clock.day}, ${clock.time}`;
+    }
     const date = new Date(dateStr);
     const month = date.toLocaleDateString('en-US', { month: 'short' });
     const day = date.getDate();
@@ -148,7 +166,7 @@ export default function HourlyPrecipChart({
   const cumulativeColor = darkMode ? '#14ae82e0' : '#14AE82';
 
   // Calculate y-axis max for precip bars
-  const maxPrecip = Math.max(...precipValues);
+  const maxPrecip = Math.max(0, ...precipValues.filter((value): value is number => value != null));
   const precipAxisMax = maxPrecip > 0.2 ? undefined : 0.2;
 
   // Calculate cumulative y-axis max
@@ -160,7 +178,7 @@ export default function HourlyPrecipChart({
     
     title: {
       text: shortenStationName(stationName),
-      subtext: showTodayOnly ? "Today's Precipitation" : 'Last 24 Hours Precipitation',
+      subtext: filterDate ? `${filterDate} (${historicalDay?.timezone || 'station local time'})` : showTodayOnly ? "Today's Precipitation" : 'Last 24 Hours Precipitation',
       left: 'center',
       top: 5,
       itemGap: 4,
@@ -201,12 +219,17 @@ export default function HourlyPrecipChart({
         
         params.forEach((p: any) => {
           const color = p.color?.colorStops ? p.color.colorStops[0].color : p.color;
-          const value = typeof p.value === 'number' ? p.value.toFixed(3) : p.value;
+          const trace = historical && (p.seriesName === 'Precipitation'
+            ? historical.traces[p.dataIndex]
+            : p.value === 0 && historical.traces.slice(0, p.dataIndex + 1).some(Boolean));
+          const value = historical
+            ? trace ? 'Trace' : p.value == null ? 'Missing' : `${Number(p.value).toFixed(3)}"`
+            : typeof p.value === 'number' ? `${p.value.toFixed(3)}"` : `${p.value}"`;
           html += `
             <div style="display:flex;align-items:center;gap:6px;margin:3px 0">
               <span style="display:inline-block;width:10px;height:10px;background:${color};border-radius:2px"></span>
               <span>${p.seriesName}:</span>
-              <span style="font-weight:600">${value}"</span>
+              <span style="font-weight:600">${value}</span>
             </div>
           `;
         });
@@ -312,6 +335,14 @@ export default function HourlyPrecipChart({
         name: 'Precipitation',
         type: 'bar',
         data: precipValues,
+        markPoint: historical ? {
+          symbolSize: 0,
+          data: historical.traces.flatMap((trace, index) => trace ? [{
+            name: 'Trace',
+            coord: [index, 0],
+            label: { show: !historical.traces.slice(Math.max(0, index - 3), index).some(Boolean), formatter: 'Trace', position: 'top', color: darkMode ? '#e2e8f0' : '#1e293b', fontSize: 10 },
+          }] : []),
+        } : undefined,
         barWidth: '60%',
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -349,14 +380,14 @@ export default function HourlyPrecipChart({
           ])
         },
         markPoint: {
-        data: [
+        data: historical && cumulativeValues[cumulativeValues.length - 1] == null ? [] : [
             {
             name: 'Total',  // ADD THIS LINE
-            coord: [cumulativeValues.length - 1, cumulativeValues[cumulativeValues.length - 1]],
-            value: cumulativeValues[cumulativeValues.length - 1],
+            coord: [cumulativeValues.length - 1, cumulativeValues[cumulativeValues.length - 1]!],
+            value: cumulativeValues[cumulativeValues.length - 1]!,
             label: {
                 show: true,
-                formatter: (params: any) => `${params.value.toFixed(2)}"`,
+                formatter: (params: any) => historical && params.value === 0 && hasTrace ? 'Trace' : `${params.value.toFixed(2)}"`,
                 position: 'top' as const,
                 offset: [0, -3],
                 fontSize: isMobile ? 11 : 13,
@@ -387,11 +418,17 @@ export default function HourlyPrecipChart({
         <div className="precip-total">
           <Droplets size={20} className="precip-icon" />
           <span className="precip-total-value">
-            {displayTotal.toFixed(2)}"
+            {historical ? historicalTotal == null ? '--' : traceOnly ? 'Trace' : `${historicalTotal.toFixed(2)}"` : `${displayTotal.toFixed(2)}"`}
           </span>
-          <span className="precip-total-label">total</span>
+          <span className="precip-total-label">{historical ? publishedTotal ? 'published total' : 'observed hourly sum' : 'total'}</span>
         </div>
       </div>
+      {historical && <p className="section-label" role="status">
+        {historical.observedCount}/{historicalDay?.coverage.calendar_day_hours ?? 24} hourly buckets have precipitation observations.
+        {hasTrace && ' Trace reported; excluded from measured amounts.'}
+        {' Bucket sums are approximate; observation completeness is not guaranteed.'}
+        {publishedTotal && ' Published daily total and hourly bucket sum are separate sources.'}
+      </p>}
 
       {/* Chart */}
       <div style={{
@@ -429,8 +466,9 @@ export default function HourlyPrecipChart({
         <button
             className={`precip-toggle-btn ${showTodayOnly ? 'active' : ''}`}
             onClick={() => setShowTodayOnly(!showTodayOnly)}
+            disabled={!!filterDate}
         >
-            <span className="toggle-label">Today Only</span>
+            <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
             <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
             <div className="toggle-knob" />
             </div>

@@ -14,6 +14,10 @@ import { Droplets, Wind, Thermometer } from 'lucide-react';
 import MetarModal from './MetarModal';
 import { API_URL } from '../config';
 import './ConditionSummary24HModal.css';
+import type { HistoricalDay } from '../api/historicalDay';
+import { getWeatherIcon } from '../utils/weatherIcons';
+import { observationClock } from '../utils/observationClock';
+import { parseConditions, conditionTimeline, conditionBreakdown, historicalCondition, conditionPrecipitation, historicalNarrative, conditionIsDay } from '../utils/historicalConditions';
 
 // ============================================================================
 // Types
@@ -28,8 +32,9 @@ interface HourlyCondition {
   avg_wspd_mph: number | null;
   max_gust_mph: number | null;
   relh_pct: number | null;
-  feelslike_f: number | null;
+  feelslike_f?: number | null;
   vsby_mi?: number | null;
+  drct_deg?: number | null;
 }
 
 interface ConditionHistoryModalProps {
@@ -39,6 +44,7 @@ interface ConditionHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   timezone?: string;
+  historicalDay?: HistoricalDay;
 }
 
 interface ConditionSummary {
@@ -270,6 +276,8 @@ export default function ConditionHistoryModal({
   darkMode = false,
   isOpen,
   onClose,
+  timezone,
+  historicalDay,
 
 }: ConditionHistoryModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyCondition[]>([]);
@@ -278,17 +286,25 @@ export default function ConditionHistoryModal({
   const [selectedHour, setSelectedHour] = useState<HourlyCondition | null>(null);
   const [showMetarModal, setShowMetarModal] = useState(false);
 
+  const [attempt, setAttempt] = useState(0);
+  const date = historicalDay?.local_date;
+  const nestedHistoricalOpen = !!date && showMetarModal;
+
   // Fetch hourly data
   useEffect(() => {
     if (!isOpen || !stationId) return;
 
+    const controller = new AbortController();
+    setSelectedHour(null);
+    setShowMetarModal(false);
     async function fetchData() {
       setLoading(true);
       setError(null);
 
       try {
         const response = await fetch(
-          `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`
+          date ? `${API_URL}/api/weather/hourly-day?station=${encodeURIComponent(stationId)}&date=${date}` : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`,
+          { signal: controller.signal }
         );
 
         if (!response.ok) {
@@ -296,28 +312,31 @@ export default function ConditionHistoryModal({
         }
 
         const data = await response.json();
-        setHourlyData(data);
+        const rows = date ? parseConditions(data, date) : data;
+        if (!controller.signal.aborted) setHourlyData(rows);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId]);
+    return () => controller.abort();
+  }, [isOpen, stationId, date, attempt]);
 
   // Handle escape key
   useEffect(() => {
     if (!isOpen) return;
     
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && (!date || !showMetarModal)) onClose();
     };
     
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showMetarModal, date]);
 
   // Prevent body scroll
   useEffect(() => {
@@ -327,7 +346,7 @@ export default function ConditionHistoryModal({
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  }, [isOpen, nestedHistoricalOpen]);
 
   // Handle hour click
   const handleHourClick = (hour: HourlyCondition) => {
@@ -338,8 +357,16 @@ export default function ConditionHistoryModal({
   if (!isOpen) return null;
 
   // Calculate stats
-  const conditionDurations = calculateConditionDurations(hourlyData, darkMode);
-  const narrative = generateDayNarrative(hourlyData);
+  const historicalRows = date ? parseConditions(hourlyData, date) : [];
+  const conditionDurations = date ? conditionBreakdown(historicalRows).map(item => {
+    const sample = historicalRows.find(row => historicalCondition(row.skyc1, row.wxcodes) === item.condition)!;
+    const style = getConditionStyle(sample.skyc1, sample.wxcodes, darkMode);
+    return {condition:item.condition,hours:item.count,percentage:item.percentage,color:darkMode?style.colorDark:style.color,icon:style.icon};
+  }) : calculateConditionDurations(hourlyData, darkMode);
+  const narrative = date ? historicalNarrative(historicalRows) : generateDayNarrative(hourlyData);
+  const historicalPrecip = conditionPrecipitation(historicalRows);
+  const historicalGusts = historicalRows.map(row=>row.max_gust_mph).filter((v):v is number=>v!=null);
+  const historicalIsDay = (timestamp: string) => conditionIsDay(timestamp, historicalDay!.timezone, historicalDay?.sunrise, historicalDay?.sunset);
   
   // Notable stats
   const totalPrecip = hourlyData.reduce((sum, h) => sum + (h.precip_in || 0), 0);
@@ -350,6 +377,7 @@ export default function ConditionHistoryModal({
 
   // Format hour for display
   const formatHour = (ts: string): string => {
+    if (historicalDay) return observationClock(ts, historicalDay.timezone).time;
     const date = new Date(ts);
     const hour = date.getHours();
     if (hour === 0) return '12a';
@@ -384,6 +412,7 @@ export default function ConditionHistoryModal({
           ) : error ? (
             <div className="condition-modal-error">
               <span>⚠️ {error}</span>
+              {date && <button onClick={() => setAttempt(value=>value+1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="condition-modal-loading">
@@ -394,27 +423,29 @@ export default function ConditionHistoryModal({
               {/* Header */}
               <div className="condition-header">
                 <h2 className="condition-title">{stationName}</h2>
-                <span className="condition-subtitle">Last 24 Hours</span>
+                <span className="condition-subtitle">{date ? `${date} (${timezone})` : 'Last 24 Hours'}</span>
+                {date && <p className="condition-subtitle">{historicalDay?.dominant_condition ?? 'Unknown'}</p>}
               </div>
 
               {/* Timeline Strip */}
               <div className="timeline-section">
                 <div className="section-label">HOURLY CONDITIONS</div>
                 <div className="timeline-strip">
-                  {hourlyData.map((hour, idx) => {
-                    const style = getConditionStyle(hour.skyc1, hour.wxcodes, darkMode);
+                  {(date ? conditionTimeline(historicalRows, date) : hourlyData).map((hour, idx) => {
+                    if ('missing' in hour) return <div key={hour.ts_local} className="timeline-hour" aria-disabled="true" title={`${formatHour(hour.ts_local)}: Missing observation`}><div className="timeline-bar" /><span className="timeline-icon">--</span><span className="timeline-label">{formatHour(hour.ts_local)}</span></div>;
+                    const style = date && historicalCondition(hour.skyc1,hour.wxcodes)==='Unknown' ? conditionStyles.unknown : getConditionStyle(hour.skyc1, hour.wxcodes, darkMode);
                     return (
                       <div
                         key={idx}
                         className="timeline-hour"
                         onClick={() => handleHourClick(hour)}
-                        title={`${formatHour(hour.ts_local)}: ${getConditionLabel(hour.skyc1, hour.wxcodes)}`}
+                        title={`${formatHour(hour.ts_local)}: ${date ? historicalCondition(hour.skyc1, hour.wxcodes) : getConditionLabel(hour.skyc1, hour.wxcodes)}`}
                       >
                         <div 
                           className="timeline-bar"
                           style={{ backgroundColor: darkMode ? style.colorDark : style.color }}
                         />
-                        <span className="timeline-icon">{style.icon}</span>
+                        <span className="timeline-icon">{date ? historicalCondition(hour.skyc1, hour.wxcodes) === 'Unknown' ? '?' : getWeatherIcon(hour.skyc1, hour.wxcodes, 20, historicalIsDay(hour.ts_local) ?? true, "timeline-weather-icon") : style.icon}</span>
                         {idx % 3 === 0 && (
                           <span className="timeline-label">{formatHour(hour.ts_local)}</span>
                         )}
@@ -422,17 +453,18 @@ export default function ConditionHistoryModal({
                     );
                   })}
                 </div>
-                <div className="timeline-hint">Tap any hour for details</div>
+                <div className="timeline-hint">{date ? 'Tap any observed hour for details' : 'Tap any hour for details'}</div>
               </div>
 
               {/* Duration Bars */}
               <div className="duration-section">
                 <div className="section-label">CONDITION BREAKDOWN</div>
+                {date && <p className="condition-subtitle">Percentages of classified observations only; hourly samples do not establish continuous coverage. {historicalRows.filter(row=>historicalCondition(row.skyc1,row.wxcodes)==='Unknown').length} unknown observations excluded.</p>}
                 <div className="duration-bars">
                   {conditionDurations.map((cd, idx) => (
                     <div key={idx} className="duration-row">
                       <div className="duration-info">
-                        <span className="duration-icon">{cd.icon}</span>
+                        <span className="duration-icon">{date ? (()=>{const row=historicalRows.find(row=>historicalCondition(row.skyc1,row.wxcodes)===cd.condition)!;return getWeatherIcon(row.skyc1,row.wxcodes,20,historicalIsDay(row.ts_local) ?? true, "timeline-weather-icon");})() : cd.icon}</span>
                         <span className="duration-condition">{cd.condition}</span>
                       </div>
                       <div className="duration-bar-container">
@@ -445,7 +477,7 @@ export default function ConditionHistoryModal({
                         />
                       </div>
                       <div className="duration-stats">
-                        <span className="duration-hours">{cd.hours} hrs</span>
+                        <span className="duration-hours">{cd.hours} {date ? cd.hours === 1 ? 'sample' : 'samples' : 'hrs'}</span>
                         <span className="duration-pct">{cd.percentage}%</span>
                       </div>
                     </div>
@@ -475,13 +507,13 @@ export default function ConditionHistoryModal({
                   
                   <div className="stat-card">
                     <Droplets size={18} className="stat-icon precip-icon" />
-                    <span className="stat-value">{totalPrecip.toFixed(2)}"</span>
-                    <span className="stat-label">PRECIP</span>
+                    <span className="stat-value">{date ? historicalPrecip.amount == null ? '--' : historicalPrecip.trace && historicalPrecip.amount === 0 ? 'Trace' : historicalPrecip.amount.toFixed(2) + '"' + (historicalPrecip.trace ? ' + Trace' : '') : totalPrecip.toFixed(2) + '"'}</span>
+                    <span className="stat-label">{date ? 'OBSERVED HOURLY SUM' : 'PRECIP'}</span>
                   </div>
                   
                   <div className="stat-card">
                     <Wind size={18} className="stat-icon wind-icon" />
-                    <span className="stat-value">{maxGust > 0 ? `${Math.round(maxGust)}` : '--'}</span>
+                    <span className="stat-value">{date ? historicalGusts.length ? Math.round(Math.max(...historicalGusts)) : '--' : maxGust > 0 ? `${Math.round(maxGust)}` : '--'}</span>
                     <span className="stat-label">MAX GUST</span>
                   </div>
                 </div>
@@ -502,7 +534,9 @@ export default function ConditionHistoryModal({
             setShowMetarModal(false);
             setSelectedHour(null);
           }}
-          isDay={true}
+          isDay={date ? historicalIsDay(selectedHour.ts_local) ?? true : true}
+          timezone={date ? timezone : undefined}
+          conditionLabel={date ? historicalCondition(selectedHour.skyc1, selectedHour.wxcodes) : undefined}
           initialData={{
             station_id: stationId,
             observed_at: selectedHour.ts_local,
@@ -514,7 +548,7 @@ export default function ConditionHistoryModal({
             pressure_trend: null,
             wind_speed_mph: selectedHour.avg_wspd_mph,
             wind_gust_mph: selectedHour.max_gust_mph,
-            wind_direction_deg: null,
+            wind_direction_deg: date ? selectedHour.drct_deg ?? null : null,
             sky_code: selectedHour.skyc1,
             wx_code: selectedHour.wxcodes,
             visibility_mi: selectedHour.vsby_mi ?? null,

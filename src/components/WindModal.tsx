@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { Wind } from 'lucide-react';
 import WindChart from './WindChart';
 import { API_URL } from '../config';
+import { observationClock } from '../utils/observationClock';
 import './WindModal.css';
 
 interface HourlyData {
@@ -29,6 +30,7 @@ interface WindModalProps {
   currentWind?: number | null;
   currentGust?: number | null;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
+  timezone?: string;
 }
 
 export default function WindModal({
@@ -39,16 +41,19 @@ export default function WindModal({
   onClose,
   currentWind,
   filterDate,
+  timezone,
 //   currentGust,
 }: WindModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   // Fetch hourly data when modal opens
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchData() {
       setLoading(true);
@@ -60,22 +65,27 @@ export default function WindModal({
         ? `${API_URL}/api/weather/hourly-day?station=${stationId}&date=${filterDate}`
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);
         }
 
         const data = await response.json();
+        if (filterDate && (!Array.isArray(data) || data.some((hour: HourlyData) => hour.ts_local.slice(0, 10) !== filterDate))) {
+          throw new Error('Hourly observations do not match the selected date');
+        }
         setHourlyData(data);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, filterDate, attempt]);
 
   // Handle escape key
   useEffect(() => {
@@ -105,7 +115,7 @@ export default function WindModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const filteredData = showTodayOnly
+  const filteredData = !filterDate && showTodayOnly
     ? hourlyData.filter(h => {
         const hourDate = new Date(h.ts_local);
         hourDate.setHours(0, 0, 0, 0);
@@ -142,6 +152,7 @@ export default function WindModal({
     let windyHours = 0;
     
     data.forEach(h => {
+      if (filterDate && h.avg_wspd_mph == null) return;
       const wind = h.avg_wspd_mph ?? 0;
       if (wind < 5) calmHours++;
       else if (wind < 15) breezyHours++;
@@ -159,6 +170,11 @@ export default function WindModal({
   };
 
   const summary = calculateSummary(filteredData);
+  const historicalWinds = filteredData.map(h => h.avg_wspd_mph).filter((value): value is number => value != null);
+  const historicalGusts = filteredData.filter(h => h.max_gust_mph != null);
+  const historicalMaxGust = historicalGusts.reduce<HourlyData | null>((max, hour) =>
+    !max || hour.max_gust_mph! > max.max_gust_mph! ? hour : max, null);
+  const historicalMaximum = historicalWinds.length ? Math.round(Math.max(...historicalWinds)) : '--';
 
   // Format time for max gust
   const formatGustTime = (date: Date | null): string => {
@@ -197,6 +213,7 @@ export default function WindModal({
           ) : error ? (
             <div className="wind-modal-error">
               <span>⚠️ {error}</span>
+              {filterDate && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="wind-modal-loading">
@@ -208,7 +225,7 @@ export default function WindModal({
               <div className="wind-modal-header">
                 <h2 className="wind-modal-title">{stationName}</h2>
                 <div className="wind-modal-subtitle">
-                  {showTodayOnly ? "Today's Wind" : 'Last 24 Hours Wind'}
+                  {filterDate ? `${filterDate} (${timezone}) Wind` : showTodayOnly ? "Today's Wind" : 'Last 24 Hours Wind'}
                 </div>
               </div>
 
@@ -218,7 +235,7 @@ export default function WindModal({
                 <div className="wind-summary-card">
                   <Wind size={20} className="wind-card-icon" />
                   <div className="wind-card-value">
-                    {summary.avgWind}
+                    {filterDate && !historicalWinds.length ? '--' : summary.avgWind}
                     <span className="wind-card-unit">mph</span>
                   </div>
                   <div className="wind-card-label">Average</div>
@@ -228,22 +245,22 @@ export default function WindModal({
                 <div className="wind-summary-card current">
                   <Wind size={20} className="wind-card-icon" />
                   <div className="wind-card-value">
-                    {currentWind !== null && currentWind !== undefined ? Math.round(currentWind) : '--'}
+                    {filterDate ? historicalMaximum : currentWind !== null && currentWind !== undefined ? Math.round(currentWind) : '--'}
                     <span className="wind-card-unit">mph</span>
                   </div>
-                  <div className="wind-card-label">Current</div>
+                  <div className="wind-card-label">{filterDate ? 'Maximum' : 'Current'}</div>
                 </div>
 
                 {/* Max Gust */}
                 <div className="wind-summary-card gust">
                   <Wind size={20} className="wind-card-icon gust-icon" />
                   <div className="wind-card-value">
-                    {summary.maxGust > 0 ? summary.maxGust : '--'}
+                    {filterDate ? historicalMaxGust ? Math.round(historicalMaxGust.max_gust_mph!) : '--' : summary.maxGust > 0 ? summary.maxGust : '--'}
                     <span className="wind-card-unit">mph</span>
                   </div>
                   <div className="wind-card-label">Max Gust</div>
-                  {summary.maxGustTime && (
-                    <div className="wind-card-time">{formatGustTime(summary.maxGustTime)}</div>
+                  {(filterDate ? historicalMaxGust : summary.maxGustTime) && (
+                    <div className="wind-card-time">{filterDate && historicalMaxGust ? observationClock(historicalMaxGust.ts_local, timezone || 'America/New_York').time : formatGustTime(summary.maxGustTime)}</div>
                   )}
                 </div>
               </div>
@@ -271,6 +288,8 @@ export default function WindModal({
                 data={filteredData}
                 darkMode={darkMode}
                 showTodayOnly={showTodayOnly}
+                filterDate={filterDate}
+                timezone={timezone}
               />
 
               {/* Toggle */}
@@ -278,8 +297,9 @@ export default function WindModal({
                 <button
                   className={`wind-toggle-btn ${showTodayOnly ? 'active' : ''}`}
                   onClick={() => setShowTodayOnly(!showTodayOnly)}
+                  disabled={!!filterDate}
                 >
-                  <span className="toggle-label">Today Only</span>
+                  <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
                   <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
                     <div className="toggle-knob" />
                   </div>

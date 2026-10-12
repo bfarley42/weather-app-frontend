@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import type { HistoricalSunshine } from '../utils/historicalSunshine';
+import { observationClock } from '../utils/observationClock';
 // import { FaSun, FaRegMoon  } from "react-icons/fa6";
 
 
@@ -28,6 +30,9 @@ interface SunshineChartProps {
     sunset: string | null;
   } | null;
   showTodayOnly?: boolean;
+  historicalEstimate?: HistoricalSunshine | null;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function SunshineChart({
@@ -35,6 +40,9 @@ export default function SunshineChart({
   darkMode = false,
   sunTimes,
   showTodayOnly = false,
+  historicalEstimate,
+  filterDate,
+  timezone,
 }: SunshineChartProps) {
   const chartRef = useRef<ReactECharts | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -160,17 +168,23 @@ export default function SunshineChart({
   });
 
   // Prepare chart data
+  const historicalBuckets = new Map(historicalEstimate?.buckets.map(bucket => [bucket.timestamp, bucket]));
   const chartData = sortedData.map(hour => {
     const hourDate = new Date(hour.ts_local);
     const hourNum = hourDate.getHours();
-    const isDaylight = hourNum >= Math.floor(sunriseHour) && hourNum < Math.ceil(sunsetHour);
+    const historicalBucket = historicalBuckets.get(hour.ts_local);
+    const isDaylight = historicalBucket ? historicalBucket.isDaylight : hourNum >= Math.floor(sunriseHour) && hourNum < Math.ceil(sunsetHour);
     
     const sunshineFactor = skyToSunshineFactor(hour.skyc1);
     const attenuation = wxToAttenuation(hour.wxcodes);
-    const sunshineValue = isDaylight ? sunshineFactor * attenuation * 100 : 0;
+    const sunshineValue = historicalBucket
+      ? !isDaylight ? 0 : historicalBucket.factor == null ? null : historicalBucket.factor * 100
+      : isDaylight ? sunshineFactor * attenuation * 100 : 0;
 
     return {
       hour: hourDate,
+      timestamp: hour.ts_local,
+      historicalBucket,
       hourNum,
       value: sunshineValue,
       isDaylight,
@@ -197,6 +211,10 @@ export default function SunshineChart({
 
   // X-axis labels
   const xLabels = chartData.map(d => {
+    if (filterDate) {
+      const hour = observationClock(d.timestamp, timezone || 'America/New_York').hour;
+      return hour === 0 ? '12a' : hour === 12 ? '12p' : hour < 12 ? `${hour}a` : `${hour - 12}p`;
+    }
     const label = formatHourLabel(d.hour);
     return label;
   });
@@ -206,6 +224,7 @@ export default function SunshineChart({
     if (!d.isDaylight) {
       return darkMode ? '#1e293b' : '#cbd5e1'; // Night - gray
     }
+    if (d.value == null) return 'transparent';
     // Gradient from gray (0%) to gold (100%)
     const intensity = d.value / 100;
     if (intensity >= 0.8) return '#f59e0b'; // Bright sun
@@ -227,6 +246,7 @@ export default function SunshineChart({
 
     tooltip: {
       trigger: 'axis',
+      confine: !!filterDate,
       backgroundColor: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.98)',
       borderColor: darkMode ? '#475569' : '#e2e8f0',
       borderWidth: 1,
@@ -239,8 +259,8 @@ export default function SunshineChart({
         
         const idx = params[0].dataIndex;
         const d = chartData[idx];
-        const dayLabel = isYesterday(d.hour) ? 'Yesterday' : 'Today';
-        const timeStr = d.hour.toLocaleTimeString('en-US', { 
+        const dayLabel = filterDate || (isYesterday(d.hour) ? 'Yesterday' : 'Today');
+        const timeStr = filterDate ? observationClock(d.timestamp, timezone || 'America/New_York').time : d.hour.toLocaleTimeString('en-US', {
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
@@ -252,13 +272,15 @@ export default function SunshineChart({
             <div style="color:${darkMode ? '#94a3b8' : '#64748b'}">🌙 Nighttime</div>
           `;
         }
+        if (filterDate && d.value == null) return `<div style="font-weight:600;margin-bottom:4px">${dayLabel}, ${timeStr}</div><div>Missing or unknown sky observation.</div><div>Sunshine estimate unavailable.</div>`;
         
         return `
           <div style="font-weight:600;margin-bottom:4px">${dayLabel}, ${timeStr}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
             <span>☀️</span>
-            <span style="font-weight:600">${Math.round(d.value)}% sunshine</span>
+            <span style="font-weight:600">${Math.round(d.value ?? 0)}% ${filterDate ? 'estimated proxy during daylight' : 'sunshine'}</span>
           </div>
+          ${filterDate && d.historicalBucket ? `<div>Daylight overlap: ${d.historicalBucket.daylightHours.toFixed(2)} hrs</div><div>Estimated sunshine: ${d.historicalBucket.estimatedHours?.toFixed(2) ?? '--'} hrs</div>` : ''}
           <div style="color:${darkMode ? '#94a3b8' : '#64748b'};margin-top:2px;font-size:12px">
             ${d.condition}
           </div>
@@ -327,7 +349,7 @@ export default function SunshineChart({
           }
         },
         // Mark line for midnight divider (only if showing 24h and midnight exists)
-        markLine: (!showTodayOnly && midnightIndex > 0) ? {
+        markLine: (!filterDate && !showTodayOnly && midnightIndex > 0) ? {
           silent: true,
           symbol: 'none',
           lineStyle: {

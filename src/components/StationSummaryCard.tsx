@@ -20,7 +20,9 @@ import DewPointModal from './DewPointModal';
 import DailySummaryModal from './DailySummaryModal';
 import StationDayNavigation from './StationDayNavigation';
 import type { HistoricalDay } from '../api/historicalDay';
-import { useState, useEffect, useRef  } from 'react';
+import { fetchHistoricalMoisture } from '../api/historicalMoisture';
+import { moistureStatistics, type HourlyMoisture } from '../utils/historicalMoisture';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { 
   Droplets, 
@@ -610,6 +612,24 @@ export default function StationSummaryCard({
   historicalDay,
 }: StationSummaryCardProps) {
   const [liveSummary, setSummary] = useState<StationSummary | null>(null);
+  const [moistureRows, setMoistureRows] = useState<HourlyMoisture[]>([]);
+  const [moistureError, setMoistureError] = useState<string | null>(null);
+  const receiveMoisture = useCallback((rows: HourlyMoisture[]) => {
+    setMoistureRows(rows);
+    setMoistureError(null);
+  }, []);
+  useEffect(() => {
+    if (!historicalDay) return;
+    const controller = new AbortController();
+    setMoistureRows([]);
+    setMoistureError(null);
+    fetchHistoricalMoisture(stationId, historicalDay.local_date, controller.signal).then(rows => {
+      if (!controller.signal.aborted) receiveMoisture(rows);
+    }).catch((reason: unknown) => {
+      if (!controller.signal.aborted) setMoistureError(reason instanceof Error ? reason.message : 'Unable to load humidity and dew point');
+    });
+    return () => controller.abort();
+  }, [stationId, historicalDay?.local_date, historicalDay, receiveMoisture]);
   const summary: StationSummary | null = historicalDay ? {
     station_id: historicalDay.station_id, station_name: historicalDay.station_name,
     timezone: historicalDay.timezone,
@@ -621,9 +641,9 @@ export default function StationSummaryCard({
     last_24h: {
       high_f: historicalDay.high_f, low_f: historicalDay.low_f, avg_temp_f: null,
       precip_in: historicalDay.precip_in, avg_wind_mph: historicalDay.avg_wind_mph,
-      avg_humidity_pct: null, max_gust_mph: null, dominant_condition: null,
+      avg_humidity_pct: moistureStatistics(moistureRows, 'relh_pct').average, max_gust_mph: null, dominant_condition: null,
       condition_hours: null, observation_count: historicalDay.coverage.hourly_observation_count,
-      avg_dewpoint_f: null,
+      avg_dewpoint_f: moistureStatistics(moistureRows, 'dwpf').average,
     },
     hourly_history: [], vs_yesterday: null, vs_normal: null,
     data_freshness_minutes: null, generated_at: '', sun_times: null,
@@ -745,12 +765,15 @@ useEffect(() => {
   const dashboard = (
     <div className={`summary-cards-wrapper ${darkMode ? 'dark' : ''}`}
       onClickCapture={historicalDay ? event => {
-        if (!(event.target instanceof Element) || !event.target.closest('.current-temp, .temp-band-wrapper, .hourly-modal-overlay')) event.stopPropagation();
+        if (!(event.target instanceof Element) || !event.target.closest('.current-temp, .temp-band-wrapper, [data-historical-modal="conditions"], .condition-modal-overlay, .metar-modal-overlay, .hourly-modal-overlay, [data-historical-modal="wind"], .wind-modal-overlay, [data-historical-modal="precip"], .precip-modal-overlay, [data-historical-modal="clouds"], .cloudcover-modal-overlay, [data-historical-modal="humidity"], .humidity-modal-overlay, [data-historical-modal="dewpoint"], .dewpoint-modal-overlay, [data-historical-modal="sunshine"], .sunshine-modal-overlay')) event.stopPropagation();
       } : undefined}
       onKeyDownCapture={historicalDay ? event => {
-        if (event.target instanceof Element && event.target.closest('.hourly-modal-overlay')) return;
+        if (event.target instanceof Element && event.target.closest('.condition-modal-overlay, .metar-modal-overlay, .hourly-modal-overlay, .wind-modal-overlay, .precip-modal-overlay, .cloudcover-modal-overlay, .humidity-modal-overlay, .dewpoint-modal-overlay, .sunshine-modal-overlay')) return;
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); }
       } : undefined}>
+      {historicalDay && moistureError && <p className="section-label" role="alert">
+        Humidity and dew point could not be loaded: {moistureError}. Open either statistic to retry.
+      </p>}
       
       {/* ============================================================
           CARD 1: Current Conditions
@@ -797,7 +820,7 @@ useEffect(() => {
           
           {/* Right: Icon + Wind */}
           <div className="current-right">
-{historicalDay?.dominant_condition && <div className="weather-icon-container">
+{historicalDay?.dominant_condition && <div className="weather-icon-container clickable" data-historical-modal="conditions" onClick={() => setShowConditionSummary24H(true)} title="View this day's weather conditions">
   {getHistoricalConditionIcon(historicalDay.dominant_condition)}
   <span className="condition-label">{historicalDay.dominant_condition}</span>
 </div>}
@@ -885,7 +908,8 @@ useEffect(() => {
   <div 
     className="stat-item-vertical clickable"
     onClick={() => setShowPrecipModal(true)}
-    title="View 24-hour precipitation"
+    data-historical-modal="precip"
+    title={historicalDay ? 'View daily precipitation' : 'View 24-hour precipitation'}
   >
     <Droplets size={18} className="stat-icon precip-icon" />
     <span className="stat-value">
@@ -900,6 +924,7 @@ useEffect(() => {
   className="stat-item-vertical clickable"
   onClick={() => setShowSunshineModal(true)}
   title="View sunshine breakdown"
+  data-historical-modal="sunshine"
 >
   <Sun size={18} className="stat-icon sunshine-icon" />
   <span className="stat-value">
@@ -916,6 +941,7 @@ useEffect(() => {
 <div 
   className="stat-item-vertical clickable"
   onClick={() => setShowCloudCoverModal(true)}
+  data-historical-modal="clouds"
   title="View cloud cover breakdown"
 >
   <Cloud size={18} className="stat-icon cloud-icon" />
@@ -929,6 +955,7 @@ useEffect(() => {
   <div 
     className="stat-item-vertical clickable"
     onClick={() => setShowWindModal(true)}
+    data-historical-modal="wind"
     title="View wind details"
   >
     <Wind size={18} className="stat-icon" style={{ color: '#0891b2' }} />
@@ -944,6 +971,7 @@ useEffect(() => {
         <div 
           className="stat-item-vertical clickable"
           onClick={() => setShowHumidityModal(true)}
+          data-historical-modal="humidity"
           title="View humidity details"
         >
           <Waves size={18} className="stat-icon humidity-icon" />
@@ -957,6 +985,7 @@ useEffect(() => {
       <div 
         className="stat-item-vertical clickable"
         onClick={() => setShowDewPointModal(true)}
+        data-historical-modal="dewpoint"
         title="View dew point details"
       >
         <FaThermometerHalf size={18} className="stat-icon dewpoint-icon" />
@@ -1597,16 +1626,20 @@ useEffect(() => {
       isOpen={showPrecipModal}
       onClose={() => setShowPrecipModal(false)}
       totalPrecip24h={last_24h.precip_in}
+      filterDate={historicalDay?.local_date}
+      historicalDay={historicalDay}
     />
 
     {/* Condition Summary 24H Modal */}
     <ConditionSummary24HModal
+      key={historicalDay ? `${stationId}:${historicalDay.local_date}` : 'live-conditions'}
       stationId={stationId}
       stationName={displayName}
       darkMode={darkMode}
       isOpen={showConditionSummary24H}   // <-- Change this
       onClose={() => setShowConditionSummary24H(false)}
-      timezone={summary.timezone ?? 'America/New_York'} 
+      timezone={summary.timezone ?? 'America/New_York'}
+      historicalDay={historicalDay}
     />
 
     {/* Sunshine Modal */}
@@ -1617,6 +1650,8 @@ useEffect(() => {
       isOpen={showSunshineModal}
       onClose={() => setShowSunshineModal(false)}
       sunTimes={summary.sun_times}
+      filterDate={historicalDay?.local_date}
+      historicalDay={historicalDay}
     />
 
     {/* Cloud Cover Modal */}
@@ -1626,6 +1661,8 @@ useEffect(() => {
       darkMode={darkMode}
       isOpen={showCloudCoverModal}
       onClose={() => setShowCloudCoverModal(false)}
+      filterDate={historicalDay?.local_date}
+      timezone={historicalDay?.timezone}
     />
 
     {/* Wind Modal */}
@@ -1637,6 +1674,8 @@ useEffect(() => {
   onClose={() => setShowWindModal(false)}
   currentWind={current.wind_mph}
   currentGust={current.wind_gust_mph}
+  filterDate={historicalDay?.local_date}
+  timezone={historicalDay?.timezone}
 />
 
 {/* Humidity Modal */}
@@ -1647,6 +1686,9 @@ useEffect(() => {
   isOpen={showHumidityModal}
   onClose={() => setShowHumidityModal(false)}
   currentHumidity={current.humidity_pct}
+  filterDate={historicalDay?.local_date}
+  timezone={historicalDay?.timezone}
+  onHistoricalData={receiveMoisture}
 />
 
 {/* Dew Point Modal */}
@@ -1657,6 +1699,9 @@ useEffect(() => {
   isOpen={showDewPointModal}
   onClose={() => setShowDewPointModal(false)}
   currentDewPoint={current.dewpoint_f}
+  filterDate={historicalDay?.local_date}
+  timezone={historicalDay?.timezone}
+  onHistoricalData={receiveMoisture}
 />
 
 <DailySummaryModal

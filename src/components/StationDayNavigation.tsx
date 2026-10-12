@@ -27,7 +27,7 @@ function HistoricalObservations({ stationId, date, render }: {
   return <>
     <div className="summary-cards-wrapper"><p className="section-label history-card" role="status">{day.has_observations
       ? `${day.coverage.hourly_observation_count} hourly records. Observation completeness is not guaranteed.`
-      : 'No observations available for this date.'} Historical temperature details are available; other detail modals are not connected yet.</p></div>
+      : 'No observations available for this date.'} Historical temperature, wind, precipitation, cloud, humidity, dew point, and estimated sunshine details are available; other detail modals are not connected yet.</p></div>
     {render(day)}
   </>;
 }

@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { observationClock } from '../utils/observationClock';
 
 interface HourlyData {
   ts_local: string;
@@ -19,12 +20,16 @@ interface DewPointChartProps {
   data: HourlyData[];
   darkMode?: boolean;
   showTodayOnly?: boolean;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function DewPointChart({
   data,
   darkMode = false,
   showTodayOnly = false,
+  filterDate,
+  timezone,
 }: DewPointChartProps) {
   const chartRef = useRef<ReactECharts | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -81,6 +86,7 @@ export default function DewPointChart({
     const hourDate = new Date(hour.ts_local);
     return {
       hour: hourDate,
+      timestamp: hour.ts_local,
       dewPoint: hour.dwpf,
       temp: hour.tmpf,
     };
@@ -102,7 +108,11 @@ export default function DewPointChart({
   };
 
   // X-axis labels
-  const xLabels = chartData.map(d => formatHourLabel(d.hour));
+  const xLabels = chartData.map(d => {
+    if (!filterDate) return formatHourLabel(d.hour);
+    const hour = observationClock(d.timestamp, timezone || 'America/New_York').hour;
+    return hour === 0 ? '12a' : hour === 12 ? '12p' : hour < 12 ? `${hour}a` : `${hour - 12}p`;
+  });
 
   // Colors - teal/green theme
   const lineColor = darkMode ? '#2dd4bf' : '#14b8a6';
@@ -151,14 +161,14 @@ export default function DewPointChart({
         
         const idx = params[0].dataIndex;
         const d = chartData[idx];
-        const dayLabel = isYesterday(d.hour) ? 'Yesterday' : 'Today';
-        const timeStr = d.hour.toLocaleTimeString('en-US', { 
+        const dayLabel = filterDate || (isYesterday(d.hour) ? 'Yesterday' : 'Today');
+        const timeStr = filterDate ? observationClock(d.timestamp, timezone || 'America/New_York').time : d.hour.toLocaleTimeString('en-US', {
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
         });
         
-        const dewPoint = params[0].value;
+        const dewPoint = filterDate ? d.dewPoint : params[0].value;
         const comfort = dewPoint !== null ? getComfortInfo(dewPoint) : { label: '--', color: '#666' };
         
         return `
@@ -244,7 +254,7 @@ export default function DewPointChart({
           }
         },
         // Midnight divider
-        markLine: (!showTodayOnly && midnightIndex > 0) ? {
+        markLine: (!filterDate && !showTodayOnly && midnightIndex > 0) ? {
           silent: true,
           symbol: 'none',
           lineStyle: {
@@ -292,7 +302,7 @@ markPoint: {
     fontWeight: 'bold',
     formatter: (params: any) => `${Math.round(params.value)}°`
   },
-  data: [
+  data: filterDate && !chartData.some(d => d.dewPoint != null) ? [] : [
     {
       type: 'max',
       name: 'Max',

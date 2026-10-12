@@ -13,6 +13,7 @@
  */
 
 import { useState } from 'react';
+import { observationClock } from '../utils/observationClock';
 import { 
   Droplets, 
   Wind, 
@@ -39,6 +40,8 @@ interface MetarSummaryProps {
   stationName: string;
   darkMode?: boolean;
   isDay?: boolean;
+  timezone?: string;
+  conditionLabel?: string;
 }
 
 // ============================================================================
@@ -115,11 +118,11 @@ function getWindDirection(degrees: number | null): string {
 
 
 // Generate a natural language summary
-function generateSummary(data: MetarData, _isDay: boolean): string {
+function generateSummary(data: MetarData, _isDay: boolean, conditionLabel?: string): string {
   const parts: string[] = [];
   
   // Condition
-  const condition = getConditionText(data.sky_code, data.wx_code);
+  const condition = conditionLabel ?? getConditionText(data.sky_code, data.wx_code);
   
   // Temperature description
   if (data.temp_f !== null) {
@@ -173,7 +176,11 @@ function generateSummary(data: MetarData, _isDay: boolean): string {
 }
 
 // Format observation time
-function formatObservedTime(isoString: string | null): string {
+function formatObservedTime(isoString: string | null, timezone?: string): string {
+  if (isoString && timezone) {
+    const clock = observationClock(isoString, timezone);
+    return clock.time + ' ' + clock.month + ' ' + clock.day + ' (' + timezone + ')';
+  }
   if (!isoString) return 'Unknown';
   try {
     const date = new Date(isoString);
@@ -345,12 +352,14 @@ export default function MetarSummary({
   stationName,
   darkMode = false,
   isDay = true,
+  timezone,
+  conditionLabel,
 }: MetarSummaryProps) {
   
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
-  const condition = getConditionText(data.sky_code, data.wx_code);
-  const summary = generateSummary(data, isDay);
+  const condition = conditionLabel ?? getConditionText(data.sky_code, data.wx_code);
+  const summary = generateSummary(data, isDay, conditionLabel);
   const cloudCover = getCloudCoverPercent(data.sky_code);
   
   const toggleTooltip = (key: string) => {
@@ -364,7 +373,7 @@ export default function MetarSummary({
       <div className="metar-header">
         <h2 className="metar-station-name">{stationName}</h2>
         <span className="metar-observed-time">
-          Observed at {formatObservedTime(data.observed_at)}
+          Observed at {formatObservedTime(data.observed_at, timezone)}
         </span>
       </div>
       
@@ -388,7 +397,7 @@ export default function MetarSummary({
             />
             
             <div className="metar-icon-wrapper">
-              {getWeatherIcon(data.sky_code, data.wx_code, 72, isDay)}
+              {conditionLabel === 'Unknown' ? '--' : getWeatherIcon(data.sky_code, data.wx_code, 72, isDay)}
             </div>
             <div className="metar-condition-text">{condition}</div>
             

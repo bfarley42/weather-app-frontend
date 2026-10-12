@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { observationClock } from '../utils/observationClock';
 
 interface HourlyData {
   ts_local: string;
@@ -21,12 +22,16 @@ interface WindChartProps {
   data: HourlyData[];
   darkMode?: boolean;
   showTodayOnly?: boolean;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function WindChart({
   data,
   darkMode = false,
   showTodayOnly = false,
+  filterDate,
+  timezone,
 }: WindChartProps) {
   const chartRef = useRef<ReactECharts | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -93,6 +98,7 @@ export default function WindChart({
     const hourDate = new Date(hour.ts_local);
     return {
       hour: hourDate,
+      timestamp: hour.ts_local,
       wind: hour.avg_wspd_mph,
       gust: hour.max_gust_mph && hour.max_gust_mph > 0 ? hour.max_gust_mph : null,
     };
@@ -114,7 +120,11 @@ export default function WindChart({
   };
 
   // X-axis labels
-  const xLabels = chartData.map(d => formatHourLabel(d.hour));
+  const xLabels = chartData.map(d => {
+    if (!filterDate) return formatHourLabel(d.hour);
+    const hour = observationClock(d.timestamp, timezone || 'America/New_York').hour;
+    return hour === 0 ? '12a' : hour === 12 ? '12p' : hour < 12 ? `${hour}a` : `${hour - 12}p`;
+  });
 
   // Colors
   const windColor = darkMode ? '#22d3ee' : '#0891b2';
@@ -155,8 +165,8 @@ export default function WindChart({
         
         const idx = params[0].dataIndex;
         const d = chartData[idx];
-        const dayLabel = isYesterday(d.hour) ? 'Yesterday' : 'Today';
-        const timeStr = d.hour.toLocaleTimeString('en-US', { 
+        const dayLabel = filterDate || (isYesterday(d.hour) ? 'Yesterday' : 'Today');
+        const timeStr = filterDate ? observationClock(d.timestamp, timezone || 'America/New_York').time : d.hour.toLocaleTimeString('en-US', {
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
@@ -264,7 +274,7 @@ if (gustParam && gustParam.value !== null && gustParam.value !== undefined && !i
     }
   },
         // Midnight divider
-        markLine: (!showTodayOnly && midnightIndex > 0) ? {
+        markLine: (!filterDate && !showTodayOnly && midnightIndex > 0) ? {
           silent: true,
           symbol: 'none',
           lineStyle: {

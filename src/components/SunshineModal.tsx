@@ -10,6 +10,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import SunshineChart from './SunshineChart';
 import { API_URL } from '../config';
+import { fetchHistoricalDay, type HistoricalDay } from '../api/historicalDay';
+import { historicalSunshine, type HistoricalSunshine } from '../utils/historicalSunshine';
 import './SunshineModal.css';
 import { FaSun } from "react-icons/fa6";
 import { IoMdInformationCircleOutline } from "react-icons/io";
@@ -34,6 +36,7 @@ interface SunshineModalProps {
     sunset: string | null;
   } | null;
   filterDate?: string;  // NEW - optional date like "2026-02-08"
+  historicalDay?: HistoricalDay;
 }
 
 export default function SunshineModal({
@@ -44,15 +47,20 @@ export default function SunshineModal({
   onClose,
   sunTimes,
   filterDate,
+  historicalDay,
 }: SunshineModalProps) {
   const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [historicalEstimate, setHistoricalEstimate] = useState<HistoricalSunshine | null>(null);
+  const [historicalContext, setHistoricalContext] = useState<HistoricalDay | null>(null);
 
   // Fetch hourly data when modal opens
   useEffect(() => {
     if (!isOpen || !stationId) return;
+    const controller = new AbortController();
 
     async function fetchData() {
       setLoading(true);
@@ -65,7 +73,7 @@ export default function SunshineModal({
         : `${API_URL}/api/weather/hourly-hours?station=${stationId}&hours=24`;
         
         const response = await fetch(
-          url
+          url, { signal: controller.signal }
         );
 
         if (!response.ok) {
@@ -73,16 +81,27 @@ export default function SunshineModal({
         }
 
         const data = await response.json();
-        setHourlyData(data);
+        if (filterDate) {
+          const day = historicalDay ?? await fetchHistoricalDay(stationId, filterDate);
+          if (day.station_id !== stationId || day.local_date !== filterDate) throw new Error('Sunshine summary does not match the selected station and date');
+          const estimate = historicalSunshine(data, day);
+          if (!controller.signal.aborted) {
+            setHistoricalEstimate(estimate);
+            setHistoricalContext(day);
+          }
+        }
+        if (!controller.signal.aborted) setHourlyData(data);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
     fetchData();
-  }, [isOpen, stationId, filterDate]);
+    return () => controller.abort();
+  }, [isOpen, stationId, filterDate, historicalDay, attempt]);
 
   // Handle escape key
   useEffect(() => {
@@ -112,7 +131,7 @@ export default function SunshineModal({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const filteredData = showTodayOnly
+  const filteredData = !filterDate && showTodayOnly
     ? hourlyData.filter(h => {
         const hourDate = new Date(h.ts_local);
         hourDate.setHours(0, 0, 0, 0);
@@ -197,7 +216,11 @@ export default function SunshineModal({
     };
   };
 
-  const summary = calculateSummary(filteredData);
+  const summary = filterDate && historicalEstimate ? {
+    sunshineHours: historicalEstimate.estimatedHours == null ? null : Number(historicalEstimate.estimatedHours.toFixed(2)),
+    sunshinePct: historicalEstimate.estimatedPct == null ? null : Number(historicalEstimate.estimatedPct.toFixed(1)),
+    daylightHours: Number(historicalEstimate.daylightHours.toFixed(2)),
+  } : calculateSummary(filteredData);
 
   const modalContent = (
     <div 
@@ -226,6 +249,7 @@ export default function SunshineModal({
           ) : error ? (
             <div className="sunshine-modal-error">
               <span>⚠️ {error}</span>
+              {filterDate && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}
             </div>
           ) : hourlyData.length === 0 ? (
             <div className="sunshine-modal-loading">
@@ -237,7 +261,7 @@ export default function SunshineModal({
               <div className="sunshine-header">
                 <h2 className="sunshine-title">{stationName}</h2>
                 <div className="sunshine-subtitle">
-                  {showTodayOnly ? "Today's Sunshine" : 'Last 24 Hours Sunshine'}
+                  {filterDate ? `${filterDate} (${historicalContext?.timezone}) Estimated Sunshine` : showTodayOnly ? "Today's Sunshine" : 'Last 24 Hours Sunshine'}
                 </div>
               </div>
 
@@ -245,13 +269,16 @@ export default function SunshineModal({
               <div className="sunshine-summary">
                 <div className="sunshine-stat-main">
                   <FaSun className="sunshine-icon" aria-label="Sunshine" />
-                  <span className="sunshine-hours">{summary.sunshineHours}</span>
+                  <span className="sunshine-hours">{summary.sunshineHours ?? '--'}</span>
                   <span className="sunshine-hours-label">hrs</span>
                 </div>
                 <div className="sunshine-stat-secondary">
-                  <span className="sunshine-pct">{summary.sunshinePct}%</span>
+                  <span className="sunshine-pct">{summary.sunshinePct ?? '--'}%</span>
 <span className="sunshine-pct-label">
-  of {summary.daylightHours} daylight hours
+  {filterDate && historicalEstimate
+    ? `of ${historicalEstimate.coveredDaylightHours.toFixed(2)} hours with known sky cover`
+    : `of ${summary.daylightHours} daylight hours`}
+  {filterDate && <><br />About estimate </>}
   <button
     type="button"
     className="sunshine-info-btn"
@@ -262,11 +289,19 @@ export default function SunshineModal({
       Sunshine hours and % sunshine are modeled from METAR sky cover and weather 
       codes (wx_codes) during daylight (sunrise to sunset). 
       These are estimates and may differ from instrument-measured sunshine duration.
+      {filterDate && ' Partial daylight is weighted; unknown sky is excluded. Gray night bars are display markers, not sunshine. This proxy is uncalibrated.'}
     </span>
   </button>
 </span>
                 </div>
               </div>
+
+              {filterDate && historicalEstimate && historicalContext && <p className="sunshine-subtitle" role="status">
+                Astronomical daylight: {summary.daylightHours} hours.
+                {' Sunrise '}{new Intl.DateTimeFormat('en-US', { timeZone: historicalContext.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(historicalContext.sunrise!))}
+                {'; sunset '}{new Intl.DateTimeFormat('en-US', { timeZone: historicalContext.timezone, hour: 'numeric', minute: '2-digit' }).format(new Date(historicalContext.sunset!))}.
+                {' Sky/weather estimate, not measured sunshine. Missing sky is excluded; observation completeness is not guaranteed.'}
+              </p>}
 
 
               {/* Chart */}
@@ -275,6 +310,9 @@ export default function SunshineModal({
                 darkMode={darkMode}
                 sunTimes={sunTimes}
                 showTodayOnly={showTodayOnly}
+                historicalEstimate={filterDate ? historicalEstimate : null}
+                filterDate={filterDate}
+                timezone={historicalContext?.timezone}
               />
 
               {/* Toggle */}
@@ -282,8 +320,9 @@ export default function SunshineModal({
                 <button
                   className={`sunshine-toggle-btn ${showTodayOnly ? 'active' : ''}`}
                   onClick={() => setShowTodayOnly(!showTodayOnly)}
+                  disabled={!!filterDate}
                 >
-                  <span className="toggle-label">Today Only</span>
+                  <span className="toggle-label">{filterDate ? 'Selected day' : 'Today Only'}</span>
                   <div className={`toggle-switch ${showTodayOnly ? 'on' : ''}`}>
                     <div className="toggle-knob" />
                   </div>

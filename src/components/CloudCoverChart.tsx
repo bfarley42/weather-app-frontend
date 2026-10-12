@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts';
+import { estimatedCloudCover } from '../utils/historicalCloudCover';
+import { observationClock } from '../utils/observationClock';
 
 interface HourlyData {
   ts_local: string;
@@ -21,12 +23,16 @@ interface CloudCoverChartProps {
   data: HourlyData[];
   darkMode?: boolean;
   showTodayOnly?: boolean;
+  filterDate?: string;
+  timezone?: string;
 }
 
 export default function CloudCoverChart({
   data,
   darkMode = false,
   showTodayOnly = false,
+  filterDate,
+  timezone,
 }: CloudCoverChartProps) {
   const chartRef = useRef<ReactECharts | null>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -110,10 +116,11 @@ export default function CloudCoverChart({
   // Prepare chart data
   const chartData = sortedData.map(hour => {
     const hourDate = new Date(hour.ts_local);
-    const cloudPct = skyToCloudPct(hour.skyc1);
+    const cloudPct = filterDate ? estimatedCloudCover(hour.skyc1) : skyToCloudPct(hour.skyc1);
 
     return {
       hour: hourDate,
+      timestamp: hour.ts_local,
       value: cloudPct,
       condition: getConditionLabel(hour.skyc1),
       skyCode: hour.skyc1,
@@ -136,7 +143,11 @@ export default function CloudCoverChart({
   };
 
   // X-axis labels
-  const xLabels = chartData.map(d => formatHourLabel(d.hour));
+  const xLabels = chartData.map(d => {
+    if (!filterDate) return formatHourLabel(d.hour);
+    const hour = observationClock(d.timestamp, timezone || 'America/New_York').hour;
+    return hour === 0 ? '12a' : hour === 12 ? '12p' : hour < 12 ? `${hour}a` : `${hour - 12}p`;
+  });
 
   // Bar colors based on cloud coverage - grayish blue palette
   const getBarColor = (cloudPct: number): string => {
@@ -155,7 +166,7 @@ export default function CloudCoverChart({
     return darkMode ? '#475569' : '#64748b'; // Dark gray - overcast
   };
 
-  const barColors = chartData.map(d => getBarColor(d.value));
+  const barColors = chartData.map(d => d.value == null ? 'transparent' : getBarColor(d.value));
 
   const option: echarts.EChartsOption = {
     backgroundColor: 'transparent',
@@ -182,8 +193,8 @@ export default function CloudCoverChart({
         
         const idx = params[0].dataIndex;
         const d = chartData[idx];
-        const dayLabel = isYesterday(d.hour) ? 'Yesterday' : 'Today';
-        const timeStr = d.hour.toLocaleTimeString('en-US', { 
+        const dayLabel = filterDate || (isYesterday(d.hour) ? 'Yesterday' : 'Today');
+        const timeStr = filterDate ? observationClock(d.timestamp, timezone || 'America/New_York').time : d.hour.toLocaleTimeString('en-US', {
           hour: 'numeric', 
           minute: '2-digit',
           hour12: true 
@@ -193,7 +204,7 @@ export default function CloudCoverChart({
           <div style="font-weight:600;margin-bottom:4px">${dayLabel}, ${timeStr}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
             <span>☁️</span>
-            <span style="font-weight:600">${d.value}% cloud cover</span>
+            <span style="font-weight:600">${filterDate ? d.value == null ? 'Missing or unknown sky observation' : `${d.value}% estimated cloud cover` : `${d.value}% cloud cover`}</span>
           </div>
           <div style="color:${darkMode ? '#94a3b8' : '#64748b'};margin-top:2px;font-size:12px">
             ${d.condition}
@@ -262,7 +273,7 @@ export default function CloudCoverChart({
           }
         },
         // Mark line for midnight divider
-        markLine: (!showTodayOnly && midnightIndex > 0) ? {
+        markLine: (!filterDate && !showTodayOnly && midnightIndex > 0) ? {
           silent: true,
           symbol: 'none',
           lineStyle: {
